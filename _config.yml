@@ -1,12 +1,12 @@
 # Site settings
-title:
-email:
+title: Sultana del Norte
+email: eduardo@enelmargen.org
 description: > # this means to ignore newlines until "baseurl:"
 baseurl: "/" # the subpath of your site, e.g. /blog/
 url: "https://sultanadelnorte.com/" # the base hostname & protocol for your site
 
 twitter_username:
-github_username:
+github_username: sultana-del-norte
 
 # Build settings
 markdown: kramdown
