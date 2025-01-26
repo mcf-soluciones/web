@@ -125,21 +125,24 @@
           <h4>20 Euros</h4>
             <input type="number" 
                   id="euro20-input" 
-                  label="20 euros",
+                  label="20 euros"
+                  value="0"
                   placeholder="Numero de billetes" 
                   class="form-control" 
                   style="width:100%;"/><br/>
             <h4>10 Euros</h4>
             <input type="number" 
                   id="euro10-input" 
-                  label="10 euros",
+                  label="10 euros"
+                  value="0"
                   placeholder="Numero de billetes" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
             <h4>5 Euros</h4>
             <input type="number" 
                   id="euro5-input" 
-                  label="5 euros",
+                  label="5 euros"
+                  value="0"
                   placeholder="Numero de billetes" 
                   class="form-control" 
                   style="width:100%;"/><br/>  
@@ -148,42 +151,48 @@
           <h4>2 Euros</h4>
             <input type="number" 
                   id="euro2-input" 
-                  label="2 euros",
+                  label="2 euros"
+                  value="0"
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/>
             <h4>1 Euro</h4>
             <input type="number" 
                   id="euro1-input" 
-                  label="1 euro",
+                  label="1 euro"
+                  value="0"
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
             <h4>50 centavos</h4>
             <input type="number" 
                   id="euro50cts-input" 
-                  label="0.50 euros",
+                  label="0.50 euros"
+                  value="0"
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
                   <h4>20 centavos</h4>
             <input type="number" 
                   id="euro20cts-input" 
-                  label="0.20 euros",
+                  label="0.20 euros"
+                  value="0"
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
                   <h4>10 centavos</h4>
             <input type="number" 
                   id="euro10cts-input" 
-                  label="0.10 euros",
+                  label="0.10 euros"
+                  value="0"
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
                   <h4>5 centavos</h4>
             <input type="number" 
                   id="euro5cts-input" 
-                  label="0.05 euros",
+                  label="0.05 euros"
+                  value="0"
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
@@ -215,14 +224,22 @@
        var m10e = $("#euro10cts-input").val();
        var m5e = $("#euro5cts-input").val();
 
-       let euros = (b20e*20)+(b10e*10)+(b5e*5)+(m2e*2)+(m1e*1)+(m50e*0.50)+(m20e*0.20)+(m10e*0.10)+(m5e*0.05)
+       
 
        console.log(`Total cash: ${euros}`)
        
        var data = {
           type: type,
           user: user,
-          euros: euros
+          b20e:b20e,
+          b10e:b10e,
+          b5e:b5e,
+          m2e:m2e,
+          m1e:m1e,
+          m50e:m50e,
+          m20e:m20e,
+          m10e:m10e,
+          m5e:m5e
        };
 
        console.log('Sending data:', data); // Debug log
