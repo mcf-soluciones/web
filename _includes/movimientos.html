@@ -44,7 +44,7 @@
         function submitToAPI(e) {
             function submitToAPI(e) {
        e.preventDefault();
-       var URL = "https://6j28mrn9sl.execute-api.us-east-1.amazonaws.com";
+       var URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
 
             var Namere = /[A-Za-z]{1}[A-Za-z]/;
             if (!Namere.test($("#name-input").val())) {
@@ -80,7 +80,7 @@
 
        $.ajax({
          type: "POST",
-         url : "https://6j28mrn9sl.execute-api.us-east-1.amazonaws.com",
+         url : "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact",
          dataType: "json",
          crossDomain: "true",
          contentType: "application/json; charset=utf-8",
