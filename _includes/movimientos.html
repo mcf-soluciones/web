@@ -37,6 +37,7 @@
           </div>
 
           <h2>Billetes</h2>
+          <h4>20 Euros</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro20-input" 
@@ -44,6 +45,7 @@
                   placeholder="Numero de billetes" 
                   class="form-control" 
                   style="width:100%;"/><br/>
+            <h4>10 Euros</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro10-input" 
@@ -51,6 +53,7 @@
                   placeholder="Numero de billetes" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
+            <h4>5 Euros</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro5-input" 
@@ -60,6 +63,7 @@
                   style="width:100%;"/><br/>  
                    
           <h2>Monedas</h2>
+          <h4>2 Euros</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro2-input" 
@@ -67,6 +71,7 @@
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/>
+            <h4>1 Euro</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro1-input" 
@@ -74,6 +79,7 @@
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
+            <h4>50 centavos</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro50cts-input" 
@@ -81,6 +87,7 @@
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
+                  <h4>20 centavos</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro20cts-input" 
@@ -88,6 +95,7 @@
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
+                  <h4>10 centavos</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro10cts-input" 
@@ -95,6 +103,7 @@
                   placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/> 
+                  <h4>5 centavos</h4>
             <input type="number" 
                   style="height:35px;" 
                   id="euro5cts-input" 
@@ -141,9 +150,9 @@
         // let title = `${formatDate(now)}`  // e.g., "2025-01-26"
 
        var data = {
-          type: name,
-          user: phone,
-          euros: email
+          type: type,
+          user: user,
+          euros: euros
        };
 
        console.log('Sending data:', data); // Debug log
