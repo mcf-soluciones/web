@@ -5,7 +5,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-      <form id="contact-form" method="post">
+      <form id="contact-form" onsubmit="return submitToAPI(event)">
             <h4>Name:</h4>
             <input type="text" 
                   style="height:35px;" 
@@ -34,74 +34,70 @@
                   placeholder="Enter your message…" 
                   class="form-control" 
                   style="width:100%;"></textarea><br/>
-            <button type="button" 
-                  onClick="submitToAPI(event)" 
+            <button type="submit" 
                   class="btn btn-lg" 
                   style="margin-top:20px;">Submit</button>
       </form>
 
     <script>
-        function submitToAPI(e) {
-            function submitToAPI(e) {
+    function submitToAPI(e) {
        e.preventDefault();
+       console.log('Form submission started'); // Debug log
+
        var URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
-
-            var Namere = /[A-Za-z]{1}[A-Za-z]/;
-            if (!Namere.test($("#name-input").val())) {
-                         alert ("Name can not less than 2 char");
-                return;
-            }
-            var mobilere = /[0-9]{10}/;
-            if (!mobilere.test($("#phone-input").val())) {
-                alert ("Please enter valid mobile number");
-                return;
-            }
-            if ($("#email-input").val()=="") {
-                alert ("Please enter your email id");
-                return;
-            }
-
-            var reeamil = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,6})?$/;
-            if (!reeamil.test($("#email-input").val())) {
-                alert ("Please enter valid email address");
-                return;
-            }
 
        var name = $("#name-input").val();
        var phone = $("#phone-input").val();
        var email = $("#email-input").val();
        var desc = $("#description-input").val();
+       
+       // Form validation
+       if (name.length < 2) {
+           alert("Name can not less than 2 char");
+           return false;
+       }
+       if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+           alert("Please enter valid mobile number");
+           return false;
+       }
+       if (!email || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,6}$/.test(email)) {
+           alert("Please enter valid email address");
+           return false;
+       }
+
        var data = {
-          name : name,
-          phone : phone,
-          email : email,
-          desc : desc
-        };
+          name: name,
+          phone: phone,
+          email: email,
+          desc: desc
+       };
+
+       console.log('Sending data:', data); // Debug log
 
        $.ajax({
          type: "POST",
-         url : "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact",
+         url: URL,
          dataType: "json",
-         crossDomain: "true",
+         crossDomain: true,
          contentType: "application/json; charset=utf-8",
          data: JSON.stringify(data),
-
-         
-         success: function () {
-           // clear form and show a success message
-           alert("Successfull");
+         success: function(response) {
+           console.log('Success:', response); // Debug log
+           alert("Successful");
            document.getElementById("contact-form").reset();
-       location.reload();
          },
-         error: function () {
-           // show an error message
-           alert("UnSuccessfull");
-         }});
-     }
-        }
+         error: function(jqXHR, textStatus, errorThrown) {
+           console.log('Error:', textStatus, errorThrown); // Debug log
+           alert("Unsuccessful: " + textStatus);
+         }
+       });
+
+       return false;
+    }
     </script>
 </body>
 </html>
+
 
 
 
