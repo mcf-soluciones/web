@@ -6,34 +6,104 @@
 </head>
 <body>
       <form id="contact-form" onsubmit="return submitToAPI(event)">
-            <h4>Name:</h4>
-            <input type="text" 
+        <h2>General</h2>
+        <h4>Tipo:</h4>
+          <div>
+            <input type="radio" id="transito-input" name="type" value="transito" checked />
+            <label for="transito">transito</label>
+          </div>
+        
+          <div>
+            <input type="radio" id="deposito-input" name="type" value="deposito" />
+            <label for="deposito">deposito</label>
+          </div>
+        <h4>Usuario:</h4>
+          <div>
+            <input type="radio" id="lalo-input" name="user" value="lalo" checked />
+            <label for="lalo">lalo</label>
+          </div>
+        
+          <div>
+            <input type="radio" id="oscar-input" name="user" value="oscar" />
+            <label for="oscar">oscar</label>
+          </div>
+          <div>
+            <input type="radio" id="adrian-input" name="user" value="adrian" />
+            <label for="adrian">adrian</label>
+          </div>
+          <div>
+            <input type="radio" id="usera-input" name="user" value="local-usera" />
+            <label for="local-usera">local-usera</label>
+          </div>
+
+          <h2>Billetes</h2>
+            <input type="number" 
                   style="height:35px;" 
-                  id="name-input" 
-                  placeholder="Enter name here…" 
-                  class="form-control" 
-                  style="width:100%;" /><br/>
-            <h4>Phone:</h4>
-            <input type="phone" 
-                  style="height:35px;" 
-                  id="phone-input" 
-                  placeholder="Enter phone number" 
+                  id="euro20-input" 
+                  label="20 euros",
+                  placeholder="Numero de billetes" 
                   class="form-control" 
                   style="width:100%;"/><br/>
-            <h4>Email:</h4>
-            <input type="email" 
+            <input type="number" 
                   style="height:35px;" 
-                  id="email-input" 
-                  placeholder="Enter email here…" 
+                  id="euro10-input" 
+                  label="10 euros",
+                  placeholder="Numero de billetes" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>      
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro5-input" 
+                  label="5 euros",
+                  placeholder="Numero de billetes" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>  
+                   
+          <h2>Monedas</h2>
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro2-input" 
+                  label="2 euros",
+                  placeholder="Numero de monedas" 
                   class="form-control" 
                   style="width:100%;"/><br/>
-            <h4>How can we help you?</h4>
-            <textarea 
-                  id="description-input" 
-                  rows="3" 
-                  placeholder="Enter your message…" 
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro1-input" 
+                  label="1 euro",
+                  placeholder="Numero de monedas" 
                   class="form-control" 
-                  style="width:100%;"></textarea><br/>
+                  style="width:100%;"/><br/>      
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro50cts-input" 
+                  label="0.50 euros",
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro20cts-input" 
+                  label="0.20 euros",
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro10cts-input" 
+                  label="0.10 euros",
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+            <input type="number" 
+                  style="height:35px;" 
+                  id="euro5cts-input" 
+                  label="0.05 euros",
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+
+                  <br/> 
             <button type="submit" 
                   class="btn btn-lg" 
                   style="margin-top:20px;">Submit</button>
@@ -46,30 +116,34 @@
 
        var URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
 
-       var name = $("#name-input").val();
-       var phone = $("#phone-input").val();
-       var email = $("#email-input").val();
-       var desc = $("#description-input").val();
+       var type = $('input[name="type"]:checked').val();
+       var user = $('input[name="user"]:checked').val();
+
+       var b20e = $("#euro20-input").val();
+       var b10e = $("#euro10-input").val();
+       var b5e = $("#euro5-input").val();
+    
+       var m2e = $("#euro2-input").val();
+       var m1e = $("#euro1-input").val();
+       var m50e = $("#euro50cts-input").val();
+       var m20e = $("#euro20cts-input").val();
+       var m10e = $("#euro10cts-input").val();
+       var m5e = $("#euro5cts-input").val();
+
+       let euros = (b20e*20)+(b10e*10)+(b5e*5)+(m2e*2)+(m1e*1)+(m50e*0.50)+(m20e*0.20)+(m10e*0.10)+(m5e*0.05)
+
+       console.log(`Total cash: ${euros}`)
        
-       // Form validation
-       if (name.length < 2) {
-           alert("Name can not less than 2 char");
-           return false;
-       }
-       if (phone.length !== 10 || !/^\d+$/.test(phone)) {
-           alert("Please enter valid mobile number");
-           return false;
-       }
-       if (!email || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,6}$/.test(email)) {
-           alert("Please enter valid email address");
-           return false;
-       }
+       //   function formatDate(date) {
+        //                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        //       }
+        // let now = new Date();
+        // let title = `${formatDate(now)}`  // e.g., "2025-01-26"
 
        var data = {
-          name: name,
-          phone: phone,
-          email: email,
-          desc: desc
+          type: name,
+          user: phone,
+          euros: email
        };
 
        console.log('Sending data:', data); // Debug log
@@ -83,8 +157,12 @@ $.ajax({
     data: JSON.stringify(data),
     success: function(response) {
         console.log('Success:', response);
-        alert("Successful");
-        document.getElementById("contact-form").reset();
+        if (response.error) {
+            alert("Error: " + response.message);
+        } else {
+            alert("Successful");
+            document.getElementById("contact-form").reset();
+        }
     },
     error: function(xhr, status, error) {
         console.log('Error details:', {
@@ -92,14 +170,10 @@ $.ajax({
             response: xhr.responseText,
             error: error
         });
-        try {
-            const errorResponse = JSON.parse(xhr.responseText);
-            alert("Error: " + (errorResponse.error || status));
-        } catch (e) {
-            alert("Error: " + status);
-        }
+        alert("Error: " + (xhr.responseJSON?.message || status));
     }
 });
+
 }
 
 </script>
