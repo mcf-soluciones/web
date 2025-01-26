@@ -75,25 +75,28 @@
        console.log('Sending data:', data); // Debug log
 
        $.ajax({
-         type: "POST",
-         url: URL,
-         dataType: "json",
-         crossDomain: true,
-         contentType: "application/json; charset=utf-8",
-         data: JSON.stringify(data),
-         success: function(response) {
-           console.log('Success:', response); // Debug log
-           alert("Successful");
-           document.getElementById("contact-form").reset();
-         },
-         error: function(jqXHR, textStatus, errorThrown) {
-           console.log('Error:', textStatus, errorThrown); // Debug log
-           alert("Unsuccessful: " + textStatus);
-         }
-       });
+  type: "POST",
+  url: URL,
+  dataType: "json",
+  crossDomain: true,
+  contentType: "application/json; charset=utf-8",
+  data: JSON.stringify(data),
+  success: function(response) {
+    console.log('Success:', response);
+    alert("Successful");
+    document.getElementById("contact-form").reset();
+  },
+  error: function(jqXHR, textStatus, errorThrown) {
+    console.log('Error details:', {
+      status: jqXHR.status,
+      responseText: jqXHR.responseText,
+      textStatus: textStatus,
+      errorThrown: errorThrown
+    });
+    alert("Unsuccessful: " + (jqXHR.responseJSON?.details || textStatus));
+  }
+});
 
-       return false;
-    }
     </script>
 </body>
 </html>
