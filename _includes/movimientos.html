@@ -39,7 +39,7 @@
                   style="margin-top:20px;">Submit</button>
       </form>
 
-    <script>
+<script>
     function submitToAPI(e) {
        e.preventDefault();
        console.log('Form submission started'); // Debug log
@@ -74,35 +74,34 @@
 
        console.log('Sending data:', data); // Debug log
 
-       $.ajax({
-  type: "POST",
-  url: URL,
-  dataType: "json",
-  crossDomain: true,
-  contentType: "application/json; charset=utf-8",
-  data: JSON.stringify(data),
-  success: function(response) {
-    console.log('Success:', response);
-    alert("Successful");
-    document.getElementById("contact-form").reset();
-  },
-  error: function(jqXHR, textStatus, errorThrown) {
-    console.log('Error details:', {
-      status: jqXHR.status,
-      responseText: jqXHR.responseText,
-      textStatus: textStatus,
-      errorThrown: errorThrown
-    });
-    alert("Unsuccessful: " + (jqXHR.responseJSON?.details || textStatus));
-  }
+$.ajax({
+    type: "POST",
+    url: URL,
+    dataType: "json",
+    crossDomain: true,
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify(data),
+    success: function(response) {
+        console.log('Success:', response);
+        alert("Successful");
+        document.getElementById("contact-form").reset();
+    },
+    error: function(xhr, status, error) {
+        console.log('Error details:', {
+            status: xhr.status,
+            response: xhr.responseText,
+            error: error
+        });
+        try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            alert("Error: " + (errorResponse.error || status));
+        } catch (e) {
+            alert("Error: " + status);
+        }
+    }
 });
+}
 
-    </script>
+</script>
 </body>
 </html>
-
-
-
-
-
-
