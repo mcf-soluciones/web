@@ -3,21 +3,105 @@
 <head>
     <title>Movimientos</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+          --primary-color: #2196F3;
+          --border-radius: 8px;
+        }
+      
+        body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 20px;
+        }
+      
+        #contact-form {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 30px;
+          background: white;
+          border-radius: var(--border-radius);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+      
+        h2 {
+          color: #333;
+          border-bottom: 2px solid var(--primary-color);
+          padding-bottom: 10px;
+          margin-top: 30px;
+        }
+      
+        h4 {
+          color: #555;
+          margin-bottom: 10px;
+        }
+      
+        .form-control {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: var(--border-radius);
+          margin-bottom: 15px;
+          box-sizing: border-box;
+        }
+      
+        input[type="number"] {
+          height: 40px !important;
+          width: 100% !important;
+          margin-bottom: 20px;
+        }
+      
+        input[type="radio"] {
+          margin-right: 10px;
+        }
+      
+        .radio-group {
+          margin-bottom: 15px;
+        }
+      
+        button[type="submit"] {
+          background-color: var(--primary-color);
+          color: white;
+          padding: 12px 24px;
+          border: none;
+          border-radius: var(--border-radius);
+          cursor: pointer;
+          font-size: 16px;
+          width: 100%;
+          transition: background-color 0.3s ease;
+        }
+      
+        button[type="submit"]:hover {
+          background-color: #1976D2;
+        }
+      
+        /* Radio button styling */
+        input[type="radio"] + label {
+          cursor: pointer;
+          padding: 5px 10px;
+        }
+      </style>
+      
+
 </head>
 <body>
       <form id="contact-form" onsubmit="return submitToAPI(event)">
         <h2>General</h2>
         <h4>Tipo:</h4>
-          <div>
-            <input type="radio" id="transito-input" name="type" value="transito" checked />
-            <label for="transito">transito</label>
+        <div class="radio-group">
+            <div>
+                <input type="radio" id="transito-input" name="type" value="transito" checked />
+                <label for="transito">transito</label>
           </div>
         
           <div>
             <input type="radio" id="deposito-input" name="type" value="deposito" />
             <label for="deposito">deposito</label>
           </div>
+        </div>
         <h4>Usuario:</h4>
+        <div class="radio-group">  
           <div>
             <input type="radio" id="lalo-input" name="user" value="lalo" checked />
             <label for="lalo">lalo</label>
@@ -35,11 +119,11 @@
             <input type="radio" id="usera-input" name="user" value="local-usera" />
             <label for="local-usera">local-usera</label>
           </div>
+        </div>
 
           <h2>Billetes</h2>
           <h4>20 Euros</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro20-input" 
                   label="20 euros",
                   placeholder="Numero de billetes" 
@@ -47,7 +131,6 @@
                   style="width:100%;"/><br/>
             <h4>10 Euros</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro10-input" 
                   label="10 euros",
                   placeholder="Numero de billetes" 
@@ -55,7 +138,6 @@
                   style="width:100%;"/><br/>      
             <h4>5 Euros</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro5-input" 
                   label="5 euros",
                   placeholder="Numero de billetes" 
@@ -65,7 +147,6 @@
           <h2>Monedas</h2>
           <h4>2 Euros</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro2-input" 
                   label="2 euros",
                   placeholder="Numero de monedas" 
@@ -73,7 +154,6 @@
                   style="width:100%;"/><br/>
             <h4>1 Euro</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro1-input" 
                   label="1 euro",
                   placeholder="Numero de monedas" 
@@ -81,7 +161,6 @@
                   style="width:100%;"/><br/>      
             <h4>50 centavos</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro50cts-input" 
                   label="0.50 euros",
                   placeholder="Numero de monedas" 
@@ -89,7 +168,6 @@
                   style="width:100%;"/><br/> 
                   <h4>20 centavos</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro20cts-input" 
                   label="0.20 euros",
                   placeholder="Numero de monedas" 
@@ -97,7 +175,6 @@
                   style="width:100%;"/><br/> 
                   <h4>10 centavos</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro10cts-input" 
                   label="0.10 euros",
                   placeholder="Numero de monedas" 
@@ -105,7 +182,6 @@
                   style="width:100%;"/><br/> 
                   <h4>5 centavos</h4>
             <input type="number" 
-                  style="height:35px;" 
                   id="euro5cts-input" 
                   label="0.05 euros",
                   placeholder="Numero de monedas" 
