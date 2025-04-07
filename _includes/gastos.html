@@ -186,7 +186,7 @@
           <option value="USD">USD</option>
         </select>
         <h4><label for="cuenta">Cuenta:</label></h4>
-        <select name="currency" id="currency">
+        <select name="cuenta" id="cuenta">
           <option value="mcf">mcf</option>
           <option value="cash">cash</option>
         </select>
@@ -372,3 +372,12 @@
 </body>
 </html>
 
+
+
+
+"{\"error\": \"Failed to create Notion page: {
+  \\\"object\\\":\\\"error\\\",\\\"status\\\":400,\\\"code\\\":\\\
+  "validation_error\\\",\\\"message\\\":\\\"body failed validation. 
+  Fix one:\\\\nbody.properties.cuenta.select.id should be defined, 
+  instead was `undefined`.\\\\nbody.properties.cuenta.select.name should be a string, 
+  instead was `null`.\\\",\\\"request_id\\\":\\\"7d48af5d-f863-48e1-8d5b-794f4b095b8e\\\"}\"}"
