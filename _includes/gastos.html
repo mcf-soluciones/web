@@ -243,106 +243,112 @@
       </form>
 
 <script>
-    /* new file upload */
-    function updateFileName(input) {
+   /* new file upload */
+   function updateFileName(input) {
         const fileNameDisplay = document.getElementById('file-name-display');
         if (input.files.length > 0) {
             fileNameDisplay.textContent = input.files[0].name;
         } else {
             fileNameDisplay.textContent = 'No file chosen';
         }
-      }
+    }
 
     function makeAjaxCall(data) {
-      var URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/contact";
+        var URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/contact";
 
-      $.ajax({
-        type: "POST",
-        url: URL,
-        dataType: "json",
-        crossDomain: true,
-        contentType: "application/json; charset=utf-8",
-        data: JSON.stringify(data),
-        success: function(response) {
-            console.log('Success:', response);
-            if (response.error) {
-                alert("Error: " + response.message);
-            } else {
-                alert("Successful");
-                document.getElementById("contact-form").reset();
-                document.getElementById('file-name-display').textContent = 'No file chosen';
+        $.ajax({
+            type: "POST",
+            url: URL,
+            dataType: "json",
+            crossDomain: true,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(data),
+            success: function(response) {
+                console.log('Success:', response);
+                if (response.error) {
+                    alert("Error: " + response.message);
+                } else {
+                    alert("Successful");
+                    document.getElementById("contact-form").reset();
+                    document.getElementById('file-name-display').textContent = 'No file chosen';
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('Error details:', {
+                    status: xhr.status,
+                    response: xhr.responseText,
+                    error: error
+                });
+                alert("Error: " + (xhr.responseJSON?.message || status));
             }
-        },
-        error: function(xhr, status, error) {
-            console.log('Error details:', {
-                status: xhr.status,
-                response: xhr.responseText,
-                error: error
-            });
-            alert("Error: " + (xhr.responseJSON?.message || status));
-        }
-      });
+        });
     }
 
     function submitToAPI(e) {
-       e.preventDefault();
-       console.log('Form submission started'); // Debug log
+        e.preventDefault();
+        console.log('Form submission started');
 
-       var type = $('input[name="type"]:checked').val();
-       var user = $('input[name="user"]:checked').val();
+        var type = $('input[name="type"]:checked').val();
+        var user = $('input[name="user"]:checked').val();
 
-       var b20e = $("#euro20-input").val();
-       var b10e = $("#euro10-input").val();
-       var b5e = $("#euro5-input").val();
+        var b20e = $("#euro20-input").val();
+        var b10e = $("#euro10-input").val();
+        var b5e = $("#euro5-input").val();
     
-       var m2e = $("#euro2-input").val();
-       var m1e = $("#euro1-input").val();
-       var m50e = $("#euro50cts-input").val();
-       var m20e = $("#euro20cts-input").val();
-       var m10e = $("#euro10cts-input").val();
-       var m5e = $("#euro5cts-input").val();
+        var m2e = $("#euro2-input").val();
+        var m1e = $("#euro1-input").val();
+        var m50e = $("#euro50cts-input").val();
+        var m20e = $("#euro20cts-input").val();
+        var m10e = $("#euro10cts-input").val();
+        var m5e = $("#euro5cts-input").val();
        
-       var data = {
-          type: type,
-          user: user,
-          b20e:b20e,
-          b10e:b10e,
-          b5e:b5e,
-          m2e:m2e,
-          m1e:m1e,
-          m50e:m50e,
-          m20e:m20e,
-          m10e:m10e,
-          m5e:m5e
-       };
+        var data = {
+            type: type,
+            user: user,
+            b20e: b20e,
+            b10e: b10e,
+            b5e: b5e,
+            m2e: m2e,
+            m1e: m1e,
+            m50e: m50e,
+            m20e: m20e,
+            m10e: m10e,
+            m5e: m5e
+        };
 
-       // Get the file input
+        // Get the file input
         var fileInput = document.getElementById('receipt-upload');
         var file = fileInput.files[0];
 
         // If a file is selected, read it and convert to base64
         if (file) {
+            console.log('Processing file:', file.name);
             var reader = new FileReader();
             reader.onload = function(e) {
                 var base64Content = e.target.result.split(',')[1];
                 
-                // Add file information to your data object
-                data.file_content = base64Content;
-                data.file_name = file.name;
-                data.file_type = file.type;
+                // Add file information in the expected format
+                data.file = {
+                    content: base64Content,
+                    name: file.name,
+                    type: file.type
+                };
                 
-                // Now make the AJAX call
+                console.log('File processed, sending data');
                 makeAjaxCall(data);
+            };
+            reader.onerror = function(error) {
+                console.error('Error reading file:', error);
+                alert('Error reading file');
             };
             reader.readAsDataURL(file);
         } else {
-            // If no file is selected, proceed without file data
+            console.log('No file selected, sending data without file');
             makeAjaxCall(data);
         }
-
-        console.log('Sending data:', data); // Debug log
-      }
+    }
 
 </script>
 </body>
 </html>
+
