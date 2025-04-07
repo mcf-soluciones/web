@@ -254,6 +254,8 @@
       }
 
     function makeAjaxCall(data) {
+      var URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/contact";
+
       $.ajax({
         type: "POST",
         url: URL,
@@ -285,8 +287,6 @@
     function submitToAPI(e) {
        e.preventDefault();
        console.log('Form submission started'); // Debug log
-
-       var URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/contact";
 
        var type = $('input[name="type"]:checked').val();
        var user = $('input[name="user"]:checked').val();
