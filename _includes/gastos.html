@@ -119,18 +119,6 @@
 <body>
       <form id="contact-form" onsubmit="return submitToAPI(event)">
         <h2>General</h2>
-        <h4>Tipo:</h4>
-        <div class="radio-group">
-            <div>
-                <input type="radio" id="transito-input" name="type" value="transito" checked />
-                <label for="transito">transito</label>
-          </div>
-        
-          <div>
-            <input type="radio" id="deposito-input" name="type" value="deposito" />
-            <label for="deposito">deposito</label>
-          </div>
-        </div>
         <h4>Usuario:</h4>
         <div class="radio-group">  
           <div>
@@ -148,93 +136,107 @@
           </div>
           <div>
             <input type="radio" id="usera-input" name="user" value="local-usera" />
-            <label for="local-usera">local-usera</label>
+            <label for="local_usera">local-usera</label>
+          </div>
+          <div>
+            <input type="radio" id="usera-input" name="user" value="local-usera" />
+            <label for="cuenta_mcf">local-usera</label>
           </div>
         </div>
+
+
+
+
         <h2>Comprobante</h2>
         <div class="file-upload">
-            <label for="receipt-upload">Choose Receipt File</label>
+            <label for="receipt-upload">Choose File</label>
             <input type="file" 
                    id="receipt-upload" 
                    accept=".pdf,.jpg,.jpeg,.png"
                    onchange="updateFileName(this)"/>
             <div id="file-name-display">No file chosen</div>
         </div>
-          <h2>Billetes</h2>
-          <h4>20 Euros</h4>
+        <h2>Concepto</h2>
+        <h4><label for="concepto_mcf">Concepto MCF:</label></h4>
+        <select name="concepto_mcf" id="concepto_mcf">
+          <option value="renta">renta</option>
+          <option value="detergentes">detergentes</option>
+          <option value="insumos_otros">insumos_otros</option>
+          <option value="luz">luz</option>
+          <option value="agua">agua</option>
+          <option value="gas">gas</option>
+          <option value="limpieza">limpieza</option>
+          <option value="seguro">seguro</option>
+          <option value="alarma">alarma</option>
+          <option value="impuestos_irpf">impuestos_irpf</option>
+          <option value="impuestos_iva">impuestos_iva</option>
+          <option value="internet">internet</option>
+          <option value="gestor">gestor</option>
+          <option value="mantenimiento_maquinas">mantenimiento_maquinas</option>
+          <option value="mobiliario">mobiliario</option>
+          <option value="servicio_cliente">servicio_cliente</option>
+          <option value="transporte">transporte</option>
+          <option value="costos_financieros">costos_financieros</option>
+          <option value="financiamiento">financiamiento</option>
+        </select>
+        <h4><label for="currency">Moneda:</label></h4>
+        <select name="currency" id="currency">
+          <option value="EUR">EUR</option>
+          <option value="MXN">MXN</option>
+          <option value="USD">USD</option>
+        </select>
+        <h4><label for="cuenta">Cuenta:</label></h4>
+        <select name="currency" id="currency">
+          <option value="mcf">mcf</option>
+          <option value="cash">cash</option>
+        </select>
+
+        <h4><label for="concepto_proveedor">Concepto proveedor:</label></h4><br>
+        <input type="text" id="concepto_proveedor" name="concepto_proveedor"><br>
+        <h4><label for="num_factura">Numero de factura proveedor:</label></h4><br>
+        <input type="text" id="num_factura" name="num_factura"><br>
+
+
+        <h2>Gasto</h2>
+        <input type="number" 
+            id="gasto" 
+            label="gasto"
+            value="0"
+            placeholder="gasto" 
+            class="form-control" 
+        style="width:100%;"/><br/>
+        <h4>Desglose Impuestos</h4>
+            <h4>Impuesto IVA</h4>
             <input type="number" 
-                  id="euro20-input" 
-                  label="20 euros"
+                  id="iva" 
+                  label="IVA"
                   value="0"
-                  placeholder="Numero de billetes" 
-                  class="form-control" 
-                  style="width:100%;"/><br/>
-            <h4>10 Euros</h4>
-            <input type="number" 
-                  id="euro10-input" 
-                  label="10 euros"
-                  value="0"
-                  placeholder="Numero de billetes" 
+                  placeholder="IVA" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
-            <h4>5 Euros</h4>
+            <h4>IRPF</h4>
             <input type="number" 
-                  id="euro5-input" 
-                  label="5 euros"
+                  id="irpf" 
+                  label="IRPF"
                   value="0"
-                  placeholder="Numero de billetes" 
+                  placeholder="IRPF" 
                   class="form-control" 
                   style="width:100%;"/><br/>  
-                   
-          <h2>Monedas</h2>
-          <h4>2 Euros</h4>
             <input type="number" 
-                  id="euro2-input" 
-                  label="2 euros"
+                  id="otro" 
+                  label="Otro"
                   value="0"
-                  placeholder="Numero de monedas" 
-                  class="form-control" 
-                  style="width:100%;"/><br/>
-            <h4>1 Euro</h4>
-            <input type="number" 
-                  id="euro1-input" 
-                  label="1 euro"
-                  value="0"
-                  placeholder="Numero de monedas" 
+                  placeholder="Otro desglose" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
-            <h4>50 centavos</h4>
-            <input type="number" 
-                  id="euro50cts-input" 
-                  label="0.50 euros"
-                  value="0"
-                  placeholder="Numero de monedas" 
-                  class="form-control" 
-                  style="width:100%;"/><br/> 
-                  <h4>20 centavos</h4>
-            <input type="number" 
-                  id="euro20cts-input" 
-                  label="0.20 euros"
-                  value="0"
-                  placeholder="Numero de monedas" 
-                  class="form-control" 
-                  style="width:100%;"/><br/> 
-                  <h4>10 centavos</h4>
-            <input type="number" 
-                  id="euro10cts-input" 
-                  label="0.10 euros"
-                  value="0"
-                  placeholder="Numero de monedas" 
-                  class="form-control" 
-                  style="width:100%;"/><br/> 
-                  <h4>5 centavos</h4>
-            <input type="number" 
-                  id="euro5cts-input" 
-                  label="0.05 euros"
-                  value="0"
-                  placeholder="Numero de monedas" 
-                  class="form-control" 
-                  style="width:100%;"/><br/> 
+            
+                  
+
+
+  
+  <label for="lname">Last name:</label><br>
+  <input type="text" id="lname" name="lname">
+
 
                   <br/> 
             <button type="submit" 
@@ -243,15 +245,33 @@
       </form>
 
 <script>
+  /* validation for file type */
+    function validateFile(file) {
+      // Size check (e.g., 5MB limit)
+          const maxSize = 9 * 1024 * 1024; // 5MB in bytes
+          if (file.size > maxSize) {
+              alert('File too large. Maximum size is 9MB');
+              return false;
+          }
+          // Type check
+          const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+          if (!allowedTypes.includes(file.type)) {
+              alert('Invalid file type. Please upload JPG, PNG or PDF');
+              return false;
+          }
+
+          return true;
+      }
+
    /* new file upload */
-   function updateFileName(input) {
-        const fileNameDisplay = document.getElementById('file-name-display');
-        if (input.files.length > 0) {
-            fileNameDisplay.textContent = input.files[0].name;
-        } else {
-            fileNameDisplay.textContent = 'No file chosen';
-        }
-    }
+    function updateFileName(input) {
+          const fileNameDisplay = document.getElementById('file-name-display');
+          if (input.files.length > 0) {
+              fileNameDisplay.textContent = input.files[0].name;
+          } else {
+              fileNameDisplay.textContent = 'No file chosen';
+          }
+      }
 
     function makeAjaxCall(data) {
         var URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/contact";
@@ -322,6 +342,9 @@
 
         // If a file is selected, read it and convert to base64
         if (file) {
+          if (!validateFile(file)) {
+                 return false;
+          }
             console.log('Processing file:', file.name);
             var reader = new FileReader();
             reader.onload = function(e) {
