@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gastos</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+          --primary-color: #2196F3;
+          --border-radius: 8px;
+        }
+      
+        body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          background-color: #f5f5f5;
+          margin: 0;
+          padding: 20px;
+        }
+      
+        #contact-form {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 30px;
+          background: white;
+          border-radius: var(--border-radius);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+      
+        h2 {
+          color: #333;
+          border-bottom: 2px solid var(--primary-color);
+          padding-bottom: 10px;
+          margin-top: 30px;
+        }
+      
+        h4 {
+          color: #555;
+          margin-bottom: 10px;
+        }
+      
+        .form-control {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: var(--border-radius);
+          margin-bottom: 15px;
+          box-sizing: border-box;
+        }
+      
+        input[type="number"] {
+          height: 40px !important;
+          width: 100% !important;
+          margin-bottom: 20px;
+        }
+      
+        input[type="radio"] {
+          margin-right: 10px;
+        }
+      
+        .radio-group {
+          margin-bottom: 15px;
+        }
+      
+        button[type="submit"] {
+          background-color: var(--primary-color);
+          color: white;
+          padding: 12px 24px;
+          border: none;
+          border-radius: var(--border-radius);
+          cursor: pointer;
+          font-size: 16px;
+          width: 100%;
+          transition: background-color 0.3s ease;
+        }
+      
+        button[type="submit"]:hover {
+          background-color: #1976D2;
+        }
+      
+        /* Radio button styling */
+        input[type="radio"] + label {
+          cursor: pointer;
+          padding: 5px 10px;
+        }
+
+        /* new stuff for file upload */
+        .file-upload {
+            margin-bottom: 20px;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload label {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .file-upload label:hover {
+            background-color: #1976D2;
+        }
+
+        #file-name-display {
+            margin-top: 5px;
+            color: #666;
+        }
+
+
+
+      </style>
+      
+
+</head>
+<body>
+      <form id="contact-form" onsubmit="return submitToAPI(event)">
+        <h2>General</h2>
+        <h4>Tipo:</h4>
+        <div class="radio-group">
+            <div>
+                <input type="radio" id="transito-input" name="type" value="transito" checked />
+                <label for="transito">transito</label>
+          </div>
+        
+          <div>
+            <input type="radio" id="deposito-input" name="type" value="deposito" />
+            <label for="deposito">deposito</label>
+          </div>
+        </div>
+        <h4>Usuario:</h4>
+        <div class="radio-group">  
+          <div>
+            <input type="radio" id="lalo-input" name="user" value="lalo" checked />
+            <label for="lalo">lalo</label>
+          </div>
+        
+          <div>
+            <input type="radio" id="oscar-input" name="user" value="oscar" />
+            <label for="oscar">oscar</label>
+          </div>
+          <div>
+            <input type="radio" id="adrian-input" name="user" value="adrian" />
+            <label for="adrian">adrian</label>
+          </div>
+          <div>
+            <input type="radio" id="usera-input" name="user" value="local-usera" />
+            <label for="local-usera">local-usera</label>
+          </div>
+        </div>
+        <h2>Comprobante</h2>
+        <div class="file-upload">
+            <label for="receipt-upload">Choose Receipt File</label>
+            <input type="file" 
+                   id="receipt-upload" 
+                   accept=".pdf,.jpg,.jpeg,.png"
+                   onchange="updateFileName(this)"/>
+            <div id="file-name-display">No file chosen</div>
+        </div>
+          <h2>Billetes</h2>
+          <h4>20 Euros</h4>
+            <input type="number" 
+                  id="euro20-input" 
+                  label="20 euros"
+                  value="0"
+                  placeholder="Numero de billetes" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>
+            <h4>10 Euros</h4>
+            <input type="number" 
+                  id="euro10-input" 
+                  label="10 euros"
+                  value="0"
+                  placeholder="Numero de billetes" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>      
+            <h4>5 Euros</h4>
+            <input type="number" 
+                  id="euro5-input" 
+                  label="5 euros"
+                  value="0"
+                  placeholder="Numero de billetes" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>  
+                   
+          <h2>Monedas</h2>
+          <h4>2 Euros</h4>
+            <input type="number" 
+                  id="euro2-input" 
+                  label="2 euros"
+                  value="0"
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>
+            <h4>1 Euro</h4>
+            <input type="number" 
+                  id="euro1-input" 
+                  label="1 euro"
+                  value="0"
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/>      
+            <h4>50 centavos</h4>
+            <input type="number" 
+                  id="euro50cts-input" 
+                  label="0.50 euros"
+                  value="0"
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+                  <h4>20 centavos</h4>
+            <input type="number" 
+                  id="euro20cts-input" 
+                  label="0.20 euros"
+                  value="0"
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+                  <h4>10 centavos</h4>
+            <input type="number" 
+                  id="euro10cts-input" 
+                  label="0.10 euros"
+                  value="0"
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+                  <h4>5 centavos</h4>
+            <input type="number" 
+                  id="euro5cts-input" 
+                  label="0.05 euros"
+                  value="0"
+                  placeholder="Numero de monedas" 
+                  class="form-control" 
+                  style="width:100%;"/><br/> 
+
+                  <br/> 
+            <button type="submit" 
+                  class="btn btn-lg" 
+                  style="margin-top:20px;">Submit</button>
+      </form>
+
+<script>
+    /* new file upload */
+    function updateFileName(input) {
+        const fileNameDisplay = document.getElementById('file-name-display');
+        if (input.files.length > 0) {
+            fileNameDisplay.textContent = input.files[0].name;
+        } else {
+            fileNameDisplay.textContent = 'No file chosen';
+        }
+      }
+
+    function makeAjaxCall(data) {
+      $.ajax({
+        type: "POST",
+        url: URL,
+        dataType: "json",
+        crossDomain: true,
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data),
+        success: function(response) {
+            console.log('Success:', response);
+            if (response.error) {
+                alert("Error: " + response.message);
+            } else {
+                alert("Successful");
+                document.getElementById("contact-form").reset();
+                document.getElementById('file-name-display').textContent = 'No file chosen';
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Error details:', {
+                status: xhr.status,
+                response: xhr.responseText,
+                error: error
+            });
+            alert("Error: " + (xhr.responseJSON?.message || status));
+        }
+      });
+    }
+
+    function submitToAPI(e) {
+       e.preventDefault();
+       console.log('Form submission started'); // Debug log
+
+       var URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/contact";
+
+       var type = $('input[name="type"]:checked').val();
+       var user = $('input[name="user"]:checked').val();
+
+       var b20e = $("#euro20-input").val();
+       var b10e = $("#euro10-input").val();
+       var b5e = $("#euro5-input").val();
+    
+       var m2e = $("#euro2-input").val();
+       var m1e = $("#euro1-input").val();
+       var m50e = $("#euro50cts-input").val();
+       var m20e = $("#euro20cts-input").val();
+       var m10e = $("#euro10cts-input").val();
+       var m5e = $("#euro5cts-input").val();
+       
+       var data = {
+          type: type,
+          user: user,
+          b20e:b20e,
+          b10e:b10e,
+          b5e:b5e,
+          m2e:m2e,
+          m1e:m1e,
+          m50e:m50e,
+          m20e:m20e,
+          m10e:m10e,
+          m5e:m5e
+       };
+
+       // Get the file input
+        var fileInput = document.getElementById('receipt-upload');
+        var file = fileInput.files[0];
+
+        // If a file is selected, read it and convert to base64
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64Content = e.target.result.split(',')[1];
+                
+                // Add file information to your data object
+                data.file_content = base64Content;
+                data.file_name = file.name;
+                data.file_type = file.type;
+                
+                // Now make the AJAX call
+                makeAjaxCall(data);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // If no file is selected, proceed without file data
+            makeAjaxCall(data);
+        }
+
+        console.log('Sending data:', data); // Debug log
+      }
+
+</script>
+</body>
+</html>
