@@ -122,25 +122,25 @@
         <h4>Usuario:</h4>
         <div class="radio-group">  
           <div>
-            <input type="radio" id="lalo-input" name="user" value="lalo" checked />
+            <input type="radio" id="lalo" name="user" value="lalo" checked />
             <label for="lalo">lalo</label>
           </div>
         
           <div>
-            <input type="radio" id="oscar-input" name="user" value="oscar" />
+            <input type="radio" id="oscar" name="user" value="oscar" />
             <label for="oscar">oscar</label>
           </div>
           <div>
-            <input type="radio" id="adrian-input" name="user" value="adrian" />
+            <input type="radio" id="adrian" name="user" value="adrian" />
             <label for="adrian">adrian</label>
           </div>
           <div>
-            <input type="radio" id="usera-input" name="user" value="local-usera" />
-            <label for="local_usera">local-usera</label>
+            <input type="radio" id="local_usera" name="user" value="local_usera" />
+            <label for="local_usera">local_usera</label>
           </div>
           <div>
-            <input type="radio" id="usera-input" name="user" value="local-usera" />
-            <label for="cuenta_mcf">local-usera</label>
+            <input type="radio" id="cuenta_mcf" name="user" value="cuenta_mcf" />
+            <label for="cuenta_mcf">cuenta_mcf</label>
           </div>
         </div>
 
@@ -191,13 +191,18 @@
           <option value="cash">cash</option>
         </select>
 
-        <h4><label for="concepto_proveedor">Concepto proveedor:</label></h4><br>
+        <h4><label for="concepto_proveedor">Concepto proveedor:</label></h4>
         <input type="text" id="concepto_proveedor" name="concepto_proveedor"><br>
-        <h4><label for="num_factura">Numero de factura proveedor:</label></h4><br>
+        <h4><label for="num_factura">Numero de factura proveedor:</label></h4>
         <input type="text" id="num_factura" name="num_factura"><br>
+        <h4><label for="nif">NIF Proveedor:</label></h4>
+        <input type="text" id="nif" name="nif"><br>
+        <h4><label for="razon_social">Razón social proveedor:</label></h4>
+        <input type="text" id="razon_social" name="razon_social"><br>
 
 
         <h2>Gasto</h2>
+        <h4>Total gasto</h4>
         <input type="number" 
             id="gasto" 
             label="gasto"
@@ -229,14 +234,6 @@
                   placeholder="Otro desglose" 
                   class="form-control" 
                   style="width:100%;"/><br/>      
-            
-                  
-
-
-  
-  <label for="lname">Last name:</label><br>
-  <input type="text" id="lname" name="lname">
-
 
                   <br/> 
             <button type="submit" 
@@ -308,33 +305,33 @@
         e.preventDefault();
         console.log('Form submission started');
 
-        var type = $('input[name="type"]:checked').val();
-        var user = $('input[name="user"]:checked').val();
+          var user = $('input[name="user"]:checked').val();
+          var concepto_mcf = $("#concepto_mcf").val();
+          var currency = $("#currency").val();
+          var cuenta = $("#cuenta").val();
+          var concepto_proveedor = $("#concepto_proveedor").val();
+          var num_factura = $("#num_factura").val();
+          var nif = $("#nif").val();
+          var razon_social = $("#razon_social").val();
+          var gasto = $("#gasto").val();
+          var iva = $("#iva").val();
+          var irpf = $("#irpf").val();
+          var otro = $("#otro").val();
 
-        var b20e = $("#euro20-input").val();
-        var b10e = $("#euro10-input").val();
-        var b5e = $("#euro5-input").val();
-    
-        var m2e = $("#euro2-input").val();
-        var m1e = $("#euro1-input").val();
-        var m50e = $("#euro50cts-input").val();
-        var m20e = $("#euro20cts-input").val();
-        var m10e = $("#euro10cts-input").val();
-        var m5e = $("#euro5cts-input").val();
-       
-        var data = {
-            type: type,
-            user: user,
-            b20e: b20e,
-            b10e: b10e,
-            b5e: b5e,
-            m2e: m2e,
-            m1e: m1e,
-            m50e: m50e,
-            m20e: m20e,
-            m10e: m10e,
-            m5e: m5e
-        };
+          var data = {
+              user: user,
+              concepto_mcf: concepto_mcf,
+              currency: currency,
+              cuenta: cuenta,
+              concepto_proveedor: concepto_proveedor,
+              num_factura: num_factura,
+              nif: nif,
+              razon_social: razon_social,
+              gasto: parseFloat(gasto),
+              iva: parseFloat(iva),
+              irpf: parseFloat(irpf),
+              otro: parseFloat(otro)
+          };
 
         // Get the file input
         var fileInput = document.getElementById('receipt-upload');
