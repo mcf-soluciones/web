@@ -197,7 +197,7 @@
             type="checkbox"
             id="isfiscal"
             name="isfiscal"
-            value="isfiscal" 
+            value="true" 
             checked />
         </div>
 
@@ -329,7 +329,7 @@
           var iva = $("#iva").val();
           var irpf = $("#irpf").val();
           var otro = $("#otro").val();
-          var isfiscal = $("#isfiscal").val();
+          var isfiscal = $("#isfiscal").is(':checked');
 
           var data = {
               user: user,
