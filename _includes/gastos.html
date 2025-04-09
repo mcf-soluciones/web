@@ -212,7 +212,8 @@
         <input type="text" id="nif" name="nif"><br>
         <h4><label for="razon_social">Razón social proveedor:</label></h4>
         <input type="text" id="razon_social" name="razon_social"><br>
-
+        <h4><label for="concepto_banco">Concepto Banco:</label></h4>
+        <input type="text" id="concepto_banco" name="concepto_banco"><br>
 
         <h2>Gasto</h2>
         <h4>Total gasto</h4>
@@ -327,6 +328,7 @@
           var num_factura = $("#num_factura").val();
           var nif = $("#nif").val();
           var razon_social = $("#razon_social").val();
+          var concepto_banco = $("#concepto_banco").val();
           var gasto = $("#gasto").val();
           var iva = $("#iva").val();
           var irpf = $("#irpf").val();
@@ -346,7 +348,8 @@
               iva: parseFloat(iva),
               irpf: parseFloat(irpf),
               otro: parseFloat(otro),
-              isfiscal: isfiscal
+              isfiscal: isfiscal,
+              concepto_banco: concepto_banco
           };
 
         // Get the file input
