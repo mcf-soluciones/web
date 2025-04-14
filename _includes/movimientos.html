@@ -81,6 +81,36 @@
           cursor: pointer;
           padding: 5px 10px;
         }
+
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+          }
+
+        #loading-overlay > div {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+         }
+
+        #loading-overlay p {
+            margin: 10px 0;
+            color: #333;
+          }
+
+
       </style>
       
 
@@ -204,70 +234,93 @@
       </form>
 
 <script>
-    function submitToAPI(e) {
-       e.preventDefault();
-       console.log('Form submission started'); // Debug log
+function submitToAPI(e) {
+    e.preventDefault();
+    console.log('Form submission started');
 
-       var URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+    // Show loading overlay
+    document.getElementById('loading-overlay').style.display = 'block';
+    // Disable submit button
+    document.querySelector('button[type="submit"]').disabled = true;
 
-       var type = $('input[name="type"]:checked').val();
-       var user = $('input[name="user"]:checked').val();
+    var URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
 
-       var b20e = $("#euro20-input").val();
-       var b10e = $("#euro10-input").val();
-       var b5e = $("#euro5-input").val();
+    var type = $('input[name="type"]:checked').val();
+    var user = $('input[name="user"]:checked').val();
+
+    var b20e = $("#euro20-input").val();
+    var b10e = $("#euro10-input").val();
+    var b5e = $("#euro5-input").val();
+ 
+    var m2e = $("#euro2-input").val();
+    var m1e = $("#euro1-input").val();
+    var m50e = $("#euro50cts-input").val();
+    var m20e = $("#euro20cts-input").val();
+    var m10e = $("#euro10cts-input").val();
+    var m5e = $("#euro5cts-input").val();
     
-       var m2e = $("#euro2-input").val();
-       var m1e = $("#euro1-input").val();
-       var m50e = $("#euro50cts-input").val();
-       var m20e = $("#euro20cts-input").val();
-       var m10e = $("#euro10cts-input").val();
-       var m5e = $("#euro5cts-input").val();
-       
-       var data = {
-          type: type,
-          user: user,
-          b20e:b20e,
-          b10e:b10e,
-          b5e:b5e,
-          m2e:m2e,
-          m1e:m1e,
-          m50e:m50e,
-          m20e:m20e,
-          m10e:m10e,
-          m5e:m5e
-       };
+    var data = {
+        type: type,
+        user: user,
+        b20e:b20e,
+        b10e:b10e,
+        b5e:b5e,
+        m2e:m2e,
+        m1e:m1e,
+        m50e:m50e,
+        m20e:m20e,
+        m10e:m10e,
+        m5e:m5e
+    };
 
-       console.log('Sending data:', data); // Debug log
+    console.log('Sending data:', data);
 
-$.ajax({
-    type: "POST",
-    url: URL,
-    dataType: "json",
-    crossDomain: true,
-    contentType: "application/json; charset=utf-8",
-    data: JSON.stringify(data),
-    success: function(response) {
-        console.log('Success:', response);
-        if (response.error) {
-            alert("Error: " + response.message);
-        } else {
-            alert("Successful");
-            document.getElementById("contact-form").reset();
+    $.ajax({
+        type: "POST",
+        url: URL,
+        dataType: "json",
+        crossDomain: true,
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data),
+        success: function(response) {
+            // Hide loading overlay
+            document.getElementById('loading-overlay').style.display = 'none';
+            // Re-enable submit button
+            document.querySelector('button[type="submit"]').disabled = false;
+
+            console.log('Success:', response);
+            if (response.error) {
+                alert("Error: " + response.message);
+            } else {
+                alert("Successful");
+                document.getElementById("contact-form").reset();
+            }
+        },
+        error: function(xhr, status, error) {
+            // Hide loading overlay
+            document.getElementById('loading-overlay').style.display = 'none';
+            // Re-enable submit button
+            document.querySelector('button[type="submit"]').disabled = false;
+
+            console.log('Error details:', {
+                status: xhr.status,
+                response: xhr.responseText,
+                error: error
+            });
+            alert("Error: " + (xhr.responseJSON?.message || status));
         }
-    },
-    error: function(xhr, status, error) {
-        console.log('Error details:', {
-            status: xhr.status,
-            response: xhr.responseText,
-            error: error
-        });
-        alert("Error: " + (xhr.responseJSON?.message || status));
-    }
-});
-
+    });
 }
 
 </script>
+
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; text-align: center;">
+      <p>Processing your request...</p>
+      <p>Please wait a moment</p>
+  </div>
+</div>
+
+
 </body>
 </html>
