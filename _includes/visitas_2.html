@@ -154,7 +154,14 @@
 <body>
       <form id="contact-form" onsubmit="return submitToAPI(event)">
         <h2>General</h2>
-        <h4>Caja</h4>
+        <h3><label for="propiedad">Propiedad:</label></h3>
+        <select name="propiedad" id="propiedad">
+          <option value="usera">usera</option>
+          <option value="hortaleza">hortaleza</option>
+        </select>
+
+
+        <h3>Caja</h3>
         <div class="instructions">
             <p>
                 Quitar Alarma. Abrir atras. Hacer movimientos de caja:
@@ -171,152 +178,275 @@
                           unchecked />
                       </div>
                 </li>
-
                 <li>Entrar al sistema con tarjeta de administrador</li>
-                <li>Descargar</li>
+                <li>Descargar todo</li>
                 <li>Imprimir comprobante</li>
+                <li>Tomar foto al comprobante y subir a grupo de Whatsapp</li>
+                <li>Contar los billetes, hacer movimiento en sistema
+                    <div class="action">
+                        <a href="https://mcfsoluciones.com/movimientos" target="_blank">mcfsoluciones/movimientos</a>
+                    </div>
+                </li>
+                <li>Contar monedas, hacer movimiento en sistema (poner como usuario: "local") en este sistema:</li>
+                <div class="action">
+                  <a href="https://mcfsoluciones.com/movimientos" target="_blank">mcfsoluciones/movimientos</a>
+                </div>
+                <li>Guardar monedas en cajas de cada denominación</li>
+                <li>Si se requiere, cargar monedas en punto de venta
+                  <div class="action">
+                    <label for="addhopper">Cargaste Monedas?</label>
+                    <input
+                      type="checkbox"
+                      id="addhopper"
+                      name="addhopper"
+                      value="false" 
+                      unchecked />
+                  </div>
+                </li>
+                <li>Si agregaste monedas al punto de venta, subir movimiento en sistema (poner como usuario: "local") y movimiento: fondo de caja</li>
+                <li>Cerrar caja con llave y asegurar que no se mueva por alarma</li>
             </ol>
         </div>
 
-
-
-        <div class="radio-group">  
-          <div>
-            <input type="radio" id="lalo" name="user" value="lalo" checked />
-            <label for="lalo">lalo</label>
-          </div>
-        
-          <div>
-            <input type="radio" id="oscar" name="user" value="oscar" />
-            <label for="oscar">oscar</label>
-          </div>
-          <div>
-            <input type="radio" id="adrian" name="user" value="adrian" />
-            <label for="adrian">adrian</label>
-          </div>
-          <div>
-            <input type="radio" id="local_usera" name="user" value="local_usera" />
-            <label for="local_usera">local_usera</label>
-          </div>
-          <div>
-            <input type="radio" id="cuenta_mcf" name="user" value="cuenta_mcf" />
-            <label for="cuenta_mcf">cuenta_mcf</label>
-          </div>
-        </div>
-
-
-
-
-        <h2>Comprobante</h2>
-        <div class="file-upload">
-            <label for="receipt-upload">Choose File</label>
-            <input type="file" 
-                   id="receipt-upload" 
-                   accept=".pdf,.jpg,.jpeg,.png"
-                   onchange="updateFileName(this)"/>
-            <div id="file-name-display">No file chosen</div>
-        </div>
-        <h2>Concepto</h2>
-        <h4><label for="concepto_mcf">Concepto MCF:</label></h4>
-        <select name="concepto_mcf" id="concepto_mcf">
-          <option value="renta">renta</option>
-          <option value="detergentes">detergentes</option>
-          <option value="insumos_otros">insumos_otros</option>
-          <option value="luz">luz</option>
-          <option value="agua">agua</option>
-          <option value="gas">gas</option>
-          <option value="limpieza">limpieza</option>
-          <option value="seguro">seguro</option>
-          <option value="alarma">alarma</option>
-          <option value="impuestos_irpf">impuestos_irpf</option>
-          <option value="impuestos_iva">impuestos_iva</option>
-          <option value="internet">internet</option>
-          <option value="gestor">gestor</option>
-          <option value="mantenimiento_maquinas">mantenimiento_maquinas</option>
-          <option value="mobiliario">mobiliario</option>
-          <option value="servicio_cliente">servicio_cliente</option>
-          <option value="transporte">transporte</option>
-          <option value="costos_financieros">costos_financieros</option>
-          <option value="financiamiento">financiamiento</option>
-          <option value="tecnologia">tecnologia</option>
-          <option value="otros_corporate">otros_corporate</option>
-        </select>
-        <h4><label for="currency">Moneda:</label></h4>
-        <select name="currency" id="currency">
-          <option value="EUR">EUR</option>
-          <option value="MXN">MXN</option>
-          <option value="USD">USD</option>
-        </select>
-        <h4><label for="cuenta">Cuenta:</label></h4>
-        <select name="cuenta" id="cuenta">
-          <option value="mcf">mcf</option>
-          <option value="cash">cash</option>
-        </select>
-
-        <div>
-          <h4><label for="isfiscal">Es gasto fiscalizado?</label></h4>
-          <input
-            type="checkbox"
-            id="isfiscal"
-            name="isfiscal"
-            value="true" 
-            checked />
-        </div>
-
-
-        <h4><label for="concepto_proveedor">Concepto proveedor:</label></h4>
-        <input type="text" id="concepto_proveedor" name="concepto_proveedor"><br>
-        <h4><label for="num_factura">Numero de factura proveedor:</label></h4>
-        <input type="text" id="num_factura" name="num_factura"><br>
-        <h4><label for="nif">NIF Proveedor:</label></h4>
-        <input type="text" id="nif" name="nif"><br>
-        <h4><label for="razon_social">Razón social proveedor:</label></h4>
-        <input type="text" id="razon_social" name="razon_social"><br>
-        <h4><label for="concepto_banco">Concepto Banco:</label></h4>
-        <input type="text" id="concepto_banco" name="concepto_banco"><br>
-
-        <h2>Gasto</h2>
-        <h4>Total gasto</h4>
-        <input type="number" 
-            id="gasto" 
-            label="gasto"
-            value="0"
-            step="0.01"
-            min="0"
-            placeholder="gasto" 
-            class="form-control" 
-        style="width:100%;"/><br/>
-        <h4>Desglose Impuestos</h4>
-            <h4>Impuesto IVA</h4>
-            <input type="number" 
-                  id="iva" 
-                  label="IVA"
+        <h3>Insumos</h3>
+        <div class="instructions">
+          <p>
+              Ir hacia zona de insumos.
+          </p>
+          <ol>
+              <li>Revisar niveles de suavizante, detergente y oxigeno. Deben estar en al menos 40% cada uno.</li>
+              <li>Contar inventario <b>disponible</b> de cada insumo.
+              <li>
+                <div class="action">
+                      <input type="number" 
+                      id="detergente" 
+                      label="detergente"
+                      value="0"
+                      step="0.05"
+                      min="0"
+                      placeholder="detergente" 
+                      class="form-control" 
+                  style="width:90%;"/>
+                </div> 
+                  <div class="action">
+                    <input type="number" 
+                    id="suavizante" 
+                    label="suavizante"
+                    value="0"
+                    step="0.05"
+                    min="0"
+                    placeholder="suavizante" 
+                    class="form-control" 
+                    style="width:90%;"/>
+                </div> 
+                <div class="action">
+                  <input type="number" 
+                  id="oxigeno" 
+                  label="oxigeno"
                   value="0"
-                  step="0.01"
+                  step="0.05"
                   min="0"
-                  placeholder="IVA" 
+                  placeholder="oxigeno" 
                   class="form-control" 
-                  style="width:100%;"/><br/>      
-            <h4>IRPF</h4>
-            <input type="number" 
-                  id="irpf" 
-                  label="IRPF"
-                  value="0"
-                  step="0.01"
-                  min="0"
-                  placeholder="IRPF" 
-                  class="form-control" 
-                  style="width:100%;"/><br/>  
-            <h4>Otro Importe</h4>
-            <input type="number" 
-                  id="otro" 
-                  label="Otro"
-                  value="0"
-                  step="0.01"
-                  min="0"
-                  placeholder="Otro desglose" 
-                  class="form-control" 
-                  style="width:100%;"/><br/>      
+                  style="width:90%;"/>
+              </div> 
+            </li>
+            <li>
+              <div class="action">
+                <label for="revniveles">Revisión de niveles de insumos</label>
+                <input
+                  type="checkbox"
+                  id="revniveles"
+                  name="revniveles"
+                  value="false" 
+                  unchecked />
+              </div>
+            </li>
+            <li>
+              <div class="action">
+                <label for="tirar_botes">Tirar botes vacios</label>
+                <input
+                  type="checkbox"
+                  id="tirar_botes"
+                  name="tirar_botes"
+                  value="false" 
+                  unchecked />
+              </div>
+            </li>
+          </ol>
+      </div>
+
+      <h3>Maquinas</h3>
+      <div>
+        <ol>
+          <li>
+            <div class="action">
+              <label for="revbombas">Revisión de bombas de carga</label>
+              <input
+                type="checkbox"
+                id="revbombas"
+                name="revbombas"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_lav1">Re-inicio de Maquina: lavadora 1</label>
+              <input
+                type="checkbox"
+                id="restart_lav1"
+                name="restart_lav1"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_lav2">Re-inicio de Maquina: lavadora 2</label>
+              <input
+                type="checkbox"
+                id="restart_lav2"
+                name="restart_lav2"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_lav3">Re-inicio de Maquina: lavadora 3</label>
+              <input
+                type="checkbox"
+                id="restart_lav3"
+                name="restart_lav3"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_lav4">Re-inicio de Maquina: lavadora 4</label>
+              <input
+                type="checkbox"
+                id="restart_lav4"
+                name="restart_lav4"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_sec1">Re-inicio de Maquina: secadora 1</label>
+              <input
+                type="checkbox"
+                id="restart_sec1"
+                name="restart_sec1"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_sec2">Re-inicio de Maquina: secadora 2</label>
+              <input
+                type="checkbox"
+                id="restart_sec2"
+                name="restart_sec2"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="restart_sec3">Re-inicio de Maquina: secadora 3</label>
+              <input
+                type="checkbox"
+                id="restart_sec3"
+                name="restart_sec3"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+        </ol>
+      </div>
+
+
+      <h3>Exterior</h3>
+      <div>
+        <ol>
+          <li>
+            <div class="action">
+              <label for="clean_billetes">Limpieza de ranura billetes</label>
+              <input
+                type="checkbox"
+                id="clean_billetes"
+                name="clean_billetes"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="clean_tarjetas">Limpieza de ranura tarjetas</label>
+              <input
+                type="checkbox"
+                id="clean_tarjetas"
+                name="clean_tarjetas"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="clean_superficie">Limpieza de superficies</label>
+              <input
+                type="checkbox"
+                id="clean_superficie"
+                name="clean_superficie"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="filter_1">Limpieza Filtro: secadora 1</label>
+              <input
+                type="checkbox"
+                id="filter_1"
+                name="filter_1"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="filter_2">Limpieza Filtro: secadora 2</label>
+              <input
+                type="checkbox"
+                id="filter_2"
+                name="filter_2"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+          <li>
+            <div class="action">
+              <label for="filter_3">Limpieza Filtro: secadora 3</label>
+              <input
+                type="checkbox"
+                id="filter_3"
+                name="filter_3"
+                value="false" 
+                unchecked />
+            </div>
+          </li>
+
+          
+        </ol>
+      </div>
+     
+        <h4><label for="comments">Comentarios:</label></h4>
+        <input type="text" id="comments" name="comments"><br>
 
                   <br/> 
             <button type="submit" 
