@@ -135,6 +135,11 @@
             <label for="caja">carga en caja</label>
           </div>
 
+          <div>
+            <input type="radio" id="caja-input" name="type" value="gasto" />
+            <label for="gasto">gasto pagado personalmente</label>
+          </div>
+
         </div>
         <h4>Usuario:</h4>
         <div class="radio-group">  
@@ -264,6 +269,7 @@ function submitToAPI(e) {
     var m20e = $("#euro20cts-input").val();
     var m10e = $("#euro10cts-input").val();
     var m5e = $("#euro5cts-input").val();
+
     
     var data = {
         type: type,
