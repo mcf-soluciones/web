@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --warn-color: #c22121;
+            --text-color: #333;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .task-section {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            padding: 25px;
+            transition: transform 0.2s;
+        }
+
+        .task-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .task-section h2 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+
+        .warn-color {
+            color: var(--warn-color);
+        }
+
+    
+        .help-text {
+            color: var(--secondary-color);
+            font-size: 11px;
+            font-style: italic;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        .task-item input[type="checkbox"] {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .task-item label, .task-item a, .task-item p {
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .task-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .task-item a:hover {
+            text-decoration: underline;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .input-group p {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .input-group p {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .input-group input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .comments-section {
+            margin-top: 20px;
+        }
+
+        .comments-section h4 {
+            margin-bottom: 10px;
+        }
+
+        .comments-section input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 30px;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .task-section {
+                padding: 20px;
+            }
+
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .task-item input[type="checkbox"] {
+                margin-bottom: 10px;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .input-group input[type="number"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reporte de Visita</h1>
+        <form id="contact-form">
+            <div class="task-section">
+                <h2>General</h2>
+                <div class="task-item">
+                    <label for="propiedad">Propiedad:</label>
+                    <select name="propiedad" id="propiedad" style="width:100%; padding: 8px; border-radius: 4px;">
+                        <option value="usera">Usera</option>
+                        <option value="hortaleza">Hortaleza</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="task-section">
+                <h2>Caja<p class="warn-color">(Solamente socios)<p></h2>
+                <div class="task-item">
+                    <input type="checkbox" id="changepaper" name="changepaper">
+                    <label for="changepaper">Revisar y cambiar papel de impresora, si es necesario.</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="downloadall" name="downloadall">
+                    <p>Entrar al sistema con tarjeta de administrador y descargar todo.</p>
+                    <br/>
+                    <p><a href="">Ver video</a></p>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="printmoneyfoto" name="printmoneyfoto">
+                    <p>Imprimir comprobante, tomar foto y subir.</p>
+                    <br/>
+                    <p>SUBIR FOTO!</p>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="registarmovimiento" name="registarmovimiento">
+                    <p>Contar billetes y registrar movimiento.</p> 
+                    <br/>
+                    <a href="https://mcfsoluciones.com/movimientos" target="_blank">Sistema Movimientos</a>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="monedaslocal" name="monedaslocal">
+                    <p>Contar monedas y registrar movimiento (usuario: "local")</p> 
+                    <br/>
+                    <a href="https://mcfsoluciones.com/movimientos" target="_blank">Sistema Movimientos</a>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="addhopper" name="addhopper">
+                    <label for="addhopper">Cargar monedas en punto de venta, si se requiere.</label>
+                    <br/>
+                    <p class="help-text">Si agregas monedas, debes registrar el movimiento como = Tipo: carga en caja, Usuario: local-usera</p>
+                    <a href="https://mcfsoluciones.com/movimientos" target="_blank">Sistema Movimientos</a>
+
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="closecaja" name="closecaja">
+                    <p>Cerrar caja con llave.</p>
+                </div>
+            </div>
+
+            <div class="task-section">
+                <h2>Insumos (Bodega)</h2>
+                <div class="task-item">
+                    <p>Insumos que no están en máquinas. Poner numero de bidones. Medio bidon = 0.5</p>
+                </div>
+                    <div class="task-item input-group">
+                        <p>Detergente:</p> <input type="number" id="detergente_bodega" value="0" step="0.05" min="0">
+                        <p>Suavizante:</p> <input type="number" id="suavizante_bodega" value="0" step="0.05" min="0">
+                        <p>Oxigeno:</p> <input type="number" id="oxigeno_bodega" value="0" step="0.05" min="0">
+                    </div>      
+                </div>
+              <div class="task-section">
+                <h2>Insumos (Máquinas)</h2>
+                <div class="task-item">
+                <p>Insumos que están en máquinas. Poner numero de bidones. Medio bidon = 0.5</p>
+                </div>
+                    <div class="task-item input-group">
+                        <p>Detergente:</p> <input type="number" id="detergente_bodega" value="0" step="0.05" min="0">
+                        <p>Suavizante:</p> <input type="number" id="suavizante_bodega" value="0" step="0.05" min="0">
+                        <p>Oxigeno:</p> <input type="number" id="oxigeno_bodega" value="0" step="0.05" min="0">
+                    </div>    
+                <div class="task-item">
+                    <input type="checkbox" id="revniveles" name="revniveles">
+                    <label for="revniveles">Niveles de insumos deben estar en al menos 40%.</label>
+                    <br/>
+                    <p><a href="">Ver video</a></p>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" id="tirar_botes" name="tirar_botes">
+                    <label for="tirar_botes">Tirar botes vacíos.</label>
+                </div>
+            </div>
+
+            <div class="task-section">
+                <h2>Máquinas</h2>
+                <p>Hacer revisión a discreción. Por ejemplo, si hay un cliente, <b>no</b> re-inicies la máquina.</p>
+                <div class="task-item"><input type="checkbox" id="revbombas" name="revbombas"><label for="revbombas">Revisión de bombas de carga.</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_lav1" name="restart_lav1"><label for="restart_lav1">Re-inicio Lavadora 1</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_lav2" name="restart_lav2"><label for="restart_lav2">Re-inicio Lavadora 2</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_lav3" name="restart_lav3"><label for="restart_lav3">Re-inicio Lavadora 3</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_lav4" name="restart_lav4"><label for="restart_lav4">Re-inicio Lavadora 4</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_sec1" name="restart_sec1"><label for="restart_sec1">Re-inicio Secadora 1</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_sec2" name="restart_sec2"><label for="restart_sec2">Re-inicio Secadora 2</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_sec3" name="restart_sec3"><label for="restart_sec3">Re-inicio Secadora 3</label></div>
+            </div>
+
+            <div class="task-section">
+                <h2>Exterior y Limpieza</h2>
+                <div class="task-item"><input type="checkbox" id="clean_billetes" name="clean_billetes"><label for="clean_billetes">Limpieza de ranura billetes.</label></div>
+                <div class="task-item"><input type="checkbox" id="clean_tarjetas" name="clean_tarjetas"><label for="clean_tarjetas">Limpieza de ranura tarjetas.</label></div>
+                <div class="task-item"><input type="checkbox" id="clean_superficie" name="clean_superficie"><label for="clean_superficie">Limpieza de superficies.</label></div>
+                <div class="task-item"><input type="checkbox" id="filter_1" name="filter_1"><label for="filter_1">Limpieza Filtro Secadora 1</label></div>
+                <div class="task-item"><input type="checkbox" id="filter_2" name="filter_2"><label for="filter_2">Limpieza Filtro Secadora 2</label></div>
+                <div class="task-item"><input type="checkbox" id="filter_3" name="filter_3"><label for="filter_3">Limpieza Filtro Secadora 3</label></div>
+                <div class="task-item"><input type="checkbox" id="barrer" name="barrer"><label for="barrer">Barrer</label></div>
+                <div class="task-item"><input type="checkbox" id="trapear" name="trapear"><label for="trapear">Trapear</label></div>
+                <div class="task-item"><input type="checkbox" id="vending" name="vending"><label for="vending">Re-stock de vending.</label></div>
+            </div>
+
+            <div class="task-section comments-section">
+                <h4>Comentarios:</h4>
+                <input type="text" id="comments" name="comments" placeholder="Añade comentarios adicionales aquí...">
+            </div>
+
+            <button type="submit" class="submit-btn">Enviar Reporte</button>
+        </form>
+    </div>
+</body>
+</html>
