@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visitas</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -166,6 +167,34 @@
         .submit-btn:hover {
             background-color: #0056b3;
         }
+        
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+          }
+
+        #loading-overlay > div {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+         }
+
+        #loading-overlay p {
+            margin: 10px 0;
+            color: #333;
+          }
 
         @media (max-width: 768px) {
             body {
@@ -200,7 +229,7 @@
 <body>
     <div class="container">
         <h1>Reporte de Visita</h1>
-        <form id="contact-form">
+        <form id="contact-form" onsubmit="return submitToAPI(event)">
             <div class="task-section">
                 <h2>General</h2>
                 <div class="task-item">
@@ -273,9 +302,9 @@
                 <p>Insumos que están en máquinas. Poner numero de bidones. Medio bidon = 0.5</p>
                 </div>
                     <div class="task-item input-group">
-                        <p>Detergente:</p> <input type="number" id="detergente_bodega" value="0" step="0.05" min="0">
-                        <p>Suavizante:</p> <input type="number" id="suavizante_bodega" value="0" step="0.05" min="0">
-                        <p>Oxigeno:</p> <input type="number" id="oxigeno_bodega" value="0" step="0.05" min="0">
+                        <p>Detergente:</p> <input type="number" id="detergente_maquina" value="0" step="0.05" min="0">
+                        <p>Suavizante:</p> <input type="number" id="suavizante_maquina" value="0" step="0.05" min="0">
+                        <p>Oxigeno:</p> <input type="number" id="oxigeno_maquina" value="0" step="0.05" min="0">
                     </div>    
                 <div class="task-item">
                     <input type="checkbox" id="revniveles" name="revniveles">
@@ -323,5 +352,102 @@
             <button type="submit" class="submit-btn">Enviar Reporte</button>
         </form>
     </div>
+
+<script>
+function submitToAPI(e) {
+    e.preventDefault();
+    console.log('Form submission started');
+
+    // Show loading overlay
+    document.getElementById('loading-overlay').style.display = 'block';
+    // Disable submit button
+    document.querySelector('button[type="submit"]').disabled = true;
+
+    var URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+
+    var data = {
+        propiedad: $("#propiedad").val(),
+        changepaper: $("#changepaper").is(":checked"),
+        downloadall: $("#downloadall").is(":checked"),
+        printmoneyfoto: $("#printmoneyfoto").is(":checked"),
+        registarmovimiento: $("#registarmovimiento").is(":checked"),
+        monedaslocal: $("#monedaslocal").is(":checked"),
+        addhopper: $("#addhopper").is(":checked"),
+        closecaja: $("#closecaja").is(":checked"),
+        detergente_bodega: $("#detergente_bodega").val(),
+        suavizante_bodega: $("#suavizante_bodega").val(),
+        oxigeno_bodega: $("#oxigeno_bodega").val(),
+        detergente_maquina: $("#detergente_maquina").val(),
+        suavizante_maquina: $("#suavizante_maquina").val(),
+        oxigeno_maquina: $("#oxigeno_maquina").val(),
+        revniveles: $("#revniveles").is(":checked"),
+        tirar_botes: $("#tirar_botes").is(":checked"),
+        revbombas: $("#revbombas").is(":checked"),
+        restart_lav1: $("#restart_lav1").is(":checked"),
+        restart_lav2: $("#restart_lav2").is(":checked"),
+        restart_lav3: $("#restart_lav3").is(":checked"),
+        restart_lav4: $("#restart_lav4").is(":checked"),
+        restart_sec1: $("#restart_sec1").is(":checked"),
+        restart_sec2: $("#restart_sec2").is(":checked"),
+        restart_sec3: $("#restart_sec3").is(":checked"),
+        clean_billetes: $("#clean_billetes").is(":checked"),
+        clean_tarjetas: $("#clean_tarjetas").is(":checked"),
+        clean_superficie: $("#clean_superficie").is(":checked"),
+        filter_1: $("#filter_1").is(":checked"),
+        filter_2: $("#filter_2").is(":checked"),
+        filter_3: $("#filter_3").is(":checked"),
+        barrer: $("#barrer").is(":checked"),
+        trapear: $("#trapear").is(":checked"),
+        vending: $("#vending").is(":checked"),
+        comments: $("#comments").val()
+    };
+
+    console.log('Sending data:', data);
+
+    $.ajax({
+        type: "POST",
+        url: URL,
+        dataType: "json",
+        crossDomain: true,
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(data),
+        success: function(response) {
+            // Hide loading overlay
+            document.getElementById('loading-overlay').style.display = 'none';
+            // Re-enable submit button
+            document.querySelector('button[type="submit"]').disabled = false;
+
+            console.log('Success:', response);
+            if (response.error) {
+                alert("Error: " + response.message);
+            } else {
+                alert("Successful");
+                document.getElementById("contact-form").reset();
+            }
+        },
+        error: function(xhr, status, error) {
+            // Hide loading overlay
+            document.getElementById('loading-overlay').style.display = 'none';
+            // Re-enable submit button
+            document.querySelector('button[type="submit"]').disabled = false;
+
+            console.log('Error details:', {
+                status: xhr.status,
+                response: xhr.responseText,
+                error: error
+            });
+            alert("Error: " + (xhr.responseJSON?.message || status));
+        }
+    });
+}
+</script>
+
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000;">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; text-align: center;">
+      <p>Processing your request...</p>
+      <p>Please wait a moment</p>
+  </div>
+</div>
+
 </body>
 </html>
