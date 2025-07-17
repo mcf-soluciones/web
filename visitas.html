@@ -336,6 +336,7 @@
                 <div class="task-item"><input type="checkbox" id="clean_billetes" name="clean_billetes"><label for="clean_billetes">Limpieza de ranura billetes.</label></div>
                 <div class="task-item"><input type="checkbox" id="clean_tarjetas" name="clean_tarjetas"><label for="clean_tarjetas">Limpieza de ranura tarjetas.</label></div>
                 <div class="task-item"><input type="checkbox" id="clean_superficie" name="clean_superficie"><label for="clean_superficie">Limpieza de superficies.</label></div>
+                <div class="task-item"><input type="checkbox" id="clean_basura" name="clean_basura"><label for="clean_basura">Limpieza de basurero.</label></div>
                 <div class="task-item"><input type="checkbox" id="filter_1" name="filter_1"><label for="filter_1">Limpieza Filtro Secadora 1</label></div>
                 <div class="task-item"><input type="checkbox" id="filter_2" name="filter_2"><label for="filter_2">Limpieza Filtro Secadora 2</label></div>
                 <div class="task-item"><input type="checkbox" id="filter_3" name="filter_3"><label for="filter_3">Limpieza Filtro Secadora 3</label></div>
@@ -366,23 +367,23 @@ function submitToAPI(e) {
     var URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
 
     var data = {
-        propiedad: $("#propiedad").val(),
+        propiedad: $("#propiedad").val(), // ok
         changepaper: $("#changepaper").is(":checked"),
         downloadall: $("#downloadall").is(":checked"),
         printmoneyfoto: $("#printmoneyfoto").is(":checked"),
         registarmovimiento: $("#registarmovimiento").is(":checked"),
         monedaslocal: $("#monedaslocal").is(":checked"),
         addhopper: $("#addhopper").is(":checked"),
-        closecaja: $("#closecaja").is(":checked"),
-        detergente_bodega: $("#detergente_bodega").val(),
-        suavizante_bodega: $("#suavizante_bodega").val(),
-        oxigeno_bodega: $("#oxigeno_bodega").val(),
-        detergente_maquina: $("#detergente_maquina").val(),
-        suavizante_maquina: $("#suavizante_maquina").val(),
-        oxigeno_maquina: $("#oxigeno_maquina").val(),
-        revniveles: $("#revniveles").is(":checked"),
-        tirar_botes: $("#tirar_botes").is(":checked"),
-        revbombas: $("#revbombas").is(":checked"),
+        closecaja: $("#closecaja").is(":checked"), 
+        detergente_bodega: $("#detergente_bodega").val(), // ok
+        suavizante_bodega: $("#suavizante_bodega").val(), // ok
+        oxigeno_bodega: $("#oxigeno_bodega").val(), // ok
+        detergente_maquina: $("#detergente_maquina").val(), // ok
+        suavizante_maquina: $("#suavizante_maquina").val(), // ok
+        oxigeno_maquina: $("#oxigeno_maquina").val(), // ok
+        revniveles: $("#revniveles").is(":checked"), // ok
+        tirar_botes: $("#tirar_botes").is(":checked"),  // ok
+        revbombas: $("#revbombas").is(":checked"), // ok
         restart_lav1: $("#restart_lav1").is(":checked"),
         restart_lav2: $("#restart_lav2").is(":checked"),
         restart_lav3: $("#restart_lav3").is(":checked"),
@@ -390,16 +391,17 @@ function submitToAPI(e) {
         restart_sec1: $("#restart_sec1").is(":checked"),
         restart_sec2: $("#restart_sec2").is(":checked"),
         restart_sec3: $("#restart_sec3").is(":checked"),
-        clean_billetes: $("#clean_billetes").is(":checked"),
-        clean_tarjetas: $("#clean_tarjetas").is(":checked"),
-        clean_superficie: $("#clean_superficie").is(":checked"),
+        clean_billetes: $("#clean_billetes").is(":checked"), // ok
+        clean_tarjetas: $("#clean_tarjetas").is(":checked"), // ok
+        clean_superficie: $("#clean_superficie").is(":checked"), // ok
+        clean_basura: $("#clean_basura").is(":checked"), // ok
         filter_1: $("#filter_1").is(":checked"),
         filter_2: $("#filter_2").is(":checked"),
         filter_3: $("#filter_3").is(":checked"),
-        barrer: $("#barrer").is(":checked"),
-        trapear: $("#trapear").is(":checked"),
-        vending: $("#vending").is(":checked"),
-        comments: $("#comments").val()
+        barrer: $("#barrer").is(":checked"), // ok
+        trapear: $("#trapear").is(":checked"), // ok
+        vending: $("#vending").is(":checked"), // ok
+        comments: $("#comments").val() // ok
     };
 
     console.log('Sending data:', data);
