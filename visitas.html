@@ -239,6 +239,15 @@
                         <option value="hortaleza">Hortaleza</option>
                     </select>
                 </div>
+                <div class="task-item">
+                    <label for="user">Usuario:</label>
+                    <select name="user" id="user" style="width:100%; padding: 8px; border-radius: 4px;">
+                        <option value="lalo">lalo</option>
+                        <option value="oscar">oscar</option>
+                        <option value="adrian">adrian</option>
+                        <option value="xxxx">xxxx</option>
+                    </select>
+                </div>
             </div>
 
             <div class="task-section">
@@ -286,6 +295,27 @@
             </div>
 
             <div class="task-section">
+                <h2>Revisión Visual</h2>
+                <div class="task-item">
+                    <p>Revisar limpieza del local <b>antes</b> de iniciar la visita. 0 = muy muy sucio, 10 = muy muy limpio/perfecto.</p>
+                    </div>
+                        <div class="task-item input-group">
+                        <p>Limpieza general:</p> <input type="number" id="prev_clean_gen" value="0" step="0.5" min="0", max="10">
+                        <p>Botes de basura:</p> <input type="number" id="prev_clean_trash" value="0" step="0.5" min="0", max="10">
+                        <p>Maquinas:</p> <input type="number" id="prev_clean_machines" value="0" step="0.5" min="0", max="10">
+                    </div>    
+
+                <div class="task-item">
+                    <input type="checkbox" id="revvisual" name="revvisual">
+                    <label for="revvisual">Revisión visual de la propiedad.</label>
+                    <br/>
+                    <p class="help-text">Si hay algo que no funciona, tomar foto y subir.</p>
+                    <a href="https://mcfsoluciones.com/revision" target="_blank">Sistema Revisión</a>
+            </div>
+
+
+
+            <div class="task-section">
                 <h2>Insumos (Bodega)</h2>
                 <div class="task-item">
                     <p>Insumos que no están en máquinas. Poner numero de bidones. Medio bidon = 0.5</p>
@@ -326,9 +356,15 @@
                 <div class="task-item"><input type="checkbox" id="restart_lav2" name="restart_lav2"><label for="restart_lav2">Re-inicio Lavadora 2</label></div>
                 <div class="task-item"><input type="checkbox" id="restart_lav3" name="restart_lav3"><label for="restart_lav3">Re-inicio Lavadora 3</label></div>
                 <div class="task-item"><input type="checkbox" id="restart_lav4" name="restart_lav4"><label for="restart_lav4">Re-inicio Lavadora 4</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_lav4" name="restart_lav4"><label for="restart_lav4">Re-inicio Lavadora 5</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_lav4" name="restart_lav4"><label for="restart_lav4">Re-inicio Lavadora 6</label></div>
+                <br/>
                 <div class="task-item"><input type="checkbox" id="restart_sec1" name="restart_sec1"><label for="restart_sec1">Re-inicio Secadora 1</label></div>
                 <div class="task-item"><input type="checkbox" id="restart_sec2" name="restart_sec2"><label for="restart_sec2">Re-inicio Secadora 2</label></div>
                 <div class="task-item"><input type="checkbox" id="restart_sec3" name="restart_sec3"><label for="restart_sec3">Re-inicio Secadora 3</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_sec3" name="restart_sec3"><label for="restart_sec3">Re-inicio Secadora 4</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_sec3" name="restart_sec3"><label for="restart_sec3">Re-inicio Secadora 5</label></div>
+                <div class="task-item"><input type="checkbox" id="restart_sec3" name="restart_sec3"><label for="restart_sec3">Re-inicio Secadora 6</label></div>
             </div>
 
             <div class="task-section">
@@ -340,6 +376,9 @@
                 <div class="task-item"><input type="checkbox" id="filter_1" name="filter_1"><label for="filter_1">Limpieza Filtro Secadora 1</label></div>
                 <div class="task-item"><input type="checkbox" id="filter_2" name="filter_2"><label for="filter_2">Limpieza Filtro Secadora 2</label></div>
                 <div class="task-item"><input type="checkbox" id="filter_3" name="filter_3"><label for="filter_3">Limpieza Filtro Secadora 3</label></div>
+                <div class="task-item"><input type="checkbox" id="filter_3" name="filter_3"><label for="filter_3">Limpieza Filtro Secadora 4</label></div>
+                <div class="task-item"><input type="checkbox" id="filter_3" name="filter_3"><label for="filter_3">Limpieza Filtro Secadora 5</label></div>
+                <div class="task-item"><input type="checkbox" id="filter_3" name="filter_3"><label for="filter_3">Limpieza Filtro Secadora 6</label></div>
                 <div class="task-item"><input type="checkbox" id="barrer" name="barrer"><label for="barrer">Barrer</label></div>
                 <div class="task-item"><input type="checkbox" id="trapear" name="trapear"><label for="trapear">Trapear</label></div>
                 <div class="task-item"><input type="checkbox" id="vending" name="vending"><label for="vending">Re-stock de vending.</label></div>
@@ -368,13 +407,14 @@ function submitToAPI(e) {
 
     var data = {
         propiedad: $("#propiedad").val(), // ok
+        user: $("#user").val(), // ok
         changepaper: $("#changepaper").is(":checked"),
-        downloadall: $("#downloadall").is(":checked"),
-        printmoneyfoto: $("#printmoneyfoto").is(":checked"),
-        registarmovimiento: $("#registarmovimiento").is(":checked"),
-        monedaslocal: $("#monedaslocal").is(":checked"),
-        addhopper: $("#addhopper").is(":checked"),
-        closecaja: $("#closecaja").is(":checked"), 
+        downloadall: $("#downloadall").is(":checked"), // ok
+        printmoneyfoto: $("#printmoneyfoto").is(":checked"), // no, but not needed now
+        registarmovimiento: $("#registarmovimiento").is(":checked"), // no, but not needed now
+        monedaslocal: $("#monedaslocal").is(":checked"), // ok
+        addhopper: $("#addhopper").is(":checked"), // ok
+        closecaja: $("#closecaja").is(":checked"),  // ok
         detergente_bodega: $("#detergente_bodega").val(), // ok
         suavizante_bodega: $("#suavizante_bodega").val(), // ok
         oxigeno_bodega: $("#oxigeno_bodega").val(), // ok
@@ -384,23 +424,34 @@ function submitToAPI(e) {
         revniveles: $("#revniveles").is(":checked"), // ok
         tirar_botes: $("#tirar_botes").is(":checked"),  // ok
         revbombas: $("#revbombas").is(":checked"), // ok
-        restart_lav1: $("#restart_lav1").is(":checked"),
-        restart_lav2: $("#restart_lav2").is(":checked"),
-        restart_lav3: $("#restart_lav3").is(":checked"),
-        restart_lav4: $("#restart_lav4").is(":checked"),
-        restart_sec1: $("#restart_sec1").is(":checked"),
-        restart_sec2: $("#restart_sec2").is(":checked"),
-        restart_sec3: $("#restart_sec3").is(":checked"),
+        restart_lav1: $("#restart_lav1").is(":checked"), // ok
+        restart_lav2: $("#restart_lav2").is(":checked"), // ok
+        restart_lav3: $("#restart_lav3").is(":checked"), // ok
+        restart_lav4: $("#restart_lav4").is(":checked"), // ok
+        restart_lav5: $("#restart_lav5").is(":checked"), // ok
+        restart_lav6: $("#restart_lav6").is(":checked"), // ok
+        restart_sec1: $("#restart_sec1").is(":checked"), // ok
+        restart_sec2: $("#restart_sec2").is(":checked"), // ok
+        restart_sec3: $("#restart_sec3").is(":checked"), // ok
+        restart_sec4: $("#restart_sec4").is(":checked"), // ok
+        restart_sec5: $("#restart_sec5").is(":checked"), // ok
+        restart_sec6: $("#restart_sec6").is(":checked"), // ok
         clean_billetes: $("#clean_billetes").is(":checked"), // ok
         clean_tarjetas: $("#clean_tarjetas").is(":checked"), // ok
         clean_superficie: $("#clean_superficie").is(":checked"), // ok
         clean_basura: $("#clean_basura").is(":checked"), // ok
-        filter_1: $("#filter_1").is(":checked"),
-        filter_2: $("#filter_2").is(":checked"),
-        filter_3: $("#filter_3").is(":checked"),
+        filter_1: $("#filter_1").is(":checked"), // ok
+        filter_2: $("#filter_2").is(":checked"), // ok
+        filter_3: $("#filter_3").is(":checked"), // ok
+        filter_4: $("#filter_4").is(":checked"), // ok
+        filter_5: $("#filter_5").is(":checked"), // ok
+        filter_6: $("#filter_6").is(":checked"), // ok
         barrer: $("#barrer").is(":checked"), // ok
         trapear: $("#trapear").is(":checked"), // ok
         vending: $("#vending").is(":checked"), // ok
+        prev_clean_gen: $("#prev_clean_gen").val(), // ok
+        prev_clean_trash: $("#prev_clean_trash").val(), // ok
+        prev_clean_machines: $("#prev_clean_machines").val(), // ok
         comments: $("#comments").val() // ok
     };
 
