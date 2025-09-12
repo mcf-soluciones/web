@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Visita</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .task-form, #welcome-message, #submit-all-container, #completion-message {
             display: none; /* Hide all dynamic sections by default */
@@ -83,42 +84,48 @@
         <!-- Task Forms Container -->
         <div id="tasks-container">
             <!-- Both Locations -->
-            <div id="L99001" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Superficies Secadoras <span class="warn-color">*</span></h3><form data-task-id="L99001" data-task-title="Superficies Secadoras"><p>Limpiar superficies de secadoras con pañuelos</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99002" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Atrás Superficies Secadoras</h3><form data-task-id="L99002" data-task-title="Atrás Superficies Secadoras"><p>Limpiar superficies de secadoras atrás con pañuelos</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99003" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Superficies Lavadoras <span class="warn-color">*</span></h3><form data-task-id="L99003" data-task-title="Superficies Lavadoras"><p>Limpiar superficies de lavadoras con pañuelos</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99004" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Atrás Superficies Lavadoras</h3><form data-task-id="L99004" data-task-title="Atrás Superficies Lavadoras"><p>Limpiar superficies de lavadoras atrás con pañuelos</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99006" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Tirar Botes de la Bodega</h3><form data-task-id="L99006" data-task-title="Tirar Botes de la Bodega"><p>Tirar los botes de insumos en contenedores amarillos afuera</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99007" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Barrer <span class="warn-color">*</span></h3><form data-task-id="L99007" data-task-title="Barrer"><p>Barrer area de clientes</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99008" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Trapear <span class="warn-color">*</span></h3><form data-task-id="L99008" data-task-title="Trapear"><p>Trapear area de clientes</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99014" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Descarga de Billetes y Monedas</h3><form data-task-id="L99014" data-task-title="Descarga de Billetes y Monedas"><p>Descargar billetes y monedas de inzacard</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99015" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Carga de Monedas</h3><form data-task-id="L99015" data-task-title="Carga de Monedas"><p>Cargar monedas a hopper</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99012" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Carga de Papel Impression</h3><form data-task-id="L99012" data-task-title="Carga de Papel Impression"><p>Cargar papel de impresion</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99013" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Carga de Tarjetas Cliente</h3><form data-task-id="L99013" data-task-title="Carga de Tarjetas Cliente"><p>Carga de Tarjetas Cliente</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99009" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Limpieza Entrada Billetes</h3><form data-task-id="L99009" data-task-title="Limpieza Entrada Billetes"><p>Limpieza Entrada Billetes</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99010" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Limpieza Entrada Tarjetas</h3><form data-task-id="L99010" data-task-title="Limpieza Entrada Tarjetas"><p>Limpieza Entrada Tarjetas</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L99011" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Limpieza Entrada Billetes</h3><form data-task-id="L99011" data-task-title="Limpieza Entrada Billetes"><p>Limpieza Entrada Billetes</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L99001" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Superficies Secadoras <span class="warn-color">*</span></h3><form data-task-id="L99001" data-task-title="Superficies Secadoras"><p>Limpiar superficies de secadoras con pañuelos</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99002" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Atrás Superficies Secadoras</h3><form data-task-id="L99002" data-task-title="Atrás Superficies Secadoras"><p>Limpiar superficies de secadoras atrás con pañuelos</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99003" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Superficies Lavadoras <span class="warn-color">*</span></h3><form data-task-id="L99003" data-task-title="Superficies Lavadoras"><p>Limpiar superficies de lavadoras con pañuelos</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99004" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Atrás Superficies Lavadoras</h3><form data-task-id="L99004" data-task-title="Atrás Superficies Lavadoras"><p>Limpiar superficies de lavadoras atrás con pañuelos</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99006" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Tirar Botes de la Bodega</h3><form data-task-id="L99006" data-task-title="Tirar Botes de la Bodega"><p>Tirar los botes de insumos en contenedores amarillos afuera</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99007" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Barrer <span class="warn-color">*</span></h3><form data-task-id="L99007" data-task-title="Barrer"><p>Barrer area de clientes</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99008" class="task-form card loc-usera loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Trapear <span class="warn-color">*</span></h3><form data-task-id="L99008" data-task-title="Trapear"><p>Trapear area de clientes</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99014" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Descarga de Billetes y Monedas</h3><form data-task-id="L99014" data-task-title="Descarga de Billetes y Monedas"><p>Descargar billetes y monedas de inzacard</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99015" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Carga de Monedas</h3><form data-task-id="L99015" data-task-title="Carga de Monedas"><p>Cargar monedas a hopper</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99012" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Carga de Papel Impression</h3><form data-task-id="L99012" data-task-title="Carga de Papel Impression"><p>Cargar papel de impresion</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99013" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Carga de Tarjetas Cliente</h3><form data-task-id="L99013" data-task-title="Carga de Tarjetas Cliente"><p>Carga de Tarjetas Cliente</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99009" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Limpieza Entrada Billetes</h3><form data-task-id="L99009" data-task-title="Limpieza Entrada Billetes"><p>Limpieza Entrada Billetes</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L99010" class="task-form card loc-usera loc-hortaleza"><div class="card-body"><h3 class="card-title">Limpieza Entrada Tarjetas</h3><form data-task-id="L99010" data-task-title="Limpieza Entrada Tarjetas"><p>Limpieza Entrada Tarjetas</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
 
             <!-- Usera Only -->
-            <div id="L01001" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 4</h3><form data-task-id="L01001" data-task-title="Reinicio Lavadora 4"><p>Reinicio Lavadora 4</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01002" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 5</h3><form data-task-id="L01002" data-task-title="Reinicio Lavadora 5"><p>Reinicio Lavadora 5</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01003" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 6</h3><form data-task-id="L01003" data-task-title="Reinicio Lavadora 6"><p>Reinicio Lavadora 6</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01004" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 7</h3><form data-task-id="L01004" data-task-title="Reinicio Lavadora 7"><p>Reinicio Lavadora 7</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01007" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Revision Bombas 1</h3><form data-task-id="L01007" data-task-title="Revision Bombas 1"><p>Mover un poco la toma de bomba (boton rojo)</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01008" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Revision Bombas 2</h3><form data-task-id="L01008" data-task-title="Revision Bombas 2"><p>Mover un poco la toma de bomba (boton rojo)</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01009" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 1 <span class="warn-color">*</span></h3><form data-task-id="L01009" data-task-title="Limpieza Filtro Secadora 1"><p>Limpieza Filtro Secadora 1</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01010" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 2 <span class="warn-color">*</span></h3><form data-task-id="L01010" data-task-title="Limpieza Filtro Secadora 2"><p>Limpieza Filtro Secadora 2</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L01011" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 3 <span class="warn-color">*</span></h3><form data-task-id="L01011" data-task-title="Limpieza Filtro Secadora 3"><p>Limpieza Filtro Secadora 3</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L01001" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 4</h3><form data-task-id="L01001" data-task-title="Reinicio Lavadora 4"><p>Reinicio Lavadora 4</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01002" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 5</h3><form data-task-id="L01002" data-task-title="Reinicio Lavadora 5"><p>Reinicio Lavadora 5</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01003" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 6</h3><form data-task-id="L01003" data-task-title="Reinicio Lavadora 6"><p>Reinicio Lavadora 6</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01004" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 7</h3><form data-task-id="L01004" data-task-title="Reinicio Lavadora 7"><p>Reinicio Lavadora 7</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01007" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Revision Bombas 1</h3><form data-task-id="L01007" data-task-title="Revision Bombas 1"><p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01008" class="task-form card loc-usera"><div class="card-body"><h3 class="card-title">Revision Bombas 2</h3><form data-task-id="L01008" data-task-title="Revision Bombas 2"><p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01009" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 1 <span class="warn-color">*</span></h3><form data-task-id="L01009" data-task-title="Limpieza Filtro Secadora 1"><p>Limpieza Filtro Secadora 1</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01010" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 2 <span class="warn-color">*</span></h3><form data-task-id="L01010" data-task-title="Limpieza Filtro Secadora 2"><p>Limpieza Filtro Secadora 2</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L01011" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 3 <span class="warn-color">*</span></h3><form data-task-id="L01011" data-task-title="Limpieza Filtro Secadora 3"><p>Limpieza Filtro Secadora 3</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+
+            <div id="L01020" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Inventario Bodega <span class="warn-color">*</span></h3><form data-task-id="L01020" data-task-title="Inventario Bodega"><div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon" class="form-control"></div><div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante" class="form-control"></div><div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno" class="form-control"></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L01021" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Inventario Bomba 1 <span class="warn-color">*</span></h3><form data-task-id="L01021" data-task-title="Inventario Bomba 1"><div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon" class="form-control"></div><div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante" class="form-control"></div><div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno" class="form-control"></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L01022" class="task-form card loc-usera" data-mandatory="true"><div class="card-body"><h3 class="card-title">Inventario Bomba 2 <span class="warn-color">*</span></h3><form data-task-id="L01022" data-task-title="Inventario Bomba 2"><div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon" class="form-control"></div><div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante" class="form-control"></div><div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno" class="form-control"></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
 
             <!-- Hortaleza Only -->
-            <div id="L02001" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 1</h3><form data-task-id="L02001" data-task-title="Reinicio Lavadora 1"><p>Reinicio Lavadora 1</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02002" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 2</h3><form data-task-id="L02002" data-task-title="Reinicio Lavadora 2"><p>Reinicio Lavadora 2</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02003" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 3</h3><form data-task-id="L02003" data-task-title="Reinicio Lavadora 3"><p>Reinicio Lavadora 3</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02004" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 4</h3><form data-task-id="L02004" data-task-title="Reinicio Lavadora 4"><p>Reinicio Lavadora 4</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02007" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Revision Bombas 1</h3><form data-task-id="L02007" data-task-title="Revision Bombas 1"><p>Mover un poco la toma de bomba (boton rojo)</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02008" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Revision Bombas 2</h3><form data-task-id="L02008" data-task-title="Revision Bombas 2"><p>Mover un poco la toma de bomba (boton rojo)</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02011" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 5 <span class="warn-color">*</span></h3><form data-task-id="L02011" data-task-title="Limpieza Filtro Secadora 5"><p>Limpieza Filtro Secadora 5</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02009" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 6 <span class="warn-color">*</span></h3><form data-task-id="L02009" data-task-title="Limpieza Filtro Secadora 6"><p>Limpieza Filtro Secadora 6</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
-            <div id="L02010" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 7 <span class="warn-color">*</span></h3><form data-task-id="L02010" data-task-title="Limpieza Filtro Secadora 7"><p>Limpieza Filtro Secadora 7</p><div class="form-group"><div class="form-check"><input class="form-check-input" type="radio" name="status" value="Yes" required><label class="form-check-label">Sí</label></div><div class="form-check"><input class="form-check-input" type="radio" name="status" value="No"><label class="form-check-label">No</label></div></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L02001" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 1</h3><form data-task-id="L02001" data-task-title="Reinicio Lavadora 1"><p>Reinicio Lavadora 1</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02002" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 2</h3><form data-task-id="L02002" data-task-title="Reinicio Lavadora 2"><p>Reinicio Lavadora 2</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02003" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 3</h3><form data-task-id="L02003" data-task-title="Reinicio Lavadora 3"><p>Reinicio Lavadora 3</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02004" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Reinicio Lavadora 4</h3><form data-task-id="L02004" data-task-title="Reinicio Lavadora 4"><p>Reinicio Lavadora 4</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02007" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Revision Bombas 1</h3><form data-task-id="L02007" data-task-title="Revision Bombas 1"><p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02008" class="task-form card loc-hortaleza"><div class="card-body"><h3 class="card-title">Revision Bombas 2</h3><form data-task-id="L02008" data-task-title="Revision Bombas 2"><p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02011" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 5 <span class="warn-color">*</span></h3><form data-task-id="L02011" data-task-title="Limpieza Filtro Secadora 5"><p>Limpieza Filtro Secadora 5</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02009" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 6 <span class="warn-color">*</span></h3><form data-task-id="L02009" data-task-title="Limpieza Filtro Secadora 6"><p>Limpieza Filtro Secadora 6</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02010" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Limpieza Filtro Secadora 7 <span class="warn-color">*</span></h3><form data-task-id="L02010" data-task-title="Limpieza Filtro Secadora 7"><p>Limpieza Filtro Secadora 7</p><button type="submit" class="btn btn-success btn-lg">Listo</button></form></div></div>
+            <div id="L02020" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Inventario Bodega <span class="warn-color">*</span></h3><form data-task-id="L02020" data-task-title="Inventario Bodega"><div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon" class="form-control"></div><div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante" class="form-control"></div><div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno" class="form-control"></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L02021" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Inventario Bomba 1 <span class="warn-color">*</span></h3><form data-task-id="L02021" data-task-title="Inventario Bomba 1"><div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon" class="form-control"></div><div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante" class="form-control"></div><div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno" class="form-control"></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
+            <div id="L02022" class="task-form card loc-hortaleza" data-mandatory="true"><div class="card-body"><h3 class="card-title">Inventario Bomba 2 <span class="warn-color">*</span></h3><form data-task-id="L02022" data-task-title="Inventario Bomba 2"><div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon" class="form-control"></div><div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante" class="form-control"></div><div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno" class="form-control"></div><button type="submit" class="btn btn-info">Guardar Tarea</button></form></div></div>
         </div>
 
         <div id="submit-all-container" class="text-center">
@@ -182,10 +189,16 @@
             event.preventDefault();
             const location = document.getElementById('location-select').value;
             const user = document.getElementById('user-select').value;
+            const limpiezaGeneral = document.getElementById('limpieza-general').value;
+            const limpiezaMaquinas = document.getElementById('limpieza-maquinas').value;
+            const limpiezaBasurero = document.getElementById('limpieza-basurero').value;
 
             const visitData = getVisitData();
             visitData.location = location;
             visitData.user = user;
+            visitData.limpiezaGeneral = limpiezaGeneral;
+            visitData.limpiezaMaquinas = limpiezaMaquinas;
+            visitData.limpiezaBasurero = limpiezaBasurero;
             saveVisitData(visitData);
 
             document.getElementById('initial-setup').style.display = 'none';
@@ -240,14 +253,24 @@
             const form = event.target;
             const taskId = form.dataset.taskId;
             const taskTitle = form.dataset.taskTitle;
-            const answer = form.elements['status'].value;
 
             const visitData = getVisitData();
-            visitData.tasks[taskId] = {
+            const taskData = {
                 taskTitle: taskTitle,
-                answer: answer,
                 timestamp: new Date().toISOString()
             };
+
+            if (form.elements['status']) {
+                taskData.answer = form.elements['status'].value;
+            } else if (form.elements['jabon']) {
+                taskData.jabon = form.elements['jabon'].value;
+                taskData.suavizante = form.elements['suavizante'].value;
+                taskData.oxigeno = form.elements['oxigeno'].value;
+            } else {
+                taskData.answer = true;
+            }
+            
+            visitData.tasks[taskId] = taskData;
             saveVisitData(visitData);
 
             window.location.hash = '';
@@ -320,7 +343,7 @@
             document.getElementById('submit-all-btn').disabled = true;
 
             try {
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                await submitToAPI(payload);
 
                 feedbackEl.textContent = '¡Registro de visita enviado con éxito!';
                 feedbackEl.className = 'alert alert-success';
@@ -338,6 +361,93 @@
                 feedbackEl.className = 'alert alert-danger';
                 document.getElementById('submit-all-btn').disabled = false;
             }
+        }
+
+        function submitToAPI(payload) {
+            const URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+            const tasks = payload.tasks || {};
+
+            let formattedData = {
+                propiedad: payload.location,
+                user: payload.user,
+                visitId: payload.visitId,
+                submissionTimestamp: payload.submissionTimestamp,
+
+                // Cleanliness scores
+                L99016: payload.limpiezaGeneral,
+                L99017: payload.limpiezaMaquinas,
+                L99018: payload.limpiezaBasurero,
+
+                // Both Locations
+                L99001: tasks.L99001 ? tasks.L99001.answer : false, //ok
+                L99002: tasks.L99002 ? tasks.L99002.answer : false, //ok
+                L99003: tasks.L99003 ? tasks.L99003.answer : false, //ok
+                L99004: tasks.L99004 ? tasks.L99004.answer : false, //ok
+                L99006: tasks.L99006 ? tasks.L99006.answer : false, //ok
+                L99007: tasks.L99007 ? tasks.L99007.answer : false, //ok
+                L99008: tasks.L99008 ? tasks.L99008.answer : false, //ok
+                L99014: tasks.L99014 ? tasks.L99014.answer : false, //ok
+                L99015: tasks.L99015 ? tasks.L99015.answer : false, //ok
+                L99012: tasks.L99012 ? tasks.L99012.answer : false, //ok
+                L99013: tasks.L99013 ? tasks.L99013.answer : false, //ok
+                L99009: tasks.L99009 ? tasks.L99009.answer : false, //ok
+                L99010: tasks.L99010 ? tasks.L99010.answer : false, //ok
+
+                // Usera Only
+                L01001: tasks.L01001 ? tasks.L01001.answer : false,
+                L01002: tasks.L01002 ? tasks.L01002.answer : false,
+                L01003: tasks.L01003 ? tasks.L01003.answer : false,
+                L01004: tasks.L01004 ? tasks.L01004.answer : false,
+                L01007: tasks.L01007 ? tasks.L01007.answer : false,
+                L01008: tasks.L01008 ? tasks.L01008.answer : false,
+                L01009: tasks.L01009 ? tasks.L01009.answer : false,
+                L01010: tasks.L01010 ? tasks.L01010.answer : false,
+                L01011: tasks.L01011 ? tasks.L01011.answer : false,
+
+                // Hortaleza Only
+                L02001: tasks.L02001 ? tasks.L02001.answer : false,
+                L02002: tasks.L02002 ? tasks.L02002.answer : false,
+                L02003: tasks.L02003 ? tasks.L02003.answer : false,
+                L02004: tasks.L02004 ? tasks.L02004.answer : false,
+                L02007: tasks.L02007 ? tasks.L02007.answer : false,
+                L02008: tasks.L02008 ? tasks.L02008.answer : false,
+                L02011: tasks.L02011 ? tasks.L02011.answer : false,
+                L02009: tasks.L02009 ? tasks.L02009.answer : false,
+                L02010: tasks.L02010 ? tasks.L02010.answer : false,
+
+                // Numeric Inputs - Usera
+                L01020_1: tasks.L01020 ? tasks.L01020.jabon : 0, // ok
+                L01020_2: tasks.L01020 ? tasks.L01020.suavizante : 0, // ok
+                L01020_3: tasks.L01020 ? tasks.L01020.oxigeno : 0, // ok
+                L01021_1: tasks.L01021 ? tasks.L01021.jabon : 0,
+                L01021_2: tasks.L01021 ? tasks.L01021.suavizante : 0,
+                L01021_3: tasks.L01021 ? tasks.L01021.oxigeno : 0,
+                L01022_1: tasks.L01022 ? tasks.L01022.jabon : 0,
+                L01022_2: tasks.L01022 ? tasks.L01022.suavizante : 0,
+                L01022_3: tasks.L01022 ? tasks.L01022.oxigeno : 0,
+
+                // Numeric Inputs - Hortaleza
+                L02020_1: tasks.L02020 ? tasks.L02020.jabon : 0, // ok
+                L02020_2: tasks.L02020 ? tasks.L02020.suavizante : 0, // ok
+                L02020_3: tasks.L02020 ? tasks.L02020.oxigeno : 0, // ok
+                L02021_1: tasks.L02021 ? tasks.L02021.jabon : 0,
+                L02021_2: tasks.L02021 ? tasks.L02021.suavizante : 0,
+                L02021_3: tasks.L02021 ? tasks.L02021.oxigeno : 0,
+                L02022_1: tasks.L02022 ? tasks.L02022.jabon : 0,
+                L02022_2: tasks.L02022 ? tasks.L02022.suavizante : 0,
+                L02022_3: tasks.L02022 ? tasks.L02022.oxigeno : 0,
+            };
+
+            console.log('Sending data to API:', formattedData);
+
+            return $.ajax({
+                type: "POST",
+                url: URL,
+                dataType: "json",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(formattedData),
+            });
         }
     </script>
 </body>
