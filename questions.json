@@ -1,0 +1,344 @@
+[
+  {
+    "Type": "Mandatory",
+    "Description": "Superficies Secadoras",
+    "URL-hash": "L99001",
+    "question": "Limpiar superficies de secadoras con pañuelos",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Atrás Superficies Secadoras",
+    "URL-hash": "L99002",
+    "question": "Limpiar superficies de secadoras atrás con pañuelos",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 4",
+    "URL-hash": "L01001",
+    "question": "Reinicio Lavadora 4",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 5",
+    "URL-hash": "L01002",
+    "question": "Reinicio Lavadora 5",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 6",
+    "URL-hash": "L01003",
+    "question": "Reinicio Lavadora 6",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 7",
+    "URL-hash": "L01004",
+    "question": "Reinicio Lavadora 7",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 1",
+    "URL-hash": "L02001",
+    "question": "Reinicio Lavadora 1",
+    "answer-option": "Listo",
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 2",
+    "URL-hash": "L02002",
+    "question": "Reinicio Lavadora 2",
+    "answer-option": "Listo",
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 3",
+    "URL-hash": "L02003",
+    "question": "Reinicio Lavadora 3",
+    "answer-option": "Listo",
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Reinicio Lavadora 4",
+    "URL-hash": "L02004",
+    "question": "Reinicio Lavadora 4",
+    "answer-option": "Listo",
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Superficies Lavadoras",
+    "URL-hash": "L99003",
+    "question": "Limpiar superficies de lavadoras con pañuelos",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Atrás Superficies Lavadoras",
+    "URL-hash": "L99004",
+    "question": "Limpiar superficies de lavadoras atrás con pañuelos",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Insumos Bodega",
+    "URL-hash": "L99005",
+    "question": "Cuántos insumos hay en la bodega?",
+    "answer-option": [ "Jabon: Numeric decimals", "Suavizante: Numeric decimals", "Oxigeno: Numeric decimals" ],
+    "available_usera": ["Yes", "Yes", "Yes"],
+    "available_hortaleza": ["Yes",  "Yes", "Yes"]
+  },
+  {
+    "Type": "Optional",
+    "Description": "Tirar Botes de la Bodega",
+    "URL-hash": "L99006",
+    "question": "Tirar los botes de insumos en contenedores amarillos afuera",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Barrer",
+    "URL-hash": "L99007",
+    "question": "Barrer area de clientes",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Trapear",
+    "URL-hash": "L99008",
+    "question": "Trapear area de clientes",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Insumos Bomba 1",
+    "URL-hash": "L01005",
+    "question": "Cuántos insumos hay en la bomba 1?",
+    "answer-option": ["Jabon: Numeric decimals", "Suavizante: Numeric decimals", "Oxigeno: Numeric decimals"],
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Insumos Bomba 2",
+    "URL-hash": "L01006",
+    "question": "Cuántos insumos hay en la bomba 2?",
+    "answer-option": ["Jabon: Numeric decimals", "Suavizante: Numeric decimals", "Oxigeno: Numeric decimals"],
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Insumos Bomba 1",
+    "URL-hash": "L02005",
+    "question": "Cuántos insumos hay en la bomba 1?",
+    "answer-option": ["Jabon: Numeric decimals", "Suavizante: Numeric decimals", "Oxigeno: Numeric decimals"],
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Insumos Bomba 2",
+    "URL-hash": "L02006",
+    "question": "Cuántos insumos hay en la bomba 2?",
+    "answer-option": ["Jabon: Numeric decimals",  "Suavizante: Numeric decimals", "Oxigeno: Numeric decimals"],
+    "available_usera": "No", 
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Revision Bombas 1",
+    "URL-hash": "L01007",
+    "question": "Mover un poco la toma de bomba (boton rojo)",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Revision Bombas 2",
+    "URL-hash": "L01008",
+    "question": "Mover un poco la toma de bomba (boton rojo)",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "No"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Revision Bombas 1",
+    "URL-hash": "L02007",
+    "question": "Mover un poco la toma de bomba (boton rojo)",
+    "answer-option": "Listo",
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Optional",
+    "Description": "Revision Bombas 2",
+    "URL-hash": "L02008",
+    "question": "Mover un poco la toma de bomba (boton rojo)",
+    "answer-option": "Listo",
+    "available_usera": "No",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Socios",
+    "Description": "Descarga de Billetes y Monedas",
+    "URL-hash": "L99014",
+    "question": "Descargar billetes y monedas de inzacard",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "",
+    "Description": "",
+    "URL-hash": "",
+    "question": "Subir movimientos a sistema de movimientos",
+    "answer-option": "Listo",
+    "available_usera": "Yes",
+    "available_hortaleza": "Yes"
+  },
+  {
+    "Type": "Socios",
+    "Description": "Carga de Monedas",
+    "URL-hash": "L99015",
+    "question": "Cargar monedas a hopper",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Socios",
+    "Description": "Carga de Papel Impression",
+    "URL-hash": "L99012",
+    "question": "Cargar papel de impresion",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Socios",
+    "Description": "Carga de Tarjetas Cliente",
+    "URL-hash": "L99013",
+    "question": "Carga de Tarjetas Cliente",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Optional",
+    "Description": "Limpieza Entrada Billetes",
+    "URL-hash": "L99009",
+    "question": "Limpieza Entrada Billetes",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Optional",
+    "Description": "Limpieza Entrada Tarjetas",
+    "URL-hash": "L99010",
+    "question": "Limpieza Entrada Tarjetas",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Optional",
+    "Description": "Limpieza Entrada Billetes",
+    "URL-hash": "L99011",
+    "question": "Limpieza Entrada Billetes",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Limpieza Filtro Secadora 1",
+    "URL-hash": "L01009",
+    "question": "Limpieza Filtro Secadora 1",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Limpieza Filtro Secadora 2",
+    "URL-hash": "L01010",
+    "question": "Limpieza Filtro Secadora 2",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Limpieza Filtro Secadora 3",
+    "URL-hash": "L01011",
+    "question": "Limpieza Filtro Secadora 3",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Limpieza Filtro Secadora 5",
+    "URL-hash": "L02011",
+    "question": "Limpieza Filtro Secadora 5",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Limpieza Filtro Secadora 6",
+    "URL-hash": "L02009",
+    "question": "Limpieza Filtro Secadora 6",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  },
+  {
+    "Type": "Mandatory",
+    "Description": "Limpieza Filtro Secadora 7",
+    "URL-hash": "L02010",
+    "question": "Limpieza Filtro Secadora 7",
+    "answer-option": "",
+    "available_usera": "",
+    "available_hortaleza": ""
+  }
+]

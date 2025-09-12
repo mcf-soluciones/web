@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Visita a Lavandería</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .task-form {
+            display: none; /* Hide all forms by default */
+            padding-top: 20px;
+        }
+        #welcome-message {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="text-center">
+            <h1>Registro de Tareas</h1>
+            <p class="lead">Escanea un código QR para empezar.</p>
+            <p><strong>ID de Visita:</strong> <span id="visit-id-display"></span></p>
+        </div>
+
+        <div id="welcome-message">
+            <h2>Por favor, escanea el código QR de una tarea para registrarla.</h2>
+        </div>
+
+        <!-- Task Forms Container -->
+        <div id="tasks-container">
+            <!-- Tasks will be injected here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const tasks = [
+            { id: "superficie-sec-1-atras", title: "Superficie Sec 1 Atrás" },
+            { id: "superficie-sec-2-atras", title: "Superficie Sec 2 Atrás" },
+            { id: "superficie-sec-3-atras", title: "Superficie Sec 3 Atrás" },
+            { id: "reinicio-lavadora-4", title: "Reinicio Lavadora 4" },
+            { id: "reinicio-lavadora-5", title: "Reinicio Lavadora 5" },
+            { id: "reinicio-lavadora-6", title: "Reinicio Lavadora 6" },
+            { id: "reinicio-lavadora-7", title: "Reinicio Lavadora 7" },
+            { id: "superficies-lavadoras", title: "Superficies Lavadoras" },
+            { id: "superficies-secadoras", title: "Superficies Secadoras" },
+            { id: "revision-visual-inicio", title: "Revisión Visual Inicio" },
+            { id: "insumos-bodega", title: "Insumos Bodega" },
+            { id: "insumos-maquinas-1", title: "Insumos Maquinas 1" },
+            { id: "insumos-maquinas-2", title: "Insumos Maquinas 2" },
+            { id: "tirar-botes-bodega", title: "Tirar Botes Bodega" },
+            { id: "revision-bombas-1", title: "Revision Bombas 1" },
+            { id: "revision-bombas-2", title: "Revision Bombas 2" },
+            { id: "limpieza-entrada-billetes", title: "Limpieza Entrada Billetes" },
+            { id: "limpieza-entrada-tarjetas", title: "Limpieza Entrada Tarjetas" },
+            { id: "limpieza-filtro-secadora-1", title: "Limpieza Filtro Secadora 1" },
+            { id: "limpieza-filtro-secadora-2", title: "Limpieza Filtro Secadora 2" },
+            { id: "limpieza-filtro-secadora-3", title: "Limpieza Filtro Secadora 3" },
+            { id: "barrer", title: "Barrer" },
+            { id: "trapear", title: "Trapear" },
+            { id: "descarga-de-billetes", title: "Descarga de Billetes" },
+            { id: "movimientos", title: "Movimientos" },
+            { id: "descarga-de-monedas", title: "Descarga de Monedas" },
+            { id: "carga-en-fondo", title: "Carga en Fondo" },
+            { id: "carga-de-tarjetas-cliente", title: "Carga de Tarjetas Cliente" },
+            { id: "carga-de-papel-impresion", title: "Carga de Papel Impresión" }
+        ];
+
+        const API_ENDPOINT = 'YOUR_AWS_API_ENDPOINT_HERE'; // <-- IMPORTANT: Replace with your actual API endpoint
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let visitId = getOrSetVisitId();
+            document.getElementById('visit-id-display').textContent = visitId;
+
+            const tasksContainer = document.getElementById('tasks-container');
+            tasks.forEach(task => {
+                const formHtml = `
+                    <div id="${task.id}" class="task-form card">
+                        <div class="card-body">
+                            <h3 class="card-title">${task.title}</h3>
+                            <form data-task-id="${task.id}">
+                                <p>¿Se completó la tarea correctamente?</p>
+                                <div class="form-group">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" id="${task.id}-yes" value="Yes" required>
+                                        <label class="form-check-label" for="${task.id}-yes">Sí</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" id="${task.id}-no" value="No">
+                                        <label class="form-check-label" for="${task.id}-no">No</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Enviar</button>
+                                <div class="mt-2" id="feedback-${task.id}" style="display:none;"></div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                tasksContainer.innerHTML += formHtml;
+            });
+
+            // Initial route handling
+            handleRouteChange();
+
+            // Handle hash changes
+            window.addEventListener('hashchange', handleRouteChange);
+
+            // Handle form submissions
+            tasksContainer.addEventListener('submit', handleFormSubmit);
+        });
+
+        function getOrSetVisitId() {
+            let visitId = localStorage.getItem('visitId');
+            if (!visitId) {
+                visitId = `visit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                localStorage.setItem('visitId', visitId);
+            }
+            return visitId;
+        }
+
+        function handleRouteChange() {
+            const taskId = window.location.hash.substring(1); // Remove the '#'
+            const allForms = document.querySelectorAll('.task-form');
+            const welcomeMessage = document.getElementById('welcome-message');
+            
+            let taskFound = false;
+            allForms.forEach(form => {
+                if (form.id === taskId) {
+                    form.style.display = 'block';
+                    taskFound = true;
+                } else {
+                    form.style.display = 'none';
+                }
+            });
+
+            if (taskFound) {
+                welcomeMessage.style.display = 'none';
+            } else {
+                welcomeMessage.style.display = 'block';
+            }
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const taskId = form.dataset.taskId;
+            const answer = form.elements['status'].value;
+            const visitId = localStorage.getItem('visitId');
+            const feedbackEl = document.getElementById(`feedback-${taskId}`);
+
+            const data = {
+                visitId: visitId,
+                taskId: taskId,
+                taskTitle: tasks.find(t => t.id === taskId).title,
+                answer: answer,
+                timestamp: new Date().toISOString()
+            };
+
+            console.log('Submitting data:', data);
+            feedbackEl.textContent = 'Enviando...';
+            feedbackEl.className = 'alert alert-info';
+            feedbackEl.style.display = 'block';
+
+
+            try {
+                // Replace with your actual fetch call
+                // const response = await fetch(API_ENDPOINT, {
+                //     method: 'POST',
+                //     body: JSON.stringify(data),
+                //     headers: { 'Content-Type': 'application/json' }
+                // });
+
+                // if (!response.ok) {
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+                
+                // For demonstration purposes, we'll simulate a successful submission
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+
+                feedbackEl.textContent = '¡Tarea registrada con éxito!';
+                feedbackEl.className = 'alert alert-success';
+                form.reset();
+
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                feedbackEl.textContent = 'Error al registrar la tarea. Inténtalo de nuevo.';
+                feedbackEl.className = 'alert alert-danger';
+            }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitas</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --warn-color: #c22121;
+            --text-color: #333;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--background-color); color: var(--text-color); line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1, h2, h3 { color: var(--primary-color); }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .task-section { background: var(--card-background); border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 30px; padding: 25px; transition: transform 0.2s; }
+        .task-section:hover { transform: translateY(-5px); }
+        .task-section h2 { border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; }
+        .task-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; }
+        .warn-color { color: var(--warn-color); }
+        .help-text { color: var(--secondary-color); font-size: 11px; font-style: italic; }
+        .task-item:last-child { border-bottom: none; }
+        .task-item:hover { background-color: #f1f1f1; }
+        .input-group { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .input-item { display: flex; flex-direction: column; }
+        .input-item label { margin-bottom: 5px; font-weight: 500; }
+        .input-item input[type="number"] { width: 100px; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+        .comments-section input[type="text"] { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; }
+        .submit-btn { display: block; width: 100%; padding: 15px; background-color: var(--primary-color); color: white; border: none; border-radius: var(--border-radius); font-size: 18px; font-weight: 700; cursor: pointer; text-align: center; margin-top: 30px; transition: background-color 0.3s; }
+        .submit-btn:hover { background-color: #0056b3; }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; }
+        #loading-overlay > div { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: var(--border-radius); text-align: center; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        .location-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .location-btn { flex: 1; padding: 15px; font-size: 16px; cursor: pointer; border: 2px solid var(--primary-color); background-color: white; color: var(--primary-color); border-radius: var(--border-radius); transition: background-color 0.3s, color 0.3s; }
+        .location-btn.active { background-color: var(--primary-color); color: white; }
+        .ack-btn { padding: 10px 20px; border: 1px solid var(--secondary-color); background-color: #f0f0f0; color: var(--secondary-color); border-radius: 4px; cursor: pointer; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        .ack-btn.done { background-color: #28a745; color: white; border-color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reporte de Visita</h1>
+        <form id="contact-form" onsubmit="return submitToAPI(event)">
+            <div class="task-section">
+                <h2>General</h2>
+                <div class="location-selector">
+                    <button type="button" id="btn-usera" class="location-btn">Usera</button>
+                    <button type="button" id="btn-hortaleza" class="location-btn">Hortaleza</button>
+                </div>
+                <div class="task-item">
+                    <label for="user">Usuario:</label>
+                    <select name="user" id="user" style="width:100%; padding: 8px; border-radius: 4px;">
+                        <option value="lalo">lalo</option>
+                        <option value="oscar">oscar</option>
+                        <option value="adrian">adrian</option>
+                        <option value="xxxx">xxxx</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="questions-container">
+                
+        <div id="L99001" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Superficies Secadoras <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpiar superficies de secadoras con pañuelos</p>
+                    <button type="button" id="L99001_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99002" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Atrás Superficies Secadoras </h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpiar superficies de secadoras atrás con pañuelos</p>
+                    <button type="button" id="L99002_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01001" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Reinicio Lavadora 4 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 4</p>
+                    <button type="button" id="L01001_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01002" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Reinicio Lavadora 5 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 5</p>
+                    <button type="button" id="L01002_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01003" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Reinicio Lavadora 6 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 6</p>
+                    <button type="button" id="L01003_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01004" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Reinicio Lavadora 7 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 7</p>
+                    <button type="button" id="L01004_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02001" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Reinicio Lavadora 1 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 1</p>
+                    <button type="button" id="L02001_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02002" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Reinicio Lavadora 2 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 2</p>
+                    <button type="button" id="L02002_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02003" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Reinicio Lavadora 3 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 3</p>
+                    <button type="button" id="L02003_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02004" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Reinicio Lavadora 4 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Reinicio Lavadora 4</p>
+                    <button type="button" id="L02004_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99003" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Superficies Lavadoras <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpiar superficies de lavadoras con pañuelos</p>
+                    <button type="button" id="L99003_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99004" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Atrás Superficies Lavadoras </h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpiar superficies de lavadoras atrás con pañuelos</p>
+                    <button type="button" id="L99004_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99005" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Insumos Bodega <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Cuántos insumos hay en la bodega?</p>
+                    <div class="input-group"><div class="input-item"><label for="L99005_jabon">Jabon:</label><input type="number" id="L99005_jabon" name="L99005_jabon" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L99005_suavizante">Suavizante:</label><input type="number" id="L99005_suavizante" name="L99005_suavizante" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L99005_oxigeno">Oxigeno:</label><input type="number" id="L99005_oxigeno" name="L99005_oxigeno" step="0.05" min="0" value="0"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="L99006" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Tirar Botes de la Bodega </h2>
+            <div class="task-item">
+                <div>
+                    <p>Tirar los botes de insumos en contenedores amarillos afuera</p>
+                    <button type="button" id="L99006_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99007" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Barrer <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Barrer area de clientes</p>
+                    <button type="button" id="L99007_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99008" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Trapear <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Trapear area de clientes</p>
+                    <button type="button" id="L99008_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01005" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Insumos Bomba 1 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Cuántos insumos hay en la bomba 1?</p>
+                    <div class="input-group"><div class="input-item"><label for="L01005_jabon">Jabon:</label><input type="number" id="L01005_jabon" name="L01005_jabon" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L01005_suavizante">Suavizante:</label><input type="number" id="L01005_suavizante" name="L01005_suavizante" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L01005_oxigeno">Oxigeno:</label><input type="number" id="L01005_oxigeno" name="L01005_oxigeno" step="0.05" min="0" value="0"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="L01006" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Insumos Bomba 2 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Cuántos insumos hay en la bomba 2?</p>
+                    <div class="input-group"><div class="input-item"><label for="L01006_jabon">Jabon:</label><input type="number" id="L01006_jabon" name="L01006_jabon" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L01006_suavizante">Suavizante:</label><input type="number" id="L01006_suavizante" name="L01006_suavizante" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L01006_oxigeno">Oxigeno:</label><input type="number" id="L01006_oxigeno" name="L01006_oxigeno" step="0.05" min="0" value="0"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="L02005" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Insumos Bomba 1 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Cuántos insumos hay en la bomba 1?</p>
+                    <div class="input-group"><div class="input-item"><label for="L02005_jabon">Jabon:</label><input type="number" id="L02005_jabon" name="L02005_jabon" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L02005_suavizante">Suavizante:</label><input type="number" id="L02005_suavizante" name="L02005_suavizante" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L02005_oxigeno">Oxigeno:</label><input type="number" id="L02005_oxigeno" name="L02005_oxigeno" step="0.05" min="0" value="0"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="L02006" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Insumos Bomba 2 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Cuántos insumos hay en la bomba 2?</p>
+                    <div class="input-group"><div class="input-item"><label for="L02006_jabon">Jabon:</label><input type="number" id="L02006_jabon" name="L02006_jabon" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L02006_suavizante">Suavizante:</label><input type="number" id="L02006_suavizante" name="L02006_suavizante" step="0.05" min="0" value="0"></div><div class="input-item"><label for="L02006_oxigeno">Oxigeno:</label><input type="number" id="L02006_oxigeno" name="L02006_oxigeno" step="0.05" min="0" value="0"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="L01007" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Revision Bombas 1 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Mover un poco la toma de bomba (boton rojo)</p>
+                    <button type="button" id="L01007_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01008" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Revision Bombas 2 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Mover un poco la toma de bomba (boton rojo)</p>
+                    <button type="button" id="L01008_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02007" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Revision Bombas 1 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Mover un poco la toma de bomba (boton rojo)</p>
+                    <button type="button" id="L02007_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02008" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Revision Bombas 2 </h2>
+            <div class="task-item">
+                <div>
+                    <p>Mover un poco la toma de bomba (boton rojo)</p>
+                    <button type="button" id="L02008_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99014" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Descarga de Billetes y Monedas </h2>
+            <div class="task-item">
+                <div>
+                    <p>Descargar billetes y monedas de inzacard</p>
+                    <button type="button" id="L99014_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99015" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Carga de Monedas </h2>
+            <div class="task-item">
+                <div>
+                    <p>Cargar monedas a hopper</p>
+                    <button type="button" id="L99015_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99012" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Carga de Papel Impression </h2>
+            <div class="task-item">
+                <div>
+                    <p>Cargar papel de impresion</p>
+                    <button type="button" id="L99012_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99013" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Carga de Tarjetas Cliente </h2>
+            <div class="task-item">
+                <div>
+                    <p>Carga de Tarjetas Cliente</p>
+                    <button type="button" id="L99013_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99009" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Limpieza Entrada Billetes </h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Entrada Billetes</p>
+                    <button type="button" id="L99009_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99010" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Limpieza Entrada Tarjetas </h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Entrada Tarjetas</p>
+                    <button type="button" id="L99010_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L99011" class="task-section question-card loc-usera loc-hortaleza" style="display: none;">
+            <h2>Limpieza Entrada Billetes </h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Entrada Billetes</p>
+                    <button type="button" id="L99011_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01009" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Limpieza Filtro Secadora 1 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Filtro Secadora 1</p>
+                    <button type="button" id="L01009_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01010" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Limpieza Filtro Secadora 2 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Filtro Secadora 2</p>
+                    <button type="button" id="L01010_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L01011" class="task-section question-card loc-usera" style="display: none;">
+            <h2>Limpieza Filtro Secadora 3 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Filtro Secadora 3</p>
+                    <button type="button" id="L01011_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02011" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Limpieza Filtro Secadora 5 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Filtro Secadora 5</p>
+                    <button type="button" id="L02011_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02009" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Limpieza Filtro Secadora 6 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Filtro Secadora 6</p>
+                    <button type="button" id="L02009_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+        <div id="L02010" class="task-section question-card loc-hortaleza" style="display: none;">
+            <h2>Limpieza Filtro Secadora 7 <span class="warn-color">*</span></h2>
+            <div class="task-item">
+                <div>
+                    <p>Limpieza Filtro Secadora 7</p>
+                    <button type="button" id="L02010_listo" class="ack-btn">Listo</button>
+                </div>
+            </div>
+        </div>
+            </div>
+
+            <div class="task-section comments-section">
+                <h4>Comentarios:</h4>
+                <input type="text" id="comments" name="comments" placeholder="Añade comentarios adicionales aquí...">
+            </div>
+
+            <button type="submit" class="submit-btn">Enviar Reporte</button>
+        </form>
+    </div>
+
+    <div id="loading-overlay">
+        <div>
+            <p>Processing your request...</p>
+            <p>Please wait a moment</p>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let selectedLocation = null;
+
+    function filterQuestions(location) {
+        selectedLocation = location;
+        $('.question-card').hide();
+        $(`.loc-${location}`).show();
+        
+        $('#btn-usera').removeClass('active');
+        $('#btn-hortaleza').removeClass('active');
+        $(`#btn-${location}`).addClass('active');
+    }
+
+    $('#btn-usera').on('click', () => filterQuestions('usera'));
+    $('#btn-hortaleza').on('click', () => filterQuestions('hortaleza'));
+
+    $(document).on('click', '.ack-btn', function() {
+        $(this).toggleClass('done');
+    });
+
+    function handleHash() {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            if (hash.startsWith('L01')) {
+                filterQuestions('usera');
+            } else if (hash.startsWith('L02')) {
+                filterQuestions('hortaleza');
+            }
+            
+            const element = document.getElementById(hash);
+            if (element) {
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+    }
+
+    window.addEventListener('hashchange', handleHash);
+    handleHash();
+
+    window.submitToAPI = function(e) {
+        e.preventDefault();
+        if (!selectedLocation) {
+            alert('Por favor, selecciona una ubicación (Usera o Hortaleza).');
+            return false;
+        }
+
+        $('#loading-overlay').show();
+        $('.submit-btn').prop('disabled', true);
+
+        var URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+        
+        var data = {
+            propiedad: selectedLocation,
+            user: $("#user").val(),
+            comments: $("#comments").val()
+        };
+
+        $('.question-card:visible').each(function() {
+            const id = $(this).attr('id');
+            $(this).find('input[type=number]').each(function() {
+                data[$(this).attr('id')] = $(this).val();
+            });
+            $(this).find('.ack-btn').each(function() {
+                data[$(this).attr('id')] = $(this).hasClass('done');
+            });
+        });
+
+        $.ajax({
+            type: "POST",
+            url: URL,
+            dataType: "json",
+            crossDomain: true,
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#loading-overlay').hide();
+                $('.submit-btn').prop('disabled', false);
+                alert("Reporte enviado con éxito.");
+                document.getElementById("contact-form").reset();
+                $('.ack-btn').removeClass('done');
+                $('.location-btn').removeClass('active');
+                selectedLocation = null;
+                $('.question-card').hide();
+
+            },
+            error: function(xhr, status, error) {
+                $('#loading-overlay').hide();
+                $('.submit-btn').prop('disabled', false);
+                alert("Error al enviar el reporte: " + (xhr.responseJSON?.message || status));
+            }
+        });
+        return false;
+    }
+});
+</script>
+
+</body>
+</html>
