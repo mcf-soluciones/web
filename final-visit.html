@@ -179,7 +179,7 @@
         function getOrSetVisitId() {
             let visitId = localStorage.getItem('visitId');
             if (!visitId) {
-                visitId = `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                visitId = `v1-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 localStorage.setItem('visitId', visitId);
             }
             return visitId;
