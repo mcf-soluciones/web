@@ -61,6 +61,7 @@
                         <input type="number" class="form-control" id="limpieza-basurero" min="1" max="10" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Iniciar Visita</button>
+                    <button type="button" id="reset-visit-btn" class="btn btn-secondary">Reset Visit</button>
                 </form>
             </div>
         </div>
@@ -151,7 +152,18 @@
             document.getElementById('setup-form').addEventListener('submit', saveInitialSetup);
             document.getElementById('tasks-container').addEventListener('submit', saveTaskProgress);
             document.getElementById('submit-all-btn').addEventListener('click', submitAllTasks);
+            document.getElementById('reset-visit-btn').addEventListener('click', resetVisit);
         });
+
+        function resetVisit() {
+            const visitId = localStorage.getItem('visitId');
+            if (visitId) {
+                localStorage.removeItem(`visitData_${visitId}`);
+                localStorage.removeItem('visitId');
+            }
+            // Reload the page to start fresh
+            window.location.href = window.location.pathname;
+        }
 
         function getVisitData() {
             const visitId = getOrSetVisitId();
@@ -165,10 +177,10 @@
         }
 
         function getOrSetVisitId() {
-            let visitId = sessionStorage.getItem('visitId');
+            let visitId = localStorage.getItem('visitId');
             if (!visitId) {
-                visitId = `visit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                sessionStorage.setItem('visitId', visitId);
+                visitId = `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                localStorage.setItem('visitId', visitId);
             }
             return visitId;
         }
@@ -349,7 +361,7 @@
                 feedbackEl.className = 'alert alert-success';
                 
                 localStorage.removeItem(`visitData_${visitId}`);
-                sessionStorage.removeItem('visitId');
+                localStorage.removeItem('visitId');
                 
                 document.getElementById('welcome-message').style.display = 'none';
                 document.getElementById('submit-all-container').style.display = 'none';
@@ -394,26 +406,26 @@
                 L99010: tasks.L99010 ? tasks.L99010.answer : false, //ok
 
                 // Usera Only
-                L01001: tasks.L01001 ? tasks.L01001.answer : false,
-                L01002: tasks.L01002 ? tasks.L01002.answer : false,
-                L01003: tasks.L01003 ? tasks.L01003.answer : false,
-                L01004: tasks.L01004 ? tasks.L01004.answer : false,
-                L01007: tasks.L01007 ? tasks.L01007.answer : false,
-                L01008: tasks.L01008 ? tasks.L01008.answer : false,
-                L01009: tasks.L01009 ? tasks.L01009.answer : false,
-                L01010: tasks.L01010 ? tasks.L01010.answer : false,
-                L01011: tasks.L01011 ? tasks.L01011.answer : false,
+                L01001: tasks.L01001 ? tasks.L01001.answer : false, // ok
+                L01002: tasks.L01002 ? tasks.L01002.answer : false, // ok
+                L01003: tasks.L01003 ? tasks.L01003.answer : false, // ok
+                L01004: tasks.L01004 ? tasks.L01004.answer : false, // ok
+                L01007: tasks.L01007 ? tasks.L01007.answer : false, // ok
+                L01008: tasks.L01008 ? tasks.L01008.answer : false, // ok
+                L01009: tasks.L01009 ? tasks.L01009.answer : false, // ok
+                L01010: tasks.L01010 ? tasks.L01010.answer : false, // ok
+                L01011: tasks.L01011 ? tasks.L01011.answer : false, // ok
 
                 // Hortaleza Only
-                L02001: tasks.L02001 ? tasks.L02001.answer : false,
-                L02002: tasks.L02002 ? tasks.L02002.answer : false,
-                L02003: tasks.L02003 ? tasks.L02003.answer : false,
-                L02004: tasks.L02004 ? tasks.L02004.answer : false,
-                L02007: tasks.L02007 ? tasks.L02007.answer : false,
-                L02008: tasks.L02008 ? tasks.L02008.answer : false,
-                L02011: tasks.L02011 ? tasks.L02011.answer : false,
-                L02009: tasks.L02009 ? tasks.L02009.answer : false,
-                L02010: tasks.L02010 ? tasks.L02010.answer : false,
+                L02001: tasks.L02001 ? tasks.L02001.answer : false, // ok
+                L02002: tasks.L02002 ? tasks.L02002.answer : false, // ok
+                L02003: tasks.L02003 ? tasks.L02003.answer : false, // ok
+                L02004: tasks.L02004 ? tasks.L02004.answer : false, // ok
+                L02007: tasks.L02007 ? tasks.L02007.answer : false, // ok
+                L02008: tasks.L02008 ? tasks.L02008.answer : false, // ok
+                L02011: tasks.L02011 ? tasks.L02011.answer : false, // ok
+                L02009: tasks.L02009 ? tasks.L02009.answer : false, // ok
+                L02010: tasks.L02010 ? tasks.L02010.answer : false, // ok
 
                 // Numeric Inputs - Usera
                 L01020_1: tasks.L01020 ? tasks.L01020.jabon : 0, // ok
