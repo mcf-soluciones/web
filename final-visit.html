@@ -385,6 +385,49 @@
                 visitId: payload.visitId,
                 submissionTimestamp: payload.submissionTimestamp,
 
+                taskCompletionTimestamps: {
+                    // Both Locations
+                    L99001: tasks.L99001 ? tasks.L99001.timestamp : null,
+                    L99002: tasks.L99002 ? tasks.L99002.timestamp : null,
+                    L99003: tasks.L99003 ? tasks.L99003.timestamp : null,
+                    L99004: tasks.L99004 ? tasks.L99004.timestamp : null,
+                    L99006: tasks.L99006 ? tasks.L99006.timestamp : null,
+                    L99007: tasks.L99007 ? tasks.L99007.timestamp : null,
+                    L99008: tasks.L99008 ? tasks.L99008.timestamp : null,
+                    L99014: tasks.L99014 ? tasks.L99014.timestamp : null,
+                    L99015: tasks.L99015 ? tasks.L99015.timestamp : null,
+                    L99012: tasks.L99012 ? tasks.L99012.timestamp : null,
+                    L99013: tasks.L99013 ? tasks.L99013.timestamp : null,
+                    L99009: tasks.L99009 ? tasks.L99009.timestamp : null,
+                    L99010: tasks.L99010 ? tasks.L99010.timestamp : null,
+                    // Usera
+                    L01001: tasks.L01001 ? tasks.L01001.timestamp : null,
+                    L01002: tasks.L01002 ? tasks.L01002.timestamp : null,
+                    L01003: tasks.L01003 ? tasks.L01003.timestamp : null,
+                    L01004: tasks.L01004 ? tasks.L01004.timestamp : null,
+                    L01007: tasks.L01007 ? tasks.L01007.timestamp : null,
+                    L01008: tasks.L01008 ? tasks.L01008.timestamp : null,
+                    L01009: tasks.L01009 ? tasks.L01009.timestamp : null,
+                    L01010: tasks.L01010 ? tasks.L01010.timestamp : null,
+                    L01011: tasks.L01011 ? tasks.L01011.timestamp : null,
+                    L01020: tasks.L01020 ? tasks.L01020.timestamp : null,
+                    L01021: tasks.L01021 ? tasks.L01021.timestamp : null,
+                    L01022: tasks.L01022 ? tasks.L01022.timestamp : null,
+                    // Hortaleza
+                    L02001: tasks.L02001 ? tasks.L02001.timestamp : null,
+                    L02002: tasks.L02002 ? tasks.L02002.timestamp : null,
+                    L02003: tasks.L02003 ? tasks.L02003.timestamp : null,
+                    L02004: tasks.L02004 ? tasks.L02004.timestamp : null,
+                    L02007: tasks.L02007 ? tasks.L02007.timestamp : null,
+                    L02008: tasks.L02008 ? tasks.L02008.timestamp : null,
+                    L02011: tasks.L02011 ? tasks.L02011.timestamp : null,
+                    L02009: tasks.L02009 ? tasks.L02009.timestamp : null,
+                    L02010: tasks.L02010 ? tasks.L02010.timestamp : null,
+                    L02020: tasks.L02020 ? tasks.L02020.timestamp : null,
+                    L02021: tasks.L02021 ? tasks.L02021.timestamp : null,
+                    L02022: tasks.L02022 ? tasks.L02022.timestamp : null
+                },
+
                 // Cleanliness scores
                 L99016: payload.limpiezaGeneral,
                 L99017: payload.limpiezaMaquinas,
@@ -431,23 +474,23 @@
                 L01020_1: tasks.L01020 ? tasks.L01020.jabon : 0, // ok
                 L01020_2: tasks.L01020 ? tasks.L01020.suavizante : 0, // ok
                 L01020_3: tasks.L01020 ? tasks.L01020.oxigeno : 0, // ok
-                L01021_1: tasks.L01021 ? tasks.L01021.jabon : 0,
-                L01021_2: tasks.L01021 ? tasks.L01021.suavizante : 0,
-                L01021_3: tasks.L01021 ? tasks.L01021.oxigeno : 0,
-                L01022_1: tasks.L01022 ? tasks.L01022.jabon : 0,
-                L01022_2: tasks.L01022 ? tasks.L01022.suavizante : 0,
-                L01022_3: tasks.L01022 ? tasks.L01022.oxigeno : 0,
+                L01021_1: tasks.L01021 ? tasks.L01021.jabon : 0, // ok
+                L01021_2: tasks.L01021 ? tasks.L01021.suavizante : 0, // ok
+                L01021_3: tasks.L01021 ? tasks.L01021.oxigeno : 0, // ok
+                L01022_1: tasks.L01022 ? tasks.L01022.jabon : 0, // ok
+                L01022_2: tasks.L01022 ? tasks.L01022.suavizante : 0, // ok
+                L01022_3: tasks.L01022 ? tasks.L01022.oxigeno : 0, // ok
 
                 // Numeric Inputs - Hortaleza
                 L02020_1: tasks.L02020 ? tasks.L02020.jabon : 0, // ok
                 L02020_2: tasks.L02020 ? tasks.L02020.suavizante : 0, // ok
                 L02020_3: tasks.L02020 ? tasks.L02020.oxigeno : 0, // ok
-                L02021_1: tasks.L02021 ? tasks.L02021.jabon : 0,
-                L02021_2: tasks.L02021 ? tasks.L02021.suavizante : 0,
-                L02021_3: tasks.L02021 ? tasks.L02021.oxigeno : 0,
-                L02022_1: tasks.L02022 ? tasks.L02022.jabon : 0,
-                L02022_2: tasks.L02022 ? tasks.L02022.suavizante : 0,
-                L02022_3: tasks.L02022 ? tasks.L02022.oxigeno : 0,
+                L02021_1: tasks.L02021 ? tasks.L02021.jabon : 0, // ok
+                L02021_2: tasks.L02021 ? tasks.L02021.suavizante : 0,  // ok
+                L02021_3: tasks.L02021 ? tasks.L02021.oxigeno : 0, // ok
+                L02022_1: tasks.L02022 ? tasks.L02022.jabon : 0, // ok
+                L02022_2: tasks.L02022 ? tasks.L02022.suavizante : 0, // ok
+                L02022_3: tasks.L02022 ? tasks.L02022.oxigeno : 0, // ok
             };
 
             console.log('Sending data to API:', formattedData);
