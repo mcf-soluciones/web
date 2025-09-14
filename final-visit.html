@@ -79,7 +79,7 @@
         <div id="no-session-error" class="alert alert-danger" style="display: none;">
             <h4>Error: Sesión no iniciada</h4>
             <p>Por favor, regresa a la página principal para iniciar una sesión antes de escanear un código QR.</p>
-            <a href="final-visit.html" class="btn btn-primary">Iniciar Sesión</a>
+            
         </div>
 
         <!-- Task Forms Container -->
@@ -179,7 +179,7 @@
         function getOrSetVisitId() {
             let visitId = localStorage.getItem('visitId');
             if (!visitId) {
-                visitId = `v1-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                visitId = `v2-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 localStorage.setItem('visitId', visitId);
             }
             return visitId;
@@ -345,7 +345,10 @@
                 location: visitData.location,
                 user: visitData.user,
                 tasks: visitData.tasks,
-                submissionTimestamp: new Date().toISOString()
+                submissionTimestamp: new Date().toISOString(),
+                limpiezaGeneral: visitData.limpiezaGeneral,
+                limpiezaMaquinas: visitData.limpiezaMaquinas,
+                limpiezaBasurero: visitData.limpiezaBasurero
             };
 
             console.log('Submitting final data:', payload);
