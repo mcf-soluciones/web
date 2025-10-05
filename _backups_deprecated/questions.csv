@@ -1,0 +1,42 @@
+"url","question","mandatory", "only_ready"
+"#L99001","Superficies Secadoras",true, true
+"#L99002","Atrás Superficies Secadoras",false, true
+"#L99003","Superficies Lavadoras",true, true
+"#L99004","Atrás Superficies Lavadoras",false, true
+"#L99006","Tirar Botes de la Bodega",false, true
+"#L99007","Barrer",true, true
+"#L99008","Trapear",true, true
+"#L99014","Descarga de Billetes y Monedas",false, true
+"#L99015","Carga de Monedas",false, true
+"#L99012","Carga de Papel Impression",false, true 
+"#L99013","Carga de Tarjetas Cliente",false, true
+"#L99009","Limpieza Entrada Billetes",false, true
+"#L99010","Limpieza Entrada Tarjetas",false, true
+"#L99011","DEPRECATED - Limpieza Entrada Billetes",false, true
+"#L01001","Reinicio Lavadora 4",false, true
+"#L01002","Reinicio Lavadora 5",false, true
+"#L01003","Reinicio Lavadora 6",false, true
+"#L01004","Reinicio Lavadora 7",false, true
+"#L01007","Revision Bombas 1",false, true
+"#L01008","Revision Bombas 2",false, true
+"#L01009","Limpieza Filtro Secadora 1",true, true
+"#L01010","Limpieza Filtro Secadora 2",true, true
+"#L01011","Limpieza Filtro Secadora 3",true, true
+"#L02001","Reinicio Lavadora 1",false, true
+"#L02002","Reinicio Lavadora 2",false, true
+"#L02003","Reinicio Lavadora 3",false, true
+"#L02004","Reinicio Lavadora 4",false, true
+"#L02007","Revision Bombas 1",false, true
+"#L02008","Revision Bombas 2",false, true
+"#L02011","Limpieza Filtro Secadora 5",true, true
+"#L02009","Limpieza Filtro Secadora 6",true, true
+"#L02010","Limpieza Filtro Secadora 7",true, true
+"#L01020","Inventario Bodega",true, false
+"#L01021","Inventario Bomba 1",true, false
+"#L01022","Inventario Bomba 2",true, false
+"#L02020","Inventario Bodega",true, false
+"#L02021","Inventario Bomba 1",true, false
+"#L02022","Inventario Bomba 2",true, false
+"#L99016", "CLEAN1", false, true
+"#L99017", "CLEAN2", false, true
+"#L99018", "CLEAN3", false, true
