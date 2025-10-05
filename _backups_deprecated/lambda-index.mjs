@@ -16,7 +16,7 @@ const response = {
     body: JSON.stringify({ result: "Success" })
 };
 
-const notion = new Client({ auth: 'secret_vxCZixTbzZn3eZzyk7QivNp8Si6nd1BHaVixHoKPX7U' });
+const notion = new Client({ auth: 'XXXXX' });
 
 export const handler = async (event) => {
     try {
