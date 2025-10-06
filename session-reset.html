@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restablecer Sesión</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body, html {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Restablecer Datos de Sesión</h1>
+        <p class="lead">
+            Si tienes problemas para iniciar una nueva visita, presiona este botón para borrar todos los datos de la sesión anterior.
+        </p>
+        <button id="reset-button" class="btn btn-danger btn-lg">Borrar Datos y Reiniciar</button>
+        <div id="confirmation-message" class="alert alert-success mt-4" style="display: none;">
+            ¡Listo! Todos los datos de la sesión han sido borrados. Ahora puedes cerrar esta ventana e iniciar una nueva visita.
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('reset-button').addEventListener('click', () => {
+            if (confirm("¿Estás seguro de que quieres borrar todos los datos de la sesión? Esta acción no se puede deshacer.")) {
+                // Clear all local storage data for this site
+                localStorage.clear();
+                // Clear all session storage data for this site
+                sessionStorage.clear();
+
+                // Hide the button and show the confirmation message
+                document.getElementById('reset-button').style.display = 'none';
+                document.getElementById('confirmation-message').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
