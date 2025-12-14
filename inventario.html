@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Registro de Inventario</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fecaca;
+            --purple: #9333ea;
+            --purple-light: #f3e8ff;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            padding-bottom: 100px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .location-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+
+        .back-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Info box */
+        .info-box {
+            background: var(--primary-light);
+            border: 1px solid #93c5fd;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .info-box-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box-title svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .info-box p {
+            font-size: 13px;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Example images */
+        .example-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .example-item {
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .example-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .example-caption {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .example-caption strong {
+            color: var(--text-primary);
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: var(--warning-light);
+            border: 1px solid #fcd34d;
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .warning-box svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Inventory section */
+        .inventory-section {
+            margin-bottom: 24px;
+        }
+
+        .inventory-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .inventory-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .inventory-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .inventory-icon.purple {
+            background: var(--purple-light);
+            color: var(--purple);
+        }
+
+        .inventory-icon.blue {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .inventory-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .inventory-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .inventory-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Input row */
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .input-row .form-label {
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .input-row .form-input {
+            text-align: center;
+            padding: 10px 8px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        /* Alert styles */
+        .alert {
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-danger {
+            background: var(--danger-light);
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Fixed submit bar */
+        .submit-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+            padding: 16px;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-bar-content {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .submit-bar .btn {
+            width: 100%;
+        }
+
+        /* Completion message */
+        #completion-message {
+            display: none;
+            text-align: center;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-light);
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .completion-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-card {
+            background: white;
+            padding: 32px 48px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 390px) {
+            .container {
+                padding: 16px 12px;
+                padding-bottom: 100px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .input-row {
+                gap: 8px;
+            }
+        }
+
+        /* Collapsible sections */
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 12px 0;
+        }
+
+        .collapsible-header .chevron {
+            transition: transform 0.2s;
+        }
+
+        .collapsible-header.expanded .chevron {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            display: none;
+            padding-top: 12px;
+        }
+
+        .collapsible-content.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Volver al panel
+        </a>
+
+        <div class="header">
+            <h1>Registro de Inventario</h1>
+            <p>Conteo de productos y suministros</p>
+            <div class="location-badge" id="location-badge" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span id="location-name"></span>
+            </div>
+        </div>
+
+        <!-- Location Selection -->
+        <div id="location-setup" class="card fade-in">
+            <h3 class="card-title">¿En qué local estás?</h3>
+            <form id="setup-form">
+                <div class="form-group">
+                    <label class="form-label">Sucursal</label>
+                    <select class="form-select" id="location-select" required>
+                        <option value="" disabled selected>Selecciona una opcion</option>
+                        <option value="hortaleza">Hortaleza</option>
+                        <option value="usera">Usera</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Continuar</button>
+            </form>
+        </div>
+
+        <!-- Instructions -->
+        <div id="instructions-card" class="card fade-in" style="display: none;">
+            <div class="collapsible-header" onclick="toggleInstructions()">
+                <div class="info-box-title" style="margin: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    Como contar los bidones
+                </div>
+                <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="collapsible-content" id="instructions-content">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+                    Cuenta el numero de bidones de cada producto. Si un bidon esta parcialmente lleno, estima la cantidad (ej: medio bidon = 0.5).
+                </p>
+
+                <div class="example-gallery">
+                    <div class="example-item">
+                        <img src="/img/example_1.png" alt="Ejemplo bodega">
+                        <div class="example-caption">
+                            <strong>Bodega:</strong> Cuenta bidones completos. En este ejemplo: Jabon=4, Suavizante=8, Oxigeno=7.3
+                        </div>
+                    </div>
+                    <div class="example-item">
+                        <img src="/img/example_2.png" alt="Ejemplo bomba">
+                        <div class="example-caption">
+                            <strong>Bomba:</strong> Estima segun peso aproximado. Bidones parciales como 0.4, 0.5, 0.7, etc.
+                        </div>
+                    </div>
+                    <div class="example-item">
+                        <img src="/img/example_3.png" alt="Nivel bajo">
+                        <div class="example-caption">
+                            <strong>Alerta:</strong> Si el nivel es menor a 0.3, avisa para rellenar urgente.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                    <span>Si algun insumo esta por debajo de 0.3 bidones, notifica inmediatamente para reabastecer.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Form -->
+        <div id="inventory-form" style="display: none;">
+            <form id="main-form">
+                <!-- Bodega -->
+                <div class="card fade-in">
+                    <div class="inventory-section">
+                        <div class="inventory-header">
+                            <div class="inventory-icon purple">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>
+                            </div>
+                            <div>
+                                <div class="inventory-title">Inventario Bodega</div>
+                                <div class="inventory-desc">Bidones almacenados (no conectados)</div>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="form-group">
+                                <label class="form-label">Jabon</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bodega-jabon" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Suavizante</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bodega-suavizante" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Oxigeno</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bodega-oxigeno" placeholder="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bomba 1 -->
+                <div class="card fade-in">
+                    <div class="inventory-section">
+                        <div class="inventory-header">
+                            <div class="inventory-icon blue">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 11h1"/><path d="M15 11v-1a1 1 0 0 1 1-1 1 1 0 0 1 1 1v3"/><path d="M17 13h1"/><path d="M9 7 6 4"/><path d="M6 7l3-3"/><rect x="2" y="7" width="8" height="8" rx="1"/><path d="M10 11h1"/><circle cx="17" cy="17" r="3"/></svg>
+                            </div>
+                            <div>
+                                <div class="inventory-title">Bomba 1</div>
+                                <div class="inventory-desc">Bidones conectados a la bomba 1</div>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="form-group">
+                                <label class="form-label">Jabon</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bomba1-jabon" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Suavizante</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bomba1-suavizante" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Oxigeno</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bomba1-oxigeno" placeholder="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bomba 2 -->
+                <div class="card fade-in">
+                    <div class="inventory-section">
+                        <div class="inventory-header">
+                            <div class="inventory-icon blue">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 11h1"/><path d="M15 11v-1a1 1 0 0 1 1-1 1 1 0 0 1 1 1v3"/><path d="M17 13h1"/><path d="M9 7 6 4"/><path d="M6 7l3-3"/><rect x="2" y="7" width="8" height="8" rx="1"/><path d="M10 11h1"/><circle cx="17" cy="17" r="3"/></svg>
+                            </div>
+                            <div>
+                                <div class="inventory-title">Bomba 2</div>
+                                <div class="inventory-desc">Bidones conectados a la bomba 2</div>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="form-group">
+                                <label class="form-label">Jabon</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bomba2-jabon" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Suavizante</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bomba2-suavizante" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Oxigeno</label>
+                                <input type="number" step="0.1" min="0" class="form-input" id="bomba2-oxigeno" placeholder="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Completion Message -->
+        <div id="completion-message" class="card fade-in">
+            <div class="completion-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h3 class="card-title" style="text-align: center;">Inventario registrado</h3>
+            <p style="text-align: center; color: var(--text-secondary);">Los datos han sido enviados correctamente.</p>
+            <a href="/admin.html" class="btn btn-primary" style="margin-top: 16px;">Volver al panel</a>
+        </div>
+
+        <div class="footer">
+            MCF Soluciones - Registro de Inventario
+        </div>
+    </div>
+
+    <!-- Fixed Submit Bar -->
+    <div class="submit-bar" id="submit-bar" style="display: none;">
+        <div class="submit-bar-content">
+            <button class="btn btn-success" id="submit-btn" onclick="submitInventory()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Enviar Inventario
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Enviando datos...</div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let inventoryData = {
+            location: null,
+            user: null
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Read URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUser = urlParams.get('user');
+            const urlLocation = urlParams.get('location');
+
+            // Store user from URL params (required)
+            if (urlUser) {
+                inventoryData.user = urlUser;
+            }
+
+            // If location is also provided (legacy support), skip setup
+            if (urlLocation) {
+                inventoryData.location = urlLocation;
+                showInventoryForm();
+            } else {
+                // Show location selection form
+                document.getElementById('setup-form').addEventListener('submit', handleSetupSubmit);
+            }
+        });
+
+        function handleSetupSubmit(e) {
+            e.preventDefault();
+
+            inventoryData.location = document.getElementById('location-select').value;
+
+            showInventoryForm();
+        }
+
+        function showInventoryForm() {
+            document.getElementById('location-setup').style.display = 'none';
+            document.getElementById('instructions-card').style.display = 'block';
+            document.getElementById('inventory-form').style.display = 'block';
+            document.getElementById('submit-bar').style.display = 'block';
+
+            // Show location badge
+            const locationBadge = document.getElementById('location-badge');
+            locationBadge.style.display = 'inline-flex';
+            document.getElementById('location-name').textContent =
+                inventoryData.location.charAt(0).toUpperCase() + inventoryData.location.slice(1);
+        }
+
+        function toggleInstructions() {
+            const header = document.querySelector('.collapsible-header');
+            const content = document.getElementById('instructions-content');
+            header.classList.toggle('expanded');
+            content.classList.toggle('show');
+        }
+
+        async function submitInventory() {
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+
+            // Validate all inputs have values
+            const inputs = document.querySelectorAll('#inventory-form input[type="number"]');
+            let isValid = true;
+            inputs.forEach(input => {
+                if (input.value === '' || input.value === null) {
+                    input.value = '0';
+                }
+            });
+
+            document.getElementById('loading-overlay').classList.add('active');
+
+            try {
+                await submitToAPI();
+
+                document.getElementById('loading-overlay').classList.remove('active');
+                document.getElementById('instructions-card').style.display = 'none';
+                document.getElementById('inventory-form').style.display = 'none';
+                document.getElementById('submit-bar').style.display = 'none';
+                document.getElementById('completion-message').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading-overlay').classList.remove('active');
+                alert('Error al enviar. Intentalo de nuevo.');
+                submitBtn.disabled = false;
+            }
+        }
+
+        function submitToAPI() {
+            const URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+
+            const now = new Date().toISOString();
+
+            const formattedData = {
+                type: 'inventario',
+                propiedad: inventoryData.location,
+                user: inventoryData.user,
+                visitId: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                submissionTimestamp: now,
+
+                // Bodega values
+                bodega_jabon: document.getElementById('bodega-jabon').value || 0,
+                bodega_suavizante: document.getElementById('bodega-suavizante').value || 0,
+                bodega_oxigeno: document.getElementById('bodega-oxigeno').value || 0,
+
+                // Bomba 1 values
+                bomba1_jabon: document.getElementById('bomba1-jabon').value || 0,
+                bomba1_suavizante: document.getElementById('bomba1-suavizante').value || 0,
+                bomba1_oxigeno: document.getElementById('bomba1-oxigeno').value || 0,
+
+                // Bomba 2 values
+                bomba2_jabon: document.getElementById('bomba2-jabon').value || 0,
+                bomba2_suavizante: document.getElementById('bomba2-suavizante').value || 0,
+                bomba2_oxigeno: document.getElementById('bomba2-oxigeno').value || 0,
+            };
+
+            console.log('Sending inventory data:', formattedData);
+
+            return $.ajax({
+                type: "POST",
+                url: URL,
+                dataType: "json",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(formattedData),
+            });
+        }
+    </script>
+</body>
+</html>

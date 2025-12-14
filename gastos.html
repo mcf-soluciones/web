@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Registrar Gasto</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fecaca;
+            --orange: #f97316;
+            --orange-light: #ffedd5;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+
+        .back-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Amount input with currency */
+        .amount-row {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 12px;
+        }
+
+        /* Toggle switches */
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .toggle-option:hover {
+            border-color: var(--primary);
+        }
+
+        .toggle-option.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .toggle-option input {
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        .btn-orange {
+            background: var(--orange);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-orange:hover {
+            background: #ea580c;
+        }
+
+        .btn-orange:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        /* Completion message */
+        #completion-message {
+            display: none;
+            text-align: center;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-light);
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .completion-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-card {
+            background: white;
+            padding: 32px 48px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 390px) {
+            .container {
+                padding: 16px 12px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .amount-row {
+                grid-template-columns: 1fr 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Volver al panel
+        </a>
+
+        <div class="header">
+            <h1>Registrar Gasto</h1>
+            <p>Registro de gastos y pagos</p>
+        </div>
+
+        <!-- Form -->
+        <div id="form-card" class="card fade-in">
+            <form id="gastos-form">
+                <!-- Location -->
+                <div class="form-group">
+                    <label class="form-label">Propiedad / Centro de costo</label>
+                    <select class="form-select" id="location-select" required>
+                        <option value="" disabled selected>Selecciona una opcion</option>
+                        <option value="hortaleza">Hortaleza</option>
+                        <option value="usera">Usera</option>
+                        <option value="corporate">Corporate</option>
+                    </select>
+                </div>
+
+                <!-- Amount and Currency -->
+                <div class="form-group">
+                    <label class="form-label">Importe</label>
+                    <div class="amount-row">
+                        <input type="number" step="0.01" min="0" class="form-input" id="amount-input" placeholder="0.00" required>
+                        <select class="form-select" id="currency-select" required>
+                            <option value="EUR" selected>EUR</option>
+                            <option value="MXN">MXN</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Concept Dropdown -->
+                <div class="form-group">
+                    <label class="form-label">Concepto MCF</label>
+                    <select class="form-select" id="concept-select" required>
+                        <option value="" disabled selected>Selecciona un concepto</option>
+                        <!-- TODO: Replace with actual concepts -->
+                        <option value="alquiler">Alquiler</option>
+                        <option value="suministros">Suministros (luz, agua, gas)</option>
+                        <option value="mantenimiento">Mantenimiento</option>
+                        <option value="limpieza">Limpieza</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="seguros">Seguros</option>
+                        <option value="impuestos">Impuestos</option>
+                        <option value="nominas">Nominas</option>
+                        <option value="proveedores">Proveedores</option>
+                        <option value="otros">Otros</option>
+                    </select>
+                </div>
+
+                <!-- Concept Free Text -->
+                <div class="form-group">
+                    <label class="form-label">Descripcion del gasto</label>
+                    <textarea class="form-textarea" id="concept-text" placeholder="Describe el gasto..." required></textarea>
+                    <p class="form-hint">Ejemplo: Pago mensual de electricidad, Reparacion de lavadora #3, etc.</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Is Fiscal -->
+                <div class="form-group">
+                    <label class="form-label">¿Es fiscal? (tiene factura)</label>
+                    <div class="toggle-group">
+                        <label class="toggle-option" id="fiscal-si">
+                            <input type="radio" name="is_fiscal" value="true">
+                            Si
+                        </label>
+                        <label class="toggle-option active" id="fiscal-no">
+                            <input type="radio" name="is_fiscal" value="false" checked>
+                            No
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Is Investment -->
+                <div class="form-group">
+                    <label class="form-label">¿Es inversion?</label>
+                    <div class="toggle-group">
+                        <label class="toggle-option" id="investment-si">
+                            <input type="radio" name="is_investment" value="true">
+                            Si
+                        </label>
+                        <label class="toggle-option active" id="investment-no">
+                            <input type="radio" name="is_investment" value="false" checked>
+                            No
+                        </label>
+                    </div>
+                    <p class="form-hint">Marcar si es una compra de activo (equipo, maquinaria, etc.)</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <button type="submit" class="btn btn-orange">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Registrar Gasto
+                </button>
+            </form>
+        </div>
+
+        <!-- Completion Message -->
+        <div id="completion-message" class="card fade-in">
+            <div class="completion-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h3 class="card-title" style="text-align: center;">Gasto registrado</h3>
+            <p style="text-align: center; color: var(--text-secondary);">El gasto ha sido registrado correctamente.</p>
+            <a href="/admin.html" class="btn btn-primary" style="margin-top: 16px;">Volver al panel</a>
+        </div>
+
+        <div class="footer">
+            MCF Soluciones - Registro de Gastos
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Registrando gasto...</div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let gastoData = {
+            user: null
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Read URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUser = urlParams.get('user');
+
+            if (urlUser) {
+                gastoData.user = urlUser;
+            }
+
+            // Setup toggle buttons
+            setupToggles();
+
+            // Setup form submission
+            document.getElementById('gastos-form').addEventListener('submit', handleSubmit);
+        });
+
+        function setupToggles() {
+            // Fiscal toggles
+            const fiscalSi = document.getElementById('fiscal-si');
+            const fiscalNo = document.getElementById('fiscal-no');
+
+            fiscalSi.addEventListener('click', () => {
+                fiscalSi.classList.add('active');
+                fiscalNo.classList.remove('active');
+                fiscalSi.querySelector('input').checked = true;
+            });
+
+            fiscalNo.addEventListener('click', () => {
+                fiscalNo.classList.add('active');
+                fiscalSi.classList.remove('active');
+                fiscalNo.querySelector('input').checked = true;
+            });
+
+            // Investment toggles
+            const investmentSi = document.getElementById('investment-si');
+            const investmentNo = document.getElementById('investment-no');
+
+            investmentSi.addEventListener('click', () => {
+                investmentSi.classList.add('active');
+                investmentNo.classList.remove('active');
+                investmentSi.querySelector('input').checked = true;
+            });
+
+            investmentNo.addEventListener('click', () => {
+                investmentNo.classList.add('active');
+                investmentSi.classList.remove('active');
+                investmentNo.querySelector('input').checked = true;
+            });
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const location = document.getElementById('location-select').value;
+            const amount = parseFloat(document.getElementById('amount-input').value);
+            const currency = document.getElementById('currency-select').value;
+            const conceptMcf = document.getElementById('concept-select').value;
+            const conceptText = document.getElementById('concept-text').value.trim();
+            const isFiscal = document.querySelector('input[name="is_fiscal"]:checked').value === 'true';
+            const isInvestment = document.querySelector('input[name="is_investment"]:checked').value === 'true';
+
+            if (!location || !amount || !conceptMcf || !conceptText) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            document.getElementById('loading-overlay').classList.add('active');
+
+            try {
+                // Submit to both APIs in parallel
+                await Promise.all([
+                    submitToNotionAPI({
+                        location,
+                        amount,
+                        currency,
+                        conceptMcf,
+                        conceptText,
+                        isFiscal,
+                        isInvestment
+                    }),
+                    submitToGoogleSheetsAPI({
+                        location,
+                        amount,
+                        currency,
+                        conceptMcf,
+                        conceptText,
+                        isFiscal,
+                        isInvestment
+                    })
+                ]);
+
+                document.getElementById('loading-overlay').classList.remove('active');
+                document.getElementById('form-card').style.display = 'none';
+                document.getElementById('completion-message').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading-overlay').classList.remove('active');
+                alert('Error al registrar. Intentalo de nuevo.');
+            }
+        }
+
+        function submitToNotionAPI(data) {
+            // This goes to the movimientos lambda endpoint for Notion
+            const URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+
+            const now = new Date();
+
+            const formattedData = {
+                type: 'gasto',
+                mcf_user: gastoData.user,
+                propiedad: data.location,
+                importe_total: data.amount,
+                currency: data.currency,
+                concepto_mcf: data.conceptMcf,
+                concepto_proveedor: data.conceptText,
+                is_fiscal: data.isFiscal,
+                es_inversion: data.isInvestment,
+                fecha: now.toISOString()
+            };
+
+            console.log('Sending gasto data to Notion:', formattedData);
+
+            return $.ajax({
+                type: "POST",
+                url: URL,
+                dataType: "json",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(formattedData),
+            });
+        }
+
+        function submitToGoogleSheetsAPI(data) {
+            // This goes to the gastos lambda endpoint for Google Sheets
+            const URL = "https://6tadzueogh.execute-api.us-east-1.amazonaws.com/default-v0/mcf_gastosToGoogleSheet-v2";
+
+            const now = new Date();
+
+            const formattedData = {
+                type: 'gasto',
+                mcf_user: gastoData.user,
+                propiedad: data.location,
+                importe_total: data.amount,
+                currency: data.currency,
+                concepto_mcf: data.conceptMcf,
+                concepto_proveedor: data.conceptText,
+                is_fiscal: data.isFiscal,
+                es_inversion: data.isInvestment,
+                fecha: now.toISOString(),
+                // Fields that will be null (formulas or not captured in form)
+                cuenta_mcf: null,
+                nif_proveedor: null,
+                razon_social: null,
+                num_factura: null,
+                importe_iva: null,
+                base_imponible: null,
+                importe_irpf: null,
+                importe_otros: null,
+                factura: null,
+                concepto_banco: null
+            };
+
+            console.log('Sending gasto data to Google Sheets:', formattedData);
+
+            return $.ajax({
+                type: "POST",
+                url: URL,
+                dataType: "json",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(formattedData),
+            });
+        }
+    </script>
+</body>
+</html>

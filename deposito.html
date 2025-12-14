@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-    <title>Reportar Incidencia</title>
+    <title>Deposito a Cuenta</title>
     <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -23,7 +23,9 @@
             --warning: #f59e0b;
             --warning-light: #fef3c7;
             --danger: #ef4444;
-            --danger-light: #fee2e2;
+            --danger-light: #fecaca;
+            --cyan: #06b6d4;
+            --cyan-light: #cffafe;
             --bg-primary: #ffffff;
             --bg-secondary: #f8fafc;
             --bg-tertiary: #f1f5f9;
@@ -121,8 +123,7 @@
             margin-bottom: 6px;
         }
 
-        .form-input,
-        .form-select {
+        .form-input {
             width: 100%;
             padding: 12px 16px;
             font-size: 16px;
@@ -136,19 +137,10 @@
             font-family: inherit;
         }
 
-        .form-select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 12px center;
-            background-repeat: no-repeat;
-            background-size: 20px;
-            padding-right: 44px;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
+        .form-input:focus {
             outline: none;
-            border-color: var(--danger);
-            box-shadow: 0 0 0 3px var(--danger-light);
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px var(--cyan-light);
         }
 
         .form-hint {
@@ -157,28 +149,27 @@
             margin-top: 6px;
         }
 
-        /* Section headers */
-        .section-header {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--danger);
+        /* Amount display */
+        .amount-display {
+            text-align: center;
+            padding: 20px;
+            background: var(--cyan-light);
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+        }
+
+        .amount-display .label {
+            font-size: 12px;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            margin-top: 20px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--danger-light);
+            margin-bottom: 4px;
         }
 
-        .section-header:first-child {
-            margin-top: 0;
-        }
-
-        /* Divider */
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: 20px 0;
+        .amount-display .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--cyan);
         }
 
         /* Buttons */
@@ -207,17 +198,17 @@
             background: var(--primary-hover);
         }
 
-        .btn-danger {
-            background: var(--danger);
+        .btn-cyan {
+            background: var(--cyan);
             color: white;
             width: 100%;
         }
 
-        .btn-danger:hover {
-            background: #dc2626;
+        .btn-cyan:hover {
+            background: #0891b2;
         }
 
-        .btn-danger:disabled {
+        .btn-cyan:disabled {
             background: var(--secondary);
             cursor: not-allowed;
         }
@@ -294,7 +285,7 @@
             width: 40px;
             height: 40px;
             border: 3px solid var(--border);
-            border-top-color: var(--danger);
+            border-top-color: var(--cyan);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px;
@@ -329,95 +320,28 @@
         </a>
 
         <div class="header">
-            <h1>Reportar Incidencia</h1>
-            <p>Registrar quejas, problemas o llamadas</p>
+            <h1>Deposito a Cuenta</h1>
+            <p>Registrar deposito de efectivo al banco</p>
         </div>
 
         <!-- Form -->
         <div id="form-card" class="card fade-in">
-            <form id="incidencia-form">
-                <!-- Severity -->
-                <p class="section-header">Informacion General</p>
-
+            <form id="deposito-form">
+                <!-- Amount -->
                 <div class="form-group">
-                    <label class="form-label">Severidad</label>
-                    <select class="form-select" id="severity" required>
-                        <option value="" disabled selected>Selecciona severidad</option>
-                        <!-- PLACEHOLDER: Add severity options -->
-                        <option value="baja">Baja</option>
-                        <option value="media">Media</option>
-                        <option value="alta">Alta</option>
-                        <option value="critica">Critica</option>
-                    </select>
+                    <label class="form-label">Cantidad depositada</label>
+                    <input type="number" step="0.01" min="0" class="form-input" id="amount-input" placeholder="0.00" required>
+                    <p class="form-hint">Ingresa el monto total del deposito en euros</p>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Propiedad</label>
-                    <select class="form-select" id="propiedad" required>
-                        <option value="" disabled selected>Selecciona propiedad</option>
-                        <!-- PLACEHOLDER: Add propiedad options -->
-                        <option value="hortaleza">Hortaleza</option>
-                        <option value="usera">Usera</option>
-                    </select>
+                <div class="amount-display">
+                    <div class="label">Total a depositar</div>
+                    <div class="value" id="amount-display">0.00 EUR</div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Costo estimado (EUR)</label>
-                    <input type="number" step="0.01" min="0" class="form-input" id="cost" placeholder="0.00">
-                    <p class="form-hint">Deja en blanco si no aplica</p>
-                </div>
-
-                <div class="divider"></div>
-
-                <!-- Details -->
-                <p class="section-header">Detalles</p>
-
-                <div class="form-group">
-                    <label class="form-label">Resolucion</label>
-                    <select class="form-select" id="resolution" required>
-                        <option value="" disabled selected>Selecciona estado</option>
-                        <!-- PLACEHOLDER: Add resolution options -->
-                        <option value="pendiente">Pendiente</option>
-                        <option value="en_proceso">En Proceso</option>
-                        <option value="resuelto">Resuelto</option>
-                        <option value="escalado">Escalado</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Maquina afectada</label>
-                    <select class="form-select" id="machine">
-                        <option value="" disabled selected>Selecciona maquina (opcional)</option>
-                        <!-- PLACEHOLDER: Add machine options -->
-                        <option value="lavadora_1">Lavadora 1</option>
-                        <option value="lavadora_2">Lavadora 2</option>
-                        <option value="lavadora_3">Lavadora 3</option>
-                        <option value="secadora_1">Secadora 1</option>
-                        <option value="secadora_2">Secadora 2</option>
-                        <option value="otra">Otra</option>
-                        <option value="na">No aplica</option>
-                    </select>
-                    <p class="form-hint">Deja en blanco si no aplica a una maquina</p>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Como se encontro</label>
-                    <select class="form-select" id="found" required>
-                        <option value="" disabled selected>Selecciona como se encontro</option>
-                        <!-- PLACEHOLDER: Add found options -->
-                        <option value="llamada_cliente">Llamada de cliente</option>
-                        <option value="visita_rutina">Visita de rutina</option>
-                        <option value="queja_presencial">Queja presencial</option>
-                        <option value="camara">Por camara</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-
-                <div class="divider"></div>
-
-                <button type="submit" class="btn btn-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
-                    Reportar Incidencia
+                <button type="submit" class="btn btn-cyan">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Registrar Deposito
                 </button>
             </form>
         </div>
@@ -427,13 +351,13 @@
             <div class="completion-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
-            <h3 class="card-title" style="text-align: center;">Incidencia reportada</h3>
-            <p style="text-align: center; color: var(--text-secondary);">La incidencia ha sido registrada correctamente.</p>
+            <h3 class="card-title" style="text-align: center;">Deposito registrado</h3>
+            <p style="text-align: center; color: var(--text-secondary);">El deposito ha sido registrado correctamente.</p>
             <a href="/admin.html" class="btn btn-primary" style="margin-top: 16px;">Volver al panel</a>
         </div>
 
         <div class="footer">
-            MCF Soluciones - Incidencias
+            MCF Soluciones - Deposito a Cuenta
         </div>
     </div>
 
@@ -441,13 +365,13 @@
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-card">
             <div class="loading-spinner"></div>
-            <div class="loading-text">Registrando incidencia...</div>
+            <div class="loading-text">Registrando deposito...</div>
         </div>
     </div>
 
     <script>
         // State
-        let incidenciaData = {
+        let depositoData = {
             user: null
         };
 
@@ -457,39 +381,35 @@
             const urlUser = urlParams.get('user');
 
             if (urlUser) {
-                incidenciaData.user = urlUser;
+                depositoData.user = urlUser;
             }
 
+            // Update amount display on input
+            document.getElementById('amount-input').addEventListener('input', updateAmountDisplay);
+
             // Setup form submission
-            document.getElementById('incidencia-form').addEventListener('submit', handleSubmit);
+            document.getElementById('deposito-form').addEventListener('submit', handleSubmit);
         });
+
+        function updateAmountDisplay() {
+            const amount = parseFloat(document.getElementById('amount-input').value) || 0;
+            document.getElementById('amount-display').textContent = amount.toFixed(2) + ' EUR';
+        }
 
         async function handleSubmit(e) {
             e.preventDefault();
 
-            const severity = document.getElementById('severity').value;
-            const propiedad = document.getElementById('propiedad').value;
-            const cost = parseFloat(document.getElementById('cost').value) || 0;
-            const resolution = document.getElementById('resolution').value;
-            const machine = document.getElementById('machine').value || null;
-            const found = document.getElementById('found').value;
+            const amount = parseFloat(document.getElementById('amount-input').value);
 
-            if (!severity || !propiedad || !resolution || !found) {
-                alert('Por favor completa todos los campos requeridos');
+            if (!amount || amount <= 0) {
+                alert('Por favor ingresa una cantidad valida');
                 return;
             }
 
             document.getElementById('loading-overlay').classList.add('active');
 
             try {
-                await submitToNotionAPI({
-                    severity,
-                    propiedad,
-                    cost,
-                    resolution,
-                    machine,
-                    found
-                });
+                await submitToNotionAPI(amount);
 
                 document.getElementById('loading-overlay').classList.remove('active');
                 document.getElementById('form-card').style.display = 'none';
@@ -502,21 +422,17 @@
             }
         }
 
-        function submitToNotionAPI(data) {
+        function submitToNotionAPI(amount) {
             const URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
 
             const formattedData = {
-                type: 'incidencia',
-                mcf_user: incidenciaData.user,
-                severity: data.severity,
-                propiedad: data.propiedad,
-                cost: data.cost,
-                resolution: data.resolution,
-                machine: data.machine,
-                found: data.found
+                type: 'deposito_simple',
+                mcf_user: depositoData.user,
+                euros: amount,
+                account: 'cash'
             };
 
-            console.log('Sending incidencia data to Notion:', formattedData);
+            console.log('Sending deposito data to Notion:', formattedData);
 
             return $.ajax({
                 type: "POST",

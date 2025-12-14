@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta de Satisfacción del Cliente</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* No hidden sections by default, all forms will be visible */
+        .card {
+            margin-bottom: 20px;
+        }
+        .warn-color {
+            color: #c22121;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div class="text-center">
+            <h1>Encuesta de Satisfacción</h1>
+            <p class="lead">Por favor, ayúdanos a mejorar completando esta breve encuesta.</p>
+        </div>
+
+        <div id="survey-introduction" class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title">Información General</h3>
+                <form id="general-info-form">
+                    <div class="form-group">
+                        <label for="location-select">¿En qué sucursal realizaste tu visita?</label>
+                        <select class="form-control" id="location-select" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="hortaleza">Hortaleza</option>
+                            <option value="usera">Usera</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-type-select">¿Eres cliente habitual o es tu primera vez?</label>
+                        <select class="form-control" id="user-type-select" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="habitual">Cliente Habitual</option>
+                            <option value="primera-vez">Primera Vez</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="survey-questions-container">
+            <!-- Questions based on tasks from final-visit.html, adapted for survey -->
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Limpieza General</h3>
+                    <div class="form-group">
+                        <label for="q-limpieza-general">1. ¿Cómo calificarías la limpieza general de la sucursal? (1 = Muy Malo, 10 = Excelente)</label>
+                        <input type="number" class="form-control" id="q-limpieza-general" min="1" max="10" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="q-limpieza-maquinas">2. ¿Cómo calificarías la limpieza de las máquinas? (1 = Muy Malo, 10 = Excelente)</label>
+                        <input type="number" class="form-control" id="q-limpieza-maquinas" min="1" max="10" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Estado de las Máquinas</h3>
+                    <div class="form-group">
+                        <label for="q-secadoras-superficies">1. ¿Las superficies de las secadoras estaban limpias?</label>
+                        <select class="form-control" id="q-secadoras-superficies" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="q-lavadoras-superficies">2. ¿Las superficies de las lavadoras estaban limpias?</label>
+                        <select class="form-control" id="q-lavadoras-superficies" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="q-filtros-secadoras">3. ¿Los filtros de las secadoras estaban limpios (si los revisaste)?</label>
+                        <select class="form-control" id="q-filtros-secadoras" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                            <option value="no-aplica">No aplica / No revisé</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Disponibilidad de Insumos</h3>
+                    <div class="form-group">
+                        <label for="q-jabon-disponible">1. ¿Había jabón disponible?</label>
+                        <select class="form-control" id="q-jabon-disponible" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="q-suavizante-disponible">2. ¿Había suavizante disponible?</label>
+                        <select class="form-control" id="q-suavizante-disponible" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="q-oxigeno-disponible">3. ¿Había oxígeno disponible?</label>
+                        <select class="form-control" id="q-oxigeno-disponible" required>
+                            <option value="" disabled selected>Selecciona una opción</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Comentarios Adicionales</h3>
+                    <div class="form-group">
+                        <label for="q-comments">¿Tienes algún comentario o sugerencia adicional?</label>
+                        <textarea class="form-control" id="q-comments" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="submit-survey-container" class="text-center mt-5">
+            <button id="submit-survey-btn" class="btn btn-primary btn-lg">Enviar Encuesta</button>
+            <div class="mt-2" id="feedback-message" style="display:none;"></div>
+        </div>
+
+        <div id="completion-message" class="alert alert-success mt-4" style="display: none;">
+            <h4>¡Gracias por completar la encuesta!</h4>
+            <p>Tu opinión es muy valiosa para nosotros.</p>
+        </div>
+
+    </div>
+
+    <script>
+        const API_ENDPOINT = 'YOUR_AWS_API_ENDPOINT_HERE'; // Placeholder for API endpoint
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('submit-survey-btn').addEventListener('click', submitSurvey);
+        });
+
+        async function submitSurvey() {
+            const feedbackEl = document.getElementById('feedback-message');
+            feedbackEl.textContent = 'Enviando encuesta...';
+            feedbackEl.className = 'alert alert-info';
+            feedbackEl.style.display = 'block';
+            document.getElementById('submit-survey-btn').disabled = true;
+
+            const surveyData = {
+                submissionTimestamp: new Date().toISOString(),
+                location: document.getElementById('location-select').value,
+                userType: document.getElementById('user-type-select').value,
+                // Limpieza General
+                limpiezaGeneral: document.getElementById('q-limpieza-general').value,
+                limpiezaMaquinas: document.getElementById('q-limpieza-maquinas').value,
+                // Estado de las Máquinas
+                secadorasSuperficies: document.getElementById('q-secadoras-superficies').value,
+                lavadorasSuperficies: document.getElementById('q-lavadoras-superficies').value,
+                filtrosSecadoras: document.getElementById('q-filtros-secadoras').value,
+                // Disponibilidad de Insumos
+                jabonDisponible: document.getElementById('q-jabon-disponible').value,
+                suavizanteDisponible: document.getElementById('q-suavizante-disponible').value,
+                oxigenoDisponible: document.getElementById('q-oxigeno-disponible').value,
+                // Comentarios Adicionales
+                comments: document.getElementById('q-comments').value
+            };
+
+            console.log('Survey Data:', surveyData);
+
+            // Basic validation
+            const forms = document.querySelectorAll('form');
+            let allFormsValid = true;
+            forms.forEach(form => {
+                if (!form.checkValidity()) {
+                    allFormsValid = false;
+                    form.reportValidity(); // Show browser's validation messages
+                }
+            });
+
+            if (!allFormsValid) {
+                feedbackEl.textContent = 'Por favor, completa todos los campos obligatorios.';
+                feedbackEl.className = 'alert alert-danger';
+                document.getElementById('submit-survey-btn').disabled = false;
+                return;
+            }
+
+            try {
+                // Replace with actual API call if needed
+                // await submitSurveyToAPI(surveyData);
+
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                feedbackEl.textContent = '¡Encuesta enviada con éxito!';
+                feedbackEl.className = 'alert alert-success';
+
+                document.getElementById('survey-questions-container').style.display = 'none';
+                document.getElementById('survey-introduction').style.display = 'none';
+                document.getElementById('submit-survey-container').style.display = 'none';
+                document.getElementById('completion-message').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error submitting survey:', error);
+                feedbackEl.textContent = 'Error al enviar la encuesta. Inténtalo de nuevo.';
+                feedbackEl.className = 'alert alert-danger';
+                document.getElementById('submit-survey-btn').disabled = false;
+            }
+        }
+
+        // Placeholder for actual API submission function
+        async function submitSurveyToAPI(payload) {
+            // Example using fetch API
+            // const response = await fetch(API_ENDPOINT, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify(payload),
+            // });
+            // if (!response.ok) {
+            //     throw new Error(`HTTP error! status: ${response.status}`);
+            // }
+            // return response.json();
+            console.log("API call would be made here with payload:", payload);
+            return Promise.resolve({ message: "Survey submitted successfully (simulated)." });
+        }
+    </script>
+</body>
+
+</html>

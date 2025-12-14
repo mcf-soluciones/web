@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>MCF Admin</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-tertiary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 12px;
+        }
+
+        .status-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Flow Container */
+        .flow-container {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .flow-question {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Section headers in action grid */
+        .section-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            padding-left: 4px;
+        }
+
+        .section-header:first-child {
+            margin-top: 0;
+        }
+
+        /* Action Cards */
+        .action-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .action-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .action-card:active {
+            transform: translateY(0);
+        }
+
+        .action-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-card.disabled:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .action-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .action-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .action-icon.blue { background: #dbeafe; color: #2563eb; }
+        .action-icon.green { background: #d1fae5; color: #059669; }
+        .action-icon.teal { background: #ccfbf1; color: #0d9488; }
+        .action-icon.orange { background: #ffedd5; color: #ea580c; }
+        .action-icon.amber { background: #fef3c7; color: #d97706; }
+        .action-icon.purple { background: #e9d5ff; color: #9333ea; }
+        .action-icon.red { background: #fecaca; color: #dc2626; }
+        .action-icon.indigo { background: #e0e7ff; color: #4f46e5; }
+        .action-icon.cyan { background: #cffafe; color: #0891b2; }
+
+        .action-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .action-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1px;
+        }
+
+        .action-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .action-arrow {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .action-arrow svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Sub-flow styles */
+        .sub-flow {
+            display: none;
+        }
+
+        .sub-flow.active {
+            display: block;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 0;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .back-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* User chips */
+        .user-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .user-chip {
+            padding: 10px 18px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-chip:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary);
+        }
+
+        .user-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Password input */
+        .password-container {
+            margin-top: 16px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .password-input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .password-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .password-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        /* Admin badge */
+        .admin-badge {
+            display: inline-block;
+            background: #9333ea;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease;
+        }
+
+        /* Admin-only elements (hidden by default, shown via JS) */
+        .admin-only {
+            display: none;
+        }
+
+        body.is-admin .admin-only {
+            display: flex;
+        }
+
+        body.is-admin .section-header.admin-only {
+            display: block;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 390px) {
+            .container {
+                padding: 16px 12px;
+            }
+
+            .action-card {
+                padding: 12px;
+            }
+
+            .action-icon {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MCF Admin</h1>
+            <p>Panel de administración</p>
+            <div class="status-badge" id="status-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span>Iniciando...</span>
+            </div>
+        </div>
+
+        <!-- Step 1: User Selection -->
+        <div id="step-user" class="flow-container sub-flow active fade-in">
+            <p class="flow-question">¿Quién eres?</p>
+            <div class="user-chips">
+                <button class="user-chip" onclick="selectUser('lalo')">Lalo<span class="admin-badge">Admin</span></button>
+                <button class="user-chip" onclick="selectUser('oscar')">Oscar<span class="admin-badge">Admin</span></button>
+                <button class="user-chip" onclick="selectUser('adrian')">Adrian<span class="admin-badge">Admin</span></button>
+                <button class="user-chip" onclick="selectUser('kenia')">Kenia</button>
+                 <button class="user-chip" onclick="selectUser('joanna')">Joanna</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Password (for admins only) -->
+        <div id="step-password" class="flow-container sub-flow fade-in">
+            <button class="back-btn" onclick="goBack('user')">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                Cambiar usuario
+            </button>
+            <p class="flow-question">Contraseña de administrador</p>
+            <div class="password-container">
+                <input type="password" id="password-input" class="password-input" placeholder="Ingresa la contraseña" onkeypress="handlePasswordKeypress(event)">
+                <p id="password-error" class="error-message">Contraseña incorrecta</p>
+                <button class="password-btn" onclick="checkPassword()">Continuar</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Main Actions -->
+        <div id="step-actions" class="flow-container sub-flow fade-in">
+            <button class="back-btn" onclick="goBack('user')">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                Cambiar usuario
+            </button>
+            <p class="flow-question">¿Qué necesitas hacer?</p>
+            <div class="action-grid">
+
+                <!-- VISITAS -->
+                <div class="section-header">Registrar Visita</div>
+
+                <a href="#" class="action-card" onclick="navigateTo('final-visit')">
+                    <div class="action-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Registrar Limpieza</div>
+                        <div class="action-desc">Checklist de tareas de limpieza</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="action-card" onclick="navigateTo('inventario')">
+                    <div class="action-icon teal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z"/><path d="M6 9.01V9"/><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Registro Inventario</div>
+                        <div class="action-desc">Conteo de productos y suministros</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="action-card" onclick="navigateTo('reportar-insumos')">
+                    <div class="action-icon orange">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Reportar Falta de Insumos</div>
+                        <div class="action-desc">Pedir insumos que no son jabon/suavizante/oxigeno</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <!-- MOVIMIENTOS DE CAJA (Admin only) -->
+                <div class="section-header admin-only">Movimientos de Caja</div>
+
+                <a href="#" class="action-card admin-only" onclick="navigateTo('fondo-caja')">
+                    <div class="action-icon indigo">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Ingreso Monedas a Fondo</div>
+                        <div class="action-desc">Añadir monedas al fondo de caja</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="action-card admin-only" onclick="navigateTo('retiro')">
+                    <div class="action-icon purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Retiro en Transito</div>
+                        <div class="action-desc">Retirar efectivo de caja</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="action-card admin-only" onclick="navigateTo('gastos')">
+                    <div class="action-icon orange">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Pago de un Gasto</div>
+                        <div class="action-desc">Registrar gasto con efectivo</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="action-card admin-only" onclick="navigateTo('deposito')">
+                    <div class="action-icon cyan">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Depósito a Cuenta</div>
+                        <div class="action-desc">Registrar depósito bancario</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <!-- OTROS (Admin only) -->
+                <div class="section-header admin-only">Otros</div>
+
+                <a href="#" class="action-card admin-only" onclick="navigateTo('incidencias')">
+                    <div class="action-icon red">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Incidencias</div>
+                        <div class="action-desc">Reportar quejas o llamadas</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+
+
+                <!-- CORPORATE (Admin only) -->
+                <div class="section-header admin-only">Corporate</div>
+
+                <a href="https://docs.google.com/spreadsheets/d/1brwERISPLIXih8nbPbHDpUHU0yBWdt8S6wvNYqs5mN4/edit?gid=1590924242#gid=1590924242" target="_blank" class="action-card admin-only">
+                    <div class="action-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">P&L</div>
+                        <div class="action-desc">Estado de resultados</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </div>
+                </a>
+
+                <a href="https://docs.google.com/spreadsheets/d/1kzmdDbJQTXy_ABgvWTse0bMtYU0jONo5HkTftVBQEAo/edit?gid=0#gid=0" target="_blank" class="action-card admin-only">
+                    <div class="action-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Calendario</div>
+                        <div class="action-desc">Semanas de Socios</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </div>
+                </a>
+
+                <a href="https://docs.google.com/document/d/1PAI_M78kdA_xLr-GO_tbvjsHyanVja6xrIJUXYYDny8/edit?tab=t.0#heading=h.9iuzv5bwe9df" target="_blank" class="action-card admin-only">
+                    <div class="action-icon purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Minutas Reuniones</div>
+                        <div class="action-desc">Notas de reuniones</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </div>
+                </a>
+
+                <a href="https://docs.google.com/document/d/18asaW-mJIkdK2SCKIOfnhGaqMm4cHB1ox2IywM3yeK8/edit?tab=t.0#heading=h.iz6cjqtsm42a" target="_blank" class="action-card admin-only">
+                    <div class="action-icon teal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Manual de Operaciones</div>
+                        <div class="action-desc">Guia de procedimientos</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </div>
+                </a>
+
+                <a href="https://docs.google.com/spreadsheets/d/1wju-dUlIOAA8qFbMX2roH0YcinsbqrXWgjSSNNyN0qs/edit?gid=0#gid=0" target="_blank" class="action-card admin-only">
+                    <div class="action-icon orange">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="15" x2="15" y1="3" y2="21"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Gastos (Spreadsheet)</div>
+                        <div class="action-desc">Registro de gastos</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </div>
+                </a>
+
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSew7_dIfJCoqgKmbAxfHpHbuqlZ7w3Idk-Rxa0cyss8jKQiwA/viewform" target="_blank" class="action-card admin-only">
+                    <div class="action-icon amber">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Subir Facturas Gastos</div>
+                        <div class="action-desc">Formulario de facturas</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="action-card admin-only" onclick="navigateTo('calculador')">
+                    <div class="action-icon purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+                    </div>
+                    <div class="action-content">
+                        <div class="action-title">Calculador</div>
+                        <div class="action-desc">Análisis de inversiones</div>
+                    </div>
+                    <div class="action-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+
+        <div class="footer">
+            MCF Soluciones · Panel Admin
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION - Edit these values as needed
+        // ============================================================
+        const CONFIG = {
+            // Users who require password authentication
+            adminUsers: ['lalo', 'oscar', 'adrian'],
+
+            // Admin password (change this to your desired password)
+            adminPassword: 'mcf2024',
+
+            // All available users
+            allUsers: ['lalo', 'oscar', 'adrian', 'kenia', 'joanna' ],
+
+            // Session key for admin authentication (stored in sessionStorage)
+            adminSessionKey: 'mcf_admin_authenticated'
+        };
+        // ============================================================
+
+        // State management (in-memory, passed via URL params to other pages)
+        let state = {
+            user: null,
+            isAdmin: false,
+            adminAuthenticated: false
+        };
+
+        // Check if admin session exists
+        function checkAdminSession() {
+            const session = sessionStorage.getItem(CONFIG.adminSessionKey);
+            if (session) {
+                try {
+                    const data = JSON.parse(session);
+                    // Session is valid for this browser session
+                    if (data.authenticated && CONFIG.adminUsers.includes(data.user)) {
+                        return data.user;
+                    }
+                } catch (e) {
+                    sessionStorage.removeItem(CONFIG.adminSessionKey);
+                }
+            }
+            return null;
+        }
+
+        // Save admin session
+        function saveAdminSession(user) {
+            sessionStorage.setItem(CONFIG.adminSessionKey, JSON.stringify({
+                authenticated: true,
+                user: user,
+                timestamp: Date.now()
+            }));
+        }
+
+        // Check if user is an admin
+        function isAdminUser(user) {
+            return CONFIG.adminUsers.includes(user.toLowerCase());
+        }
+
+        // Select user
+        function selectUser(user) {
+            state.user = user;
+            state.isAdmin = isAdminUser(user);
+
+            // Update UI
+            document.querySelectorAll('.user-chip').forEach(chip => {
+                const chipUser = chip.textContent.replace('Admin', '').trim().toLowerCase();
+                chip.classList.toggle('active', chipUser === user);
+            });
+
+            updateStatusBadge();
+            updateAdminVisibility();
+
+            // If admin, check if already authenticated in this session
+            if (state.isAdmin) {
+                const authenticatedUser = checkAdminSession();
+                if (authenticatedUser === user) {
+                    // Already authenticated, skip password
+                    state.adminAuthenticated = true;
+                    showStep('actions');
+                } else {
+                    // Need password
+                    showStep('password');
+                    document.getElementById('password-input').focus();
+                }
+            } else {
+                showStep('actions');
+            }
+        }
+
+        // Handle password keypress (Enter to submit)
+        function handlePasswordKeypress(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        }
+
+        // Check password
+        function checkPassword() {
+            const input = document.getElementById('password-input');
+            const error = document.getElementById('password-error');
+
+            if (input.value === CONFIG.adminPassword) {
+                error.classList.remove('visible');
+                input.classList.remove('error');
+                input.value = '';
+
+                // Save admin session so they don't need to re-enter password
+                state.adminAuthenticated = true;
+                saveAdminSession(state.user);
+
+                showStep('actions');
+            } else {
+                error.classList.add('visible');
+                input.classList.add('error', 'shake');
+                setTimeout(() => input.classList.remove('shake'), 300);
+                input.select();
+            }
+        }
+
+        // Show step
+        function showStep(step) {
+            document.querySelectorAll('.sub-flow').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById('step-' + step).classList.add('active');
+        }
+
+        // Go back
+        function goBack(toStep) {
+            // Clear password input when going back
+            if (toStep === 'user') {
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-error').classList.remove('visible');
+                document.getElementById('password-input').classList.remove('error');
+            }
+            showStep(toStep);
+        }
+
+        // Update status badge
+        function updateStatusBadge() {
+            const badge = document.getElementById('status-badge');
+            let text = '';
+
+            if (state.user) {
+                text = capitalize(state.user);
+                if (state.isAdmin) text += ' (Admin)';
+            }
+
+            if (!text) {
+                text = 'Selecciona usuario';
+            }
+
+            badge.querySelector('span').textContent = text;
+        }
+
+        // Capitalize first letter
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Update admin visibility (show/hide admin-only elements)
+        function updateAdminVisibility() {
+            if (state.isAdmin) {
+                document.body.classList.add('is-admin');
+            } else {
+                document.body.classList.remove('is-admin');
+            }
+        }
+
+        // Build URL with parameters
+        function buildUrl(page, extraParams = {}) {
+            const params = new URLSearchParams();
+            if (state.user) params.set('user', state.user);
+
+            // Add any extra parameters (like type)
+            for (const [key, value] of Object.entries(extraParams)) {
+                params.set(key, value);
+            }
+
+            const queryString = params.toString();
+            return '/' + page + '.html' + (queryString ? '?' + queryString : '');
+        }
+
+        // Navigate to page with params
+        function navigateTo(page, extraParams = {}) {
+            event.preventDefault();
+            window.location.href = buildUrl(page, extraParams);
+        }
+
+        // Initialize
+        updateStatusBadge();
+    </script>
+</body>
+</html>

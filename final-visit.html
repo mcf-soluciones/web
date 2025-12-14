@@ -1,980 +1,980 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <title>Registro de Visita</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        .task-form,
-        #welcome-message,
-        #submit-all-container,
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fecaca;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            padding-bottom: 100px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .location-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+
+        .back-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Section headers */
+        .section-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header:first-child {
+            margin-top: 0;
+        }
+
+        .section-header .mandatory-indicator {
+            background: var(--danger-light);
+            color: var(--danger);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Task checklist items */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+        }
+
+        .task-item.completed {
+            background: var(--success-light);
+            border-color: var(--success);
+        }
+
+        .task-item.mandatory {
+            border-left: 3px solid var(--danger);
+        }
+
+        .task-item.mandatory.completed {
+            border-left-color: var(--success);
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .task-item.completed .task-checkbox {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-checkbox svg {
+            width: 14px;
+            height: 14px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-item.completed .task-checkbox svg {
+            opacity: 1;
+        }
+
+        .task-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .task-item.completed .task-title {
+            color: var(--success);
+        }
+
+        .task-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .mandatory-badge {
+            background: var(--danger-light);
+            color: var(--danger);
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .task-item.completed .mandatory-badge {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        /* Progress bar */
+        .progress-container {
+            margin-bottom: 24px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-count {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Rating inputs */
+        .rating-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .rating-group .form-input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .rating-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        /* Alert styles */
+        .alert {
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-warning {
+            background: var(--warning-light);
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .alert-danger {
+            background: var(--danger-light);
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-info {
+            background: var(--primary-light);
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        /* Fixed submit bar */
+        .submit-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+            padding: 16px;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .submit-bar.visible {
+            display: block;
+        }
+
+        .submit-bar-content {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .submit-bar .btn {
+            width: 100%;
+        }
+
+        .submit-status {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .submit-status.warning {
+            color: var(--danger);
+        }
+
+        /* Completion message */
         #completion-message {
             display: none;
-            /* Hide all dynamic sections by default */
+            text-align: center;
         }
 
-        #initial-setup {
-            display: block;
-            /* Show setup by default */
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-light);
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
         }
 
-        .warn-color {
-            color: #c22121;
+        .completion-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 390px) {
+            .container {
+                padding: 16px 12px;
+                padding-bottom: 100px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .task-item {
+                padding: 12px 14px;
+            }
         }
     </style>
 </head>
-
 <body>
-    <div class="container mt-5">
-        <div class="text-center">
-            <h1>Registro de Tareas</h1>
-            <p class="lead">Complete los datos iniciales para comenzar.</p>
-            <p><strong>ID de Visita:</strong> <span id="visit-id-display"></span></p>
-        </div>
+    <div class="container">
+        <a href="/admin.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Volver al panel
+        </a>
 
-        <div id="initial-setup" class="card mt-4">
-            <div class="card-body">
-                <h3 class="card-title">Información de la Visita</h3>
-                <form id="setup-form">
-                    <div class="form-group">
-                        <label for="location-select">¿En qué sucursal te encuentras?</label>
-                        <select class="form-control" id="location-select" required>
-                            <option value="" disabled selected>Selecciona una opción</option>
-                            <option value="hortaleza">hortaleza</option>
-                            <option value="usera">usera</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="user-select">¿Quién eres?</label>
-                        <select class="form-control" id="user-select" required>
-                            <option value="" disabled selected>Selecciona una opción</option>
-                            <option value="lalo">lalo</option>
-                            <option value="oscar">oscar</option>
-                            <option value="adrian">adrian</option>
-                            <option value="kenia">kenia</option>
-                        </select>
-                    </div>
-                    <hr>
-                    <p class="text-muted">Por favor, evalúa el estado de limpieza inicial (1 = malo, 10 = bueno):</p>
-                    <div class="form-group">
-                        <label for="limpieza-general">1. Limpieza inicial general (1 al 10)</label>
-                        <input type="number" class="form-control" id="limpieza-general" min="1" max="10" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="limpieza-maquinas">2. Limpieza de máquinas (1 al 10)</label>
-                        <input type="number" class="form-control" id="limpieza-maquinas" min="1" max="10" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="limpieza-basurero">3. Limpieza de basurero (1 al 10)</label>
-                        <input type="number" class="form-control" id="limpieza-basurero" min="1" max="10" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Iniciar Visita</button>
-                </form>
+        <div class="header">
+            <h1>Registro de Visita</h1>
+            <p>Completa las tareas de tu checklist</p>
+            <div class="location-badge" id="location-badge" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span id="location-name"></span>
             </div>
         </div>
 
-        <div id="welcome-message">
-            <h2>Por favor, escanea el código QR de una tarea para registrarla.</h2>
-            <p>Tareas completadas: <span id="completed-tasks-count">0</span></p>
+        <!-- Initial Setup -->
+        <div id="initial-setup" class="card fade-in">
+            <h3 class="card-title">¿En qué local estás?</h3>
+            <form id="setup-form">
+                <div class="form-group">
+                    <label class="form-label">Sucursal</label>
+                    <select class="form-select" id="location-select" required>
+                        <option value="" disabled selected>Selecciona una opción</option>
+                        <option value="hortaleza">Hortaleza</option>
+                        <option value="usera">Usera</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+                <p class="section-label">Evaluación de limpieza inicial</p>
+
+                <div class="form-group">
+                    <label class="form-label">Limpieza general</label>
+                    <div class="rating-group">
+                        <input type="number" class="form-input" id="limpieza-general" min="1" max="10" required placeholder="1-10">
+                        <span class="rating-hint">1 = malo, 10 = excelente</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Limpieza de máquinas</label>
+                    <div class="rating-group">
+                        <input type="number" class="form-input" id="limpieza-maquinas" min="1" max="10" required placeholder="1-10">
+                        <span class="rating-hint">1 = malo, 10 = excelente</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Limpieza de basurero</label>
+                    <div class="rating-group">
+                        <input type="number" class="form-input" id="limpieza-basurero" min="1" max="10" required placeholder="1-10">
+                        <span class="rating-hint">1 = malo, 10 = excelente</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Iniciar Visita</button>
+            </form>
         </div>
 
-        <div id="completion-message" class="alert alert-success">
-            <h4>¡Visita registrada con éxito!</h4>
-            <p>Todos los datos han sido enviados. Puede cerrar esta ventana.</p>
+        <!-- Tasks Checklist -->
+        <div id="tasks-checklist" style="display: none;">
+            <!-- Progress -->
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span class="progress-label">Progreso</span>
+                    <span class="progress-count"><span id="completed-count">0</span> / <span id="total-count">0</span></span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Mandatory Tasks -->
+            <div class="card">
+                <div class="section-header">
+                    Tareas Obligatorias
+                    <span class="mandatory-indicator">Requeridas</span>
+                </div>
+                <div class="task-list" id="mandatory-tasks"></div>
+            </div>
+
+            <!-- Optional Tasks -->
+            <div class="card">
+                <div class="section-header">Tareas Opcionales</div>
+                <div class="task-list" id="optional-tasks"></div>
+            </div>
+
         </div>
 
-        <div id="no-session-error" class="alert alert-danger" style="display: none;">
-            <h4>Error: Sesión no iniciada</h4>
-            <p>Por favor, regresa a la página principal para iniciar una sesión antes de escanear un código QR.</p>
-
+        <!-- Completion Message -->
+        <div id="completion-message" class="card fade-in">
+            <div class="completion-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h3 class="card-title" style="text-align: center;">¡Visita registrada!</h3>
+            <p style="text-align: center; color: var(--text-secondary);">Todos los datos han sido enviados correctamente. Puedes cerrar esta ventana.</p>
+            <a href="/admin.html" class="btn btn-primary" style="margin-top: 16px;">Volver al panel</a>
         </div>
 
-        <!-- Task Forms Container -->
-        <div id="tasks-container">
-            <!-- Both Locations -->
-            <div id="L99001" class="task-form card loc-usera loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Superficies Secadoras <span class="warn-color">*</span></h3>
-                    <form data-task-id="L99001" data-task-title="Superficies Secadoras">
-                        <p>Limpiar superficies de secadoras con pañuelos</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99002" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Atrás Superficies Secadoras</h3>
-                    <form data-task-id="L99002" data-task-title="Atrás Superficies Secadoras">
-                        <p>Limpiar superficies de secadoras atrás con pañuelos</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99003" class="task-form card loc-usera loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Superficies Lavadoras <span class="warn-color">*</span></h3>
-                    <form data-task-id="L99003" data-task-title="Superficies Lavadoras">
-                        <p>Limpiar superficies de lavadoras con pañuelos</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99004" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Atrás Superficies Lavadoras</h3>
-                    <form data-task-id="L99004" data-task-title="Atrás Superficies Lavadoras">
-                        <p>Limpiar superficies de lavadoras atrás con pañuelos</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99006" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Tirar Botes de la Bodega</h3>
-                    <form data-task-id="L99006" data-task-title="Tirar Botes de la Bodega">
-                        <p>Tirar los botes de insumos en contenedores amarillos afuera</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99007" class="task-form card loc-usera loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Barrer <span class="warn-color">*</span></h3>
-                    <form data-task-id="L99007" data-task-title="Barrer">
-                        <p>Barrer area de clientes</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99008" class="task-form card loc-usera loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Trapear <span class="warn-color">*</span></h3>
-                    <form data-task-id="L99008" data-task-title="Trapear">
-                        <p>Trapear area de clientes</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99014" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Descarga de Billetes y Monedas</h3>
-                    <form data-task-id="L99014" data-task-title="Descarga de Billetes y Monedas">
-                        <p>Descargar billetes y monedas de inzacard</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99015" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Carga de Monedas</h3>
-                    <form data-task-id="L99015" data-task-title="Carga de Monedas">
-                        <p>Cargar monedas a hopper</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99012" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Carga de Papel Impression</h3>
-                    <form data-task-id="L99012" data-task-title="Carga de Papel Impression">
-                        <p>Cargar papel de impresion</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99013" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Carga de Tarjetas Cliente</h3>
-                    <form data-task-id="L99013" data-task-title="Carga de Tarjetas Cliente">
-                        <p>Carga de Tarjetas Cliente</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99009" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Entrada Billetes</h3>
-                    <form data-task-id="L99009" data-task-title="Limpieza Entrada Billetes">
-                        <p>Limpieza Entrada Billetes</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L99010" class="task-form card loc-usera loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Entrada Tarjetas</h3>
-                    <form data-task-id="L99010" data-task-title="Limpieza Entrada Tarjetas">
-                        <p>Limpieza Entrada Tarjetas</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
+        <div class="footer">
+            MCF Soluciones · Registro de Visita
+        </div>
+    </div>
 
-            <!-- Usera Only -->
-            <div id="L01001" class="task-form card loc-usera">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 4</h3>
-                    <form data-task-id="L01001" data-task-title="Reinicio Lavadora 4">
-                        <p>Reinicio Lavadora 4</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01002" class="task-form card loc-usera">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 5</h3>
-                    <form data-task-id="L01002" data-task-title="Reinicio Lavadora 5">
-                        <p>Reinicio Lavadora 5</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01003" class="task-form card loc-usera">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 6</h3>
-                    <form data-task-id="L01003" data-task-title="Reinicio Lavadora 6">
-                        <p>Reinicio Lavadora 6</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01004" class="task-form card loc-usera">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 7</h3>
-                    <form data-task-id="L01004" data-task-title="Reinicio Lavadora 7">
-                        <p>Reinicio Lavadora 7</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01007" class="task-form card loc-usera">
-                <div class="card-body">
-                    <h3 class="card-title">Revision Bombas 1</h3>
-                    <form data-task-id="L01007" data-task-title="Revision Bombas 1">
-                        <p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01008" class="task-form card loc-usera">
-                <div class="card-body">
-                    <h3 class="card-title">Revision Bombas 2</h3>
-                    <form data-task-id="L01008" data-task-title="Revision Bombas 2">
-                        <p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01009" class="task-form card loc-usera" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Filtro Secadora 1 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L01009" data-task-title="Limpieza Filtro Secadora 1">
-                        <p>Limpieza Filtro Secadora 1</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01010" class="task-form card loc-usera" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Filtro Secadora 2 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L01010" data-task-title="Limpieza Filtro Secadora 2">
-                        <p>Limpieza Filtro Secadora 2</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L01011" class="task-form card loc-usera" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Filtro Secadora 3 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L01011" data-task-title="Limpieza Filtro Secadora 3">
-                        <p>Limpieza Filtro Secadora 3</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
+    <!-- Fixed Submit Bar -->
+    <div class="submit-bar" id="submit-bar">
+        <div class="submit-bar-content">
+            <div class="submit-status" id="submit-status">Completa las tareas obligatorias para continuar</div>
+            <button class="btn btn-success" id="submit-btn" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Enviar Registro de Visita
+            </button>
+        </div>
+    </div>
 
-            <div id="L01020" class="task-form card loc-usera" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Inventario Bodega <span class="warn-color">*</span></h3>
-                    <form data-task-id="L01020" data-task-title="Inventario Bodega">
-                        <div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon"
-                                class="form-control"></div>
-                        <div class="form-group"><label>Suavizante</label><input type="number" step="any"
-                                name="suavizante" class="form-control"></div>
-                        <div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno"
-                                class="form-control"></div><button type="submit" class="btn btn-info">Guardar
-                            Tarea</button>
-                    </form>
-                    <hr>
-                    <h5>Ejemplos</h5>
-                        <div class="text-center">
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_1.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 1">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej1</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_2.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 2">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej2</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_3.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 3">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej3</figcaption>
-                                        </figure>
-                        </div>
-                </div>
-            </div>
-            <div id="L01021" class="task-form card loc-usera" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Inventario Bomba 1 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L01021" data-task-title="Inventario Bomba 1">
-                        <div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon"
-                                class="form-control"></div>
-                        <div class="form-group"><label>Suavizante</label><input type="number" step="any"
-                                name="suavizante" class="form-control"></div>
-                        <div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno"
-                                class="form-control"></div><button type="submit" class="btn btn-info">Guardar
-                            Tarea</button>
-                    </form>
-                    <hr>
-                    <h5>Ejemplos</h5>
-                        <div class="text-center">
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_1.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 1">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej1</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_2.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 2">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej2</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_3.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 3">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej3</figcaption>
-                                        </figure>
-                        </div>
-                </div>
-            </div>
-            <div id="L01022" class="task-form card loc-usera" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Inventario Bomba 2 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L01022" data-task-title="Inventario Bomba 2">
-                        <div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon"
-                                class="form-control"></div>
-                        <div class="form-group"><label>Suavizante</label><input type="number" step="any"
-                                name="suavizante" class="form-control"></div>
-                        <div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno"
-                                class="form-control"></div><button type="submit" class="btn btn-info">Guardar
-                            Tarea</button>
-                    </form>
-                    <hr>
-                    <h5>Ejemplos</h5>
-                        <div class="text-center">
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_1.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 1">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej1</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_2.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 2">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej2</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_3.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 3">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej3</figcaption>
-                                        </figure>
-                        </div>
-                </div>
-            </div>
+    <script>
+        // Task definitions
+        const TASKS = {
+            // Both locations (L99)
+            L99001: { title: 'Superficies Secadoras', desc: 'Limpiar superficies de secadoras con pañuelos', mandatory: true, locations: ['hortaleza', 'usera'] },
+            L99002: { title: 'Atrás Superficies Secadoras', desc: 'Limpiar superficies de secadoras atrás con pañuelos', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99003: { title: 'Superficies Lavadoras', desc: 'Limpiar superficies de lavadoras con pañuelos', mandatory: true, locations: ['hortaleza', 'usera'] },
+            L99004: { title: 'Atrás Superficies Lavadoras', desc: 'Limpiar superficies de lavadoras atrás con pañuelos', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99006: { title: 'Tirar Botes de Bodega', desc: 'Tirar los botes de insumos en contenedores amarillos', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99007: { title: 'Barrer', desc: 'Barrer área de clientes', mandatory: true, locations: ['hortaleza', 'usera'] },
+            L99008: { title: 'Trapear', desc: 'Trapear área de clientes', mandatory: true, locations: ['hortaleza', 'usera'] },
+            L99009: { title: 'Limpieza Entrada Billetes', desc: 'Limpieza entrada de billetes', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99010: { title: 'Limpieza Entrada Tarjetas', desc: 'Limpieza entrada de tarjetas', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99012: { title: 'Carga Papel Impresión', desc: 'Cargar papel de impresión', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99013: { title: 'Carga Tarjetas Cliente', desc: 'Carga de tarjetas cliente', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99014: { title: 'Descarga Billetes y Monedas', desc: 'Descargar billetes y monedas de inzacard', mandatory: false, locations: ['hortaleza', 'usera'] },
+            L99015: { title: 'Carga de Monedas', desc: 'Cargar monedas a hopper', mandatory: false, locations: ['hortaleza', 'usera'] },
 
-            <!-- Hortaleza Only -->
-            <div id="L02001" class="task-form card loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 1</h3>
-                    <form data-task-id="L02001" data-task-title="Reinicio Lavadora 1">
-                        <p>Reinicio Lavadora 1</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02002" class="task-form card loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 2</h3>
-                    <form data-task-id="L02002" data-task-title="Reinicio Lavadora 2">
-                        <p>Reinicio Lavadora 2</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02003" class="task-form card loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 3</h3>
-                    <form data-task-id="L02003" data-task-title="Reinicio Lavadora 3">
-                        <p>Reinicio Lavadora 3</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02004" class="task-form card loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Reinicio Lavadora 4</h3>
-                    <form data-task-id="L02004" data-task-title="Reinicio Lavadora 4">
-                        <p>Reinicio Lavadora 4</p><button type="submit" class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02007" class="task-form card loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Revision Bombas 1</h3>
-                    <form data-task-id="L02007" data-task-title="Revision Bombas 1">
-                        <p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02008" class="task-form card loc-hortaleza">
-                <div class="card-body">
-                    <h3 class="card-title">Revision Bombas 2</h3>
-                    <form data-task-id="L02008" data-task-title="Revision Bombas 2">
-                        <p>Mover un poco la toma de bomba (boton rojo)</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02011" class="task-form card loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Filtro Secadora 5 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L02011" data-task-title="Limpieza Filtro Secadora 5">
-                        <p>Limpieza Filtro Secadora 5</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02009" class="task-form card loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Filtro Secadora 6 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L02009" data-task-title="Limpieza Filtro Secadora 6">
-                        <p>Limpieza Filtro Secadora 6</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02010" class="task-form card loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Limpieza Filtro Secadora 7 <span class="warn-color">*</span></h3>
-                    <form data-task-id="L02010" data-task-title="Limpieza Filtro Secadora 7">
-                        <p>Limpieza Filtro Secadora 7</p><button type="submit"
-                            class="btn btn-success btn-lg">Listo</button>
-                    </form>
-                </div>
-            </div>
-            <div id="L02020" class="task-form card loc-hortaleza" data-mandatory="true">
-                <div class="card-body">
-                    <h3 class="card-title">Inventario Bodega <span class="warn-color">*</span></h3>
-                    <form data-task-id="L02020" data-task-title="Inventario Bodega">
-                        <div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon"
-                                class="form-control"></div>
-                        <div class="form-group"><label>Suavizante</label><input type="number" step="any"
-                                name="suavizante" class="form-control"></div>
-                        <div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno"
-                                class="form-control"></div>
-                        <button type="submit" class="btn btn-info mt-3">Guardar Tarea</button>
-                    </form>
-                    <hr>
-                    <h5>Ejemplos</h5>
-                        <div class="text-center">
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_1.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 1">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej1</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_2.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 2">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej2</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_3.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 3">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej3</figcaption>
-                                        </figure>
-                        </div>
-                </div>
-            </div>
-                        <div id="L02021" class="task-form card loc-hortaleza" data-mandatory="true">
-                            <div class="card-body">
-                                <h3 class="card-title">Inventario Bomba 1 <span class="warn-color">*</span></h3>
-                                <form data-task-id="L02021" data-task-title="Inventario Bomba 1">
-                                    <div class="form-group"><label>Jabon</label><input type="number" step="any" name="jabon"
-                                            class="form-control"></div>
-                                    <div class="form-group"><label>Suavizante</label><input type="number" step="any" name="suavizante"
-                                            class="form-control"></div>
-                                    <div class="form-group"><label>Oxigeno</label><input type="number" step="any" name="oxigeno"
-                                            class="form-control"></div>
-                                    <button type="submit" class="btn btn-info mt-3">Guardar Tarea</button>
-                                </form>
-                                <hr>
-                                <h5>Ejemplos</h5>
-                                <div class="text-center">
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_1.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 1">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej1</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_2.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 2">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej2</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_3.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 3">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej3</figcaption>
-                                        </figure>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="L02022" class="task-form card loc-hortaleza" data-mandatory="true">
-                            <div class="card-body">
-                                <h3 class="card-title">Inventario Bomba 2 <span class="warn-color">*</span></h3>
-                                <form data-task-id="L02022" data-task-title="Inventario Bomba 2">
-                                    <div class="form-group"><label>Jabon</label><input type="number" step="any"
-                                            name="jabon" class="form-control"></div>
-                                    <div class="form-group"><label>Suavizante</label><input type="number" step="any"
-                                            name="suavizante" class="form-control"></div>
-                                    <div class="form-group"><label>Oxigeno</label><input type="number" step="any"
-                                            name="oxigeno" class="form-control"></div>
-                                    <button type="submit" class="btn btn-info mt-3">Guardar Tarea</button>
-                                </form>
-                                <hr>
-                                   <h5>Ejemplos</h5>
-                                        <div class="text-center">
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_1.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 1">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej1</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_2.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 2">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej2</figcaption>
-                                        </figure>
-                                        <figure class="figure d-inline-block mx-2"><img
-                                                src="https://mcfsoluciones.com/img/example_3.png"
-                                                class="figure-img img-fluid rounded" alt="Ejemplo 3">
-                                            <figcaption class="figure-caption text-center">Inventarios Bomba Ej3</figcaption>
-                                        </figure>
-                                        </div>
-                            </div>
-                        </div>
-                </div>
+            // Usera only (L01)
+            L01001: { title: 'Reinicio Lavadora 4', desc: 'Reinicio Lavadora 4', mandatory: false, locations: ['usera'] },
+            L01002: { title: 'Reinicio Lavadora 5', desc: 'Reinicio Lavadora 5', mandatory: false, locations: ['usera'] },
+            L01003: { title: 'Reinicio Lavadora 6', desc: 'Reinicio Lavadora 6', mandatory: false, locations: ['usera'] },
+            L01004: { title: 'Reinicio Lavadora 7', desc: 'Reinicio Lavadora 7', mandatory: false, locations: ['usera'] },
+            L01007: { title: 'Revisión Bombas 1', desc: 'Mover un poco la toma de bomba (botón rojo)', mandatory: false, locations: ['usera'] },
+            L01008: { title: 'Revisión Bombas 2', desc: 'Mover un poco la toma de bomba (botón rojo)', mandatory: false, locations: ['usera'] },
+            L01009: { title: 'Limpieza Filtro Secadora 1', desc: 'Limpieza Filtro Secadora 1', mandatory: true, locations: ['usera'] },
+            L01010: { title: 'Limpieza Filtro Secadora 2', desc: 'Limpieza Filtro Secadora 2', mandatory: true, locations: ['usera'] },
+            L01011: { title: 'Limpieza Filtro Secadora 3', desc: 'Limpieza Filtro Secadora 3', mandatory: true, locations: ['usera'] },
 
-                <div id="submit-all-container" class="text-center">
-                    <h3>Finalizar Visita</h3>
-                    <p>Has completado <span id="completed-tasks-count-final">0</span> tarea(s). ¿Deseas enviar el
-                        registro de la visita ahora?</p>
-                    <div id="mandatory-tasks-tooltip" class="alert alert-warning" style="display: none;"></div>
-                    <button id="submit-all-btn" class="btn btn-primary btn-lg">Enviar Registro de Visita</button>
-                    <div class="mt-2" id="feedback-final" style="display:none;"></div>
-                </div>
-            </div>
+            // Hortaleza only (L02)
+            L02001: { title: 'Reinicio Lavadora 1', desc: 'Reinicio Lavadora 1', mandatory: false, locations: ['hortaleza'] },
+            L02002: { title: 'Reinicio Lavadora 2', desc: 'Reinicio Lavadora 2', mandatory: false, locations: ['hortaleza'] },
+            L02003: { title: 'Reinicio Lavadora 3', desc: 'Reinicio Lavadora 3', mandatory: false, locations: ['hortaleza'] },
+            L02004: { title: 'Reinicio Lavadora 4', desc: 'Reinicio Lavadora 4', mandatory: false, locations: ['hortaleza'] },
+            L02007: { title: 'Revisión Bombas 1', desc: 'Mover un poco la toma de bomba (botón rojo)', mandatory: false, locations: ['hortaleza'] },
+            L02008: { title: 'Revisión Bombas 2', desc: 'Mover un poco la toma de bomba (botón rojo)', mandatory: false, locations: ['hortaleza'] },
+            L02009: { title: 'Limpieza Filtro Secadora 6', desc: 'Limpieza Filtro Secadora 6', mandatory: true, locations: ['hortaleza'] },
+            L02010: { title: 'Limpieza Filtro Secadora 7', desc: 'Limpieza Filtro Secadora 7', mandatory: true, locations: ['hortaleza'] },
+            L02011: { title: 'Limpieza Filtro Secadora 5', desc: 'Limpieza Filtro Secadora 5', mandatory: true, locations: ['hortaleza'] },
+        };
 
-            <script>
-                const API_ENDPOINT = 'YOUR_AWS_API_ENDPOINT_HERE';
+        // State
+        let visitData = {
+            location: null,
+            user: null,
+            limpiezaGeneral: null,
+            limpiezaMaquinas: null,
+            limpiezaBasurero: null,
+            tasks: {}
+        };
 
-                document.addEventListener('DOMContentLoaded', () => {
-                    const visitId = getOrSetVisitId();
-                    document.getElementById('visit-id-display').textContent = visitId;
-
-                    checkInitialSetup();
-                    handleRouteChange();
-
-                    window.addEventListener('hashchange', handleRouteChange);
-                    document.getElementById('setup-form').addEventListener('submit', saveInitialSetup);
-                    document.getElementById('tasks-container').addEventListener('submit', saveTaskProgress);
-                    document.getElementById('submit-all-btn').addEventListener('click', submitAllTasks);
-
-                    document.querySelectorAll('.task-form .card-body').forEach(cardBody => {
-                        const resetButton = document.createElement('button');
-                        resetButton.type = 'button';
-                        resetButton.textContent = 'Reiniciar';
-                        resetButton.className = 'btn btn-danger mt-2'; // Using btn-danger for visibility
-                        resetButton.onclick = resetVisit;
-                        cardBody.appendChild(resetButton);
-                    });
-                });
-
-                function resetVisit() {
-                    if (confirm("¿Estás seguro de que quieres perder todo el progreso de esta sesión?")) {
-                        const visitId = localStorage.getItem('visitId');
-                        if (visitId) {
-                            localStorage.removeItem(`visitData_${visitId}`);
-                            localStorage.removeItem('visitId');
-                        }
-                        // Reload the page to start fresh
-                        window.location.href = window.location.pathname;
-                    }
-                }
-
-                function getVisitData() {
-                    const visitId = getOrSetVisitId();
-                    const data = localStorage.getItem(`visitData_${visitId}`);
-                    return data ? JSON.parse(data) : { tasks: {} };
-                }
-
-                function saveVisitData(data) {
-                    const visitId = getOrSetVisitId();
-                    localStorage.setItem(`visitData_${visitId}`, JSON.stringify(data));
-                }
-
-                function getOrSetVisitId() {
-                    let visitId = localStorage.getItem('visitId');
-                    if (!visitId) {
-                        visitId = `v3-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                        localStorage.setItem('visitId', visitId);
-                    }
-                    return visitId;
-                }
-
-                function checkInitialSetup() {
-                    const visitData = getVisitData();
-                    if (visitData.location && visitData.user) {
-                        document.getElementById('initial-setup').style.display = 'none';
-                        document.getElementById('welcome-message').style.display = 'block';
-                        updateCompletedCount();
-                    } else {
-                        document.getElementById('initial-setup').style.display = 'block';
-                        document.getElementById('welcome-message').style.display = 'none';
-                    }
-                }
-
-                function saveInitialSetup(event) {
-                    event.preventDefault();
-                    const location = document.getElementById('location-select').value;
-                    const user = document.getElementById('user-select').value;
-                    const limpiezaGeneral = document.getElementById('limpieza-general').value;
-                    const limpiezaMaquinas = document.getElementById('limpieza-maquinas').value;
-                    const limpiezaBasurero = document.getElementById('limpieza-basurero').value;
-
-                    const visitData = getVisitData();
-                    visitData.location = location;
-                    visitData.user = user;
-                    visitData.limpiezaGeneral = limpiezaGeneral;
-                    visitData.limpiezaMaquinas = limpiezaMaquinas;
-                    visitData.limpiezaBasurero = limpiezaBasurero;
-                    saveVisitData(visitData);
-
-                    document.getElementById('initial-setup').style.display = 'none';
-                    handleRouteChange();
-                }
-
-        function handleRouteChange() {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Read URL parameters
             const urlParams = new URLSearchParams(window.location.search);
-            const isDebugMode = urlParams.get('debug') === 'true';
+            const urlUser = urlParams.get('user');
+            const urlLocation = urlParams.get('location');
 
-            if (isDebugMode) {
-                // In debug mode, show everything and stop.
-                document.getElementById('initial-setup').style.display = 'block';
-                document.getElementById('welcome-message').style.display = 'block';
-                document.getElementById('tasks-container').style.display = 'block';
-                document.querySelectorAll('.task-form').forEach(form => form.style.display = 'block');
-                document.getElementById('submit-all-container').style.display = 'block';
-                updateCompletedCount(); // Ensure the final count is updated
-                return;
+            // Store user from URL params
+            if (urlUser) {
+                visitData.user = urlUser;
             }
 
-            const visitData = getVisitData();
+            // If location is also provided (legacy support), pre-fill the select
+            if (urlLocation) {
+                document.getElementById('location-select').value = urlLocation;
+            }
+
+            // Load saved data if exists
+            const savedData = localStorage.getItem('visitData');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                visitData = { ...visitData, ...parsed };
+                if (visitData.location && visitData.user) {
+                    showChecklist();
+                }
+            }
+
+            document.getElementById('setup-form').addEventListener('submit', handleSetupSubmit);
+            document.getElementById('submit-btn').addEventListener('click', submitVisit);
+        });
+
+        function handleSetupSubmit(e) {
+            e.preventDefault();
+
+            visitData.location = document.getElementById('location-select').value;
+            visitData.limpiezaGeneral = document.getElementById('limpieza-general').value;
+            visitData.limpiezaMaquinas = document.getElementById('limpieza-maquinas').value;
+            visitData.limpiezaBasurero = document.getElementById('limpieza-basurero').value;
+            visitData.visitId = `v3-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            saveData();
+            showChecklist();
+        }
+
+        function showChecklist() {
+            document.getElementById('initial-setup').style.display = 'none';
+            document.getElementById('tasks-checklist').style.display = 'block';
+            document.getElementById('submit-bar').classList.add('visible');
+
+            // Show location badge
+            const locationBadge = document.getElementById('location-badge');
+            locationBadge.style.display = 'inline-flex';
+            document.getElementById('location-name').textContent =
+                visitData.location.charAt(0).toUpperCase() + visitData.location.slice(1);
+
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const mandatoryContainer = document.getElementById('mandatory-tasks');
+            const optionalContainer = document.getElementById('optional-tasks');
+
+            mandatoryContainer.innerHTML = '';
+            optionalContainer.innerHTML = '';
+
             const location = visitData.location;
-            const taskId = window.location.hash.substring(1);
-            
-            const noSessionError = document.getElementById('no-session-error');
-            const initialSetup = document.getElementById('initial-setup');
-            const welcomeMessage = document.getElementById('welcome-message');
-            const tasksContainer = document.getElementById('tasks-container');
-            const submitContainer = document.getElementById('submit-all-container');
 
-            document.querySelectorAll('.task-form').forEach(form => form.style.display = 'none');
-            initialSetup.style.display = 'none';
-            welcomeMessage.style.display = 'none';
-            tasksContainer.style.display = 'none';
-            submitContainer.style.display = 'none';
-            noSessionError.style.display = 'none';
+            for (const [taskId, task] of Object.entries(TASKS)) {
+                if (!task.locations.includes(location)) continue;
 
-            if (!location || !visitData.user) {
-                if (taskId) {
-                    noSessionError.style.display = 'block';
+                const isCompleted = !!visitData.tasks[taskId];
+                const taskEl = createTaskElement(taskId, task, isCompleted);
+
+                if (task.mandatory) {
+                    mandatoryContainer.appendChild(taskEl);
                 } else {
-                    initialSetup.style.display = 'block';
-                }
-                return;
-            }
-
-            let taskFound = false;
-            if (taskId) {
-                const taskForm = document.getElementById(taskId);
-                if (taskForm && taskForm.classList.contains(`loc-${location}`)) {
-                    tasksContainer.style.display = 'block';
-                    taskForm.style.display = 'block';
-                    taskFound = true;
+                    optionalContainer.appendChild(taskEl);
                 }
             }
 
-            if (!taskFound) {
-                welcomeMessage.style.display = 'block';
-                updateCompletedCount();
+            updateProgress();
+        }
+
+        function createTaskElement(taskId, task, isCompleted) {
+            const div = document.createElement('div');
+            div.className = `task-item${isCompleted ? ' completed' : ''}${task.mandatory ? ' mandatory' : ''}`;
+            div.dataset.taskId = taskId;
+
+            div.innerHTML = `
+                <div class="task-checkbox">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-desc">${task.desc}</div>
+                </div>
+                ${task.mandatory ? '<span class="mandatory-badge">Obligatorio</span>' : ''}
+            `;
+            div.onclick = () => toggleTask(taskId);
+
+            return div;
+        }
+
+        function toggleTask(taskId) {
+            const taskEl = document.querySelector(`[data-task-id="${taskId}"]`);
+            const isCompleted = taskEl.classList.contains('completed');
+
+            if (isCompleted) {
+                delete visitData.tasks[taskId];
+                taskEl.classList.remove('completed');
+            } else {
+                visitData.tasks[taskId] = {
+                    taskTitle: TASKS[taskId].title,
+                    timestamp: new Date().toISOString(),
+                    answer: true
+                };
+                taskEl.classList.add('completed');
+            }
+
+            saveData();
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const location = visitData.location;
+            let total = 0;
+            let completed = 0;
+            let mandatoryTotal = 0;
+            let mandatoryCompleted = 0;
+
+            for (const [taskId, task] of Object.entries(TASKS)) {
+                if (!task.locations.includes(location)) continue;
+
+                total++;
+                if (visitData.tasks[taskId]) completed++;
+
+                if (task.mandatory) {
+                    mandatoryTotal++;
+                    if (visitData.tasks[taskId]) mandatoryCompleted++;
+                }
+            }
+
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('progress-fill').style.width = `${(completed / total) * 100}%`;
+
+            const submitBtn = document.getElementById('submit-btn');
+            const submitStatus = document.getElementById('submit-status');
+
+            if (mandatoryCompleted === mandatoryTotal) {
+                submitBtn.disabled = false;
+                submitStatus.textContent = `${completed} de ${total} tareas completadas`;
+                submitStatus.classList.remove('warning');
+            } else {
+                submitBtn.disabled = true;
+                submitStatus.textContent = `Faltan ${mandatoryTotal - mandatoryCompleted} tareas obligatorias`;
+                submitStatus.classList.add('warning');
             }
         }
 
-                function saveTaskProgress(event) {
-                    event.preventDefault();
-                    const form = event.target;
-                    const taskId = form.dataset.taskId;
-                    const taskTitle = form.dataset.taskTitle;
+        function saveData() {
+            localStorage.setItem('visitData', JSON.stringify(visitData));
+        }
 
-                    const visitData = getVisitData();
-                    const taskData = {
-                        taskTitle: taskTitle,
-                        timestamp: new Date().toISOString()
-                    };
+        async function submitVisit() {
+            const submitBtn = document.getElementById('submit-btn');
+            const submitStatus = document.getElementById('submit-status');
 
-                    if (form.elements['status']) {
-                        taskData.answer = form.elements['status'].value;
-                    } else if (form.elements['jabon']) {
-                        taskData.jabon = form.elements['jabon'].value;
-                        taskData.suavizante = form.elements['suavizante'].value;
-                        taskData.oxigeno = form.elements['oxigeno'].value;
-                    } else {
-                        taskData.answer = true;
-                    }
+            submitBtn.disabled = true;
+            submitStatus.textContent = 'Enviando...';
 
-                    visitData.tasks[taskId] = taskData;
-                    saveVisitData(visitData);
+            try {
+                await submitToAPI();
 
-                    window.location.hash = '';
-                    form.reset();
-                }
+                localStorage.removeItem('visitData');
 
-                function updateCompletedCount() {
-                    const visitData = getVisitData();
-                    const count = Object.keys(visitData.tasks).length;
+                document.getElementById('tasks-checklist').style.display = 'none';
+                document.getElementById('submit-bar').classList.remove('visible');
+                document.getElementById('completion-message').style.display = 'block';
 
-                    document.getElementById('completed-tasks-count').textContent = count;
-                    document.getElementById('completed-tasks-count-final').textContent = count;
+            } catch (error) {
+                console.error('Error:', error);
+                submitStatus.textContent = 'Error al enviar. Inténtalo de nuevo.';
+                submitStatus.classList.add('warning');
+                submitBtn.disabled = false;
+            }
+        }
 
-                    const submitContainer = document.getElementById('submit-all-container');
-                    if (count > 0) {
-                        submitContainer.style.display = 'block';
-                    } else {
-                        submitContainer.style.display = 'none';
-                    }
-                    checkMandatoryTasks();
-                }
+        function submitToAPI() {
+            const URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+            const tasks = visitData.tasks || {};
 
-                function checkMandatoryTasks() {
-                    const visitData = getVisitData();
-                    const location = visitData.location;
-                    if (!location) return;
+            let formattedData = {
+                propiedad: visitData.location,
+                user: visitData.user,
+                visitId: visitData.visitId,
+                submissionTimestamp: new Date().toISOString(),
 
-                    const mandatoryTasks = document.querySelectorAll(`[data-mandatory="true"].loc-${location}`);
-                    const submitBtn = document.getElementById('submit-all-btn');
-                    const tooltip = document.getElementById('mandatory-tasks-tooltip');
+                taskCompletionTimestamps: {
+                    L99001: tasks.L99001 ? tasks.L99001.timestamp : null,
+                    L99002: tasks.L99002 ? tasks.L99002.timestamp : null,
+                    L99003: tasks.L99003 ? tasks.L99003.timestamp : null,
+                    L99004: tasks.L99004 ? tasks.L99004.timestamp : null,
+                    L99006: tasks.L99006 ? tasks.L99006.timestamp : null,
+                    L99007: tasks.L99007 ? tasks.L99007.timestamp : null,
+                    L99008: tasks.L99008 ? tasks.L99008.timestamp : null,
+                    L99014: tasks.L99014 ? tasks.L99014.timestamp : null,
+                    L99015: tasks.L99015 ? tasks.L99015.timestamp : null,
+                    L99012: tasks.L99012 ? tasks.L99012.timestamp : null,
+                    L99013: tasks.L99013 ? tasks.L99013.timestamp : null,
+                    L99009: tasks.L99009 ? tasks.L99009.timestamp : null,
+                    L99010: tasks.L99010 ? tasks.L99010.timestamp : null,
+                    L01001: tasks.L01001 ? tasks.L01001.timestamp : null,
+                    L01002: tasks.L01002 ? tasks.L01002.timestamp : null,
+                    L01003: tasks.L01003 ? tasks.L01003.timestamp : null,
+                    L01004: tasks.L01004 ? tasks.L01004.timestamp : null,
+                    L01007: tasks.L01007 ? tasks.L01007.timestamp : null,
+                    L01008: tasks.L01008 ? tasks.L01008.timestamp : null,
+                    L01009: tasks.L01009 ? tasks.L01009.timestamp : null,
+                    L01010: tasks.L01010 ? tasks.L01010.timestamp : null,
+                    L01011: tasks.L01011 ? tasks.L01011.timestamp : null,
+                    L02001: tasks.L02001 ? tasks.L02001.timestamp : null,
+                    L02002: tasks.L02002 ? tasks.L02002.timestamp : null,
+                    L02003: tasks.L02003 ? tasks.L02003.timestamp : null,
+                    L02004: tasks.L02004 ? tasks.L02004.timestamp : null,
+                    L02007: tasks.L02007 ? tasks.L02007.timestamp : null,
+                    L02008: tasks.L02008 ? tasks.L02008.timestamp : null,
+                    L02011: tasks.L02011 ? tasks.L02011.timestamp : null,
+                    L02009: tasks.L02009 ? tasks.L02009.timestamp : null,
+                    L02010: tasks.L02010 ? tasks.L02010.timestamp : null
+                },
 
-                    let allMandatoryCompleted = true;
-                    let missingTasks = [];
+                L99016: visitData.limpiezaGeneral,
+                L99017: visitData.limpiezaMaquinas,
+                L99018: visitData.limpiezaBasurero,
 
-                    mandatoryTasks.forEach(task => {
-                        const taskId = task.id;
-                        if (!visitData.tasks[taskId]) {
-                            allMandatoryCompleted = false;
-                            missingTasks.push(task.querySelector('h3').textContent.replace('*', '').trim());
-                        }
-                    });
+                L99001: tasks.L99001 ? tasks.L99001.answer : false,
+                L99002: tasks.L99002 ? tasks.L99002.answer : false,
+                L99003: tasks.L99003 ? tasks.L99003.answer : false,
+                L99004: tasks.L99004 ? tasks.L99004.answer : false,
+                L99006: tasks.L99006 ? tasks.L99006.answer : false,
+                L99007: tasks.L99007 ? tasks.L99007.answer : false,
+                L99008: tasks.L99008 ? tasks.L99008.answer : false,
+                L99014: tasks.L99014 ? tasks.L99014.answer : false,
+                L99015: tasks.L99015 ? tasks.L99015.answer : false,
+                L99012: tasks.L99012 ? tasks.L99012.answer : false,
+                L99013: tasks.L99013 ? tasks.L99013.answer : false,
+                L99009: tasks.L99009 ? tasks.L99009.answer : false,
+                L99010: tasks.L99010 ? tasks.L99010.answer : false,
 
-                    if (allMandatoryCompleted) {
-                        submitBtn.disabled = false;
-                        tooltip.style.display = 'none';
-                    } else {
-                        submitBtn.disabled = true;
-                        tooltip.innerHTML = `Por favor, completa las siguientes tareas obligatorias para continuar: <strong>${missingTasks.join(', ')}</strong>`;
-                        tooltip.style.display = 'block';
-                    }
-                }
+                L01001: tasks.L01001 ? tasks.L01001.answer : false,
+                L01002: tasks.L01002 ? tasks.L01002.answer : false,
+                L01003: tasks.L01003 ? tasks.L01003.answer : false,
+                L01004: tasks.L01004 ? tasks.L01004.answer : false,
+                L01007: tasks.L01007 ? tasks.L01007.answer : false,
+                L01008: tasks.L01008 ? tasks.L01008.answer : false,
+                L01009: tasks.L01009 ? tasks.L01009.answer : false,
+                L01010: tasks.L01010 ? tasks.L01010.answer : false,
+                L01011: tasks.L01011 ? tasks.L01011.answer : false,
 
-                async function submitAllTasks() {
-                    const visitId = getOrSetVisitId();
-                    const visitData = getVisitData();
-                    const feedbackEl = document.getElementById('feedback-final');
+                L02001: tasks.L02001 ? tasks.L02001.answer : false,
+                L02002: tasks.L02002 ? tasks.L02002.answer : false,
+                L02003: tasks.L02003 ? tasks.L02003.answer : false,
+                L02004: tasks.L02004 ? tasks.L02004.answer : false,
+                L02007: tasks.L02007 ? tasks.L02007.answer : false,
+                L02008: tasks.L02008 ? tasks.L02008.answer : false,
+                L02011: tasks.L02011 ? tasks.L02011.answer : false,
+                L02009: tasks.L02009 ? tasks.L02009.answer : false,
+                L02010: tasks.L02010 ? tasks.L02010.answer : false,
+            };
 
-                    const payload = {
-                        visitId: visitId,
-                        location: visitData.location,
-                        user: visitData.user,
-                        tasks: visitData.tasks,
-                        submissionTimestamp: new Date().toISOString(),
-                        limpiezaGeneral: visitData.limpiezaGeneral,
-                        limpiezaMaquinas: visitData.limpiezaMaquinas,
-                        limpiezaBasurero: visitData.limpiezaBasurero
-                    };
+            console.log('Sending data to API:', formattedData);
 
-                    console.log('Submitting final data:', payload);
-                    feedbackEl.textContent = 'Enviando...';
-                    feedbackEl.className = 'alert alert-info';
-                    feedbackEl.style.display = 'block';
-                    document.getElementById('submit-all-btn').disabled = true;
-
-                    try {
-                        await submitToAPI(payload);
-
-                        feedbackEl.textContent = '¡Registro de visita enviado con éxito!';
-                        feedbackEl.className = 'alert alert-success';
-
-                        localStorage.removeItem(`visitData_${visitId}`);
-                        localStorage.removeItem('visitId');
-
-                        document.getElementById('welcome-message').style.display = 'none';
-                        document.getElementById('submit-all-container').style.display = 'none';
-                        document.getElementById('completion-message').style.display = 'block';
-
-                    } catch (error) {
-                        console.error('Error submitting form:', error);
-                        feedbackEl.textContent = 'Error al enviar el registro. Inténtalo de nuevo.';
-                        feedbackEl.className = 'alert alert-danger';
-                        document.getElementById('submit-all-btn').disabled = false;
-                    }
-                }
-
-                function submitToAPI(payload) {
-                    const URL = "https://nd1me8yxw5.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
-                    const tasks = payload.tasks || {};
-
-                    let formattedData = {
-                        propiedad: payload.location,
-                        user: payload.user,
-                        visitId: payload.visitId,
-                        submissionTimestamp: payload.submissionTimestamp,
-
-                        taskCompletionTimestamps: {
-                            // Both Locations
-                            L99001: tasks.L99001 ? tasks.L99001.timestamp : null,
-                            L99002: tasks.L99002 ? tasks.L99002.timestamp : null,
-                            L99003: tasks.L99003 ? tasks.L99003.timestamp : null,
-                            L99004: tasks.L99004 ? tasks.L99004.timestamp : null,
-                            L99006: tasks.L99006 ? tasks.L99006.timestamp : null,
-                            L99007: tasks.L99007 ? tasks.L99007.timestamp : null,
-                            L99008: tasks.L99008 ? tasks.L99008.timestamp : null,
-                            L99014: tasks.L99014 ? tasks.L99014.timestamp : null,
-                            L99015: tasks.L99015 ? tasks.L99015.timestamp : null,
-                            L99012: tasks.L99012 ? tasks.L99012.timestamp : null,
-                            L99013: tasks.L99013 ? tasks.L99013.timestamp : null,
-                            L99009: tasks.L99009 ? tasks.L99009.timestamp : null,
-                            L99010: tasks.L99010 ? tasks.L99010.timestamp : null,
-                            // Usera
-                            L01001: tasks.L01001 ? tasks.L01001.timestamp : null,
-                            L01002: tasks.L01002 ? tasks.L01002.timestamp : null,
-                            L01003: tasks.L01003 ? tasks.L01003.timestamp : null,
-                            L01004: tasks.L01004 ? tasks.L01004.timestamp : null,
-                            L01007: tasks.L01007 ? tasks.L01007.timestamp : null,
-                            L01008: tasks.L01008 ? tasks.L01008.timestamp : null,
-                            L01009: tasks.L01009 ? tasks.L01009.timestamp : null,
-                            L01010: tasks.L01010 ? tasks.L01010.timestamp : null,
-                            L01011: tasks.L01011 ? tasks.L01011.timestamp : null,
-                            L01020: tasks.L01020 ? tasks.L01020.timestamp : null,
-                            L01021: tasks.L01021 ? tasks.L01021.timestamp : null,
-                            L01022: tasks.L01022 ? tasks.L01022.timestamp : null,
-                            // Hortaleza
-                            L02001: tasks.L02001 ? tasks.L02001.timestamp : null,
-                            L02002: tasks.L02002 ? tasks.L02002.timestamp : null,
-                            L02003: tasks.L02003 ? tasks.L02003.timestamp : null,
-                            L02004: tasks.L02004 ? tasks.L02004.timestamp : null,
-                            L02007: tasks.L02007 ? tasks.L02007.timestamp : null,
-                            L02008: tasks.L02008 ? tasks.L02008.timestamp : null,
-                            L02011: tasks.L02011 ? tasks.L02011.timestamp : null,
-                            L02009: tasks.L02009 ? tasks.L02009.timestamp : null,
-                            L02010: tasks.L02010 ? tasks.L02010.timestamp : null,
-                            L02020: tasks.L02020 ? tasks.L02020.timestamp : null,
-                            L02021: tasks.L02021 ? tasks.L02021.timestamp : null,
-                            L02022: tasks.L02022 ? tasks.L02022.timestamp : null
-                        },
-
-                        // Cleanliness scores
-                        L99016: payload.limpiezaGeneral,
-                        L99017: payload.limpiezaMaquinas,
-                        L99018: payload.limpiezaBasurero,
-
-                        // Both Locations
-                        L99001: tasks.L99001 ? tasks.L99001.answer : false, //ok
-                        L99002: tasks.L99002 ? tasks.L99002.answer : false, //ok
-                        L99003: tasks.L99003 ? tasks.L99003.answer : false, //ok
-                        L99004: tasks.L99004 ? tasks.L99004.answer : false, //ok
-                        L99006: tasks.L99006 ? tasks.L99006.answer : false, //ok
-                        L99007: tasks.L99007 ? tasks.L99007.answer : false, //ok
-                        L99008: tasks.L99008 ? tasks.L99008.answer : false, //ok
-                        L99014: tasks.L99014 ? tasks.L99014.answer : false, //ok
-                        L99015: tasks.L99015 ? tasks.L99015.answer : false, //ok
-                        L99012: tasks.L99012 ? tasks.L99012.answer : false, //ok
-                        L99013: tasks.L99013 ? tasks.L99013.answer : false, //ok
-                        L99009: tasks.L99009 ? tasks.L99009.answer : false, //ok
-                        L99010: tasks.L99010 ? tasks.L99010.answer : false, //ok
-
-                        // Usera Only
-                        L01001: tasks.L01001 ? tasks.L01001.answer : false, // ok
-                        L01002: tasks.L01002 ? tasks.L01002.answer : false, // ok
-                        L01003: tasks.L01003 ? tasks.L01003.answer : false, // ok
-                        L01004: tasks.L01004 ? tasks.L01004.answer : false, // ok
-                        L01007: tasks.L01007 ? tasks.L01007.answer : false, // ok
-                        L01008: tasks.L01008 ? tasks.L01008.answer : false, // ok
-                        L01009: tasks.L01009 ? tasks.L01009.answer : false, // ok
-                        L01010: tasks.L01010 ? tasks.L01010.answer : false, // ok
-                        L01011: tasks.L01011 ? tasks.L01011.answer : false, // ok
-
-                        // Hortaleza Only
-                        L02001: tasks.L02001 ? tasks.L02001.answer : false, // ok
-                        L02002: tasks.L02002 ? tasks.L02002.answer : false, // ok
-                        L02003: tasks.L02003 ? tasks.L02003.answer : false, // ok
-                        L02004: tasks.L02004 ? tasks.L02004.answer : false, // ok
-                        L02007: tasks.L02007 ? tasks.L02007.answer : false, // ok
-                        L02008: tasks.L02008 ? tasks.L02008.answer : false, // ok
-                        L02011: tasks.L02011 ? tasks.L02011.answer : false, // ok
-                        L02009: tasks.L02009 ? tasks.L02009.answer : false, // ok
-                        L02010: tasks.L02010 ? tasks.L02010.answer : false, // ok
-
-                        // Numeric Inputs - Usera
-                        L01020_1: tasks.L01020 ? tasks.L01020.jabon : 0, // ok
-                        L01020_2: tasks.L01020 ? tasks.L01020.suavizante : 0, // ok
-                        L01020_3: tasks.L01020 ? tasks.L01020.oxigeno : 0, // ok
-                        L01021_1: tasks.L01021 ? tasks.L01021.jabon : 0, // ok
-                        L01021_2: tasks.L01021 ? tasks.L01021.suavizante : 0, // ok
-                        L01021_3: tasks.L01021 ? tasks.L01021.oxigeno : 0, // ok
-                        L01022_1: tasks.L01022 ? tasks.L01022.jabon : 0, // ok
-                        L01022_2: tasks.L01022 ? tasks.L01022.suavizante : 0, // ok
-                        L01022_3: tasks.L01022 ? tasks.L01022.oxigeno : 0, // ok
-
-                        // Numeric Inputs - Hortaleza
-                        L02020_1: tasks.L02020 ? tasks.L02020.jabon : 0, // ok
-                        L02020_2: tasks.L02020 ? tasks.L02020.suavizante : 0, // ok
-                        L02020_3: tasks.L02020 ? tasks.L02020.oxigeno : 0, // ok
-                        L02021_1: tasks.L02021 ? tasks.L02021.jabon : 0, // ok
-                        L02021_2: tasks.L02021 ? tasks.L02021.suavizante : 0,  // ok
-                        L02021_3: tasks.L02021 ? tasks.L02021.oxigeno : 0, // ok
-                        L02022_1: tasks.L02022 ? tasks.L02022.jabon : 0, // ok
-                        L02022_2: tasks.L02022 ? tasks.L02022.suavizante : 0, // ok
-                        L02022_3: tasks.L02022 ? tasks.L02022.oxigeno : 0, // ok
-                    };
-
-                    console.log('Sending data to API:', formattedData);
-
-                    return $.ajax({
-                        type: "POST",
-                        url: URL,
-                        dataType: "json",
-                        crossDomain: true,
-                        contentType: "application/json; charset=utf-8",
-                        data: JSON.stringify(formattedData),
-                    });
-                }
-            </script>
+            return $.ajax({
+                type: "POST",
+                url: URL,
+                dataType: "json",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(formattedData),
+            });
+        }
+    </script>
 </body>
-
 </html>
