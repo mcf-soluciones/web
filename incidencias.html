@@ -344,10 +344,11 @@
                     <select class="form-select" id="severity" required>
                         <option value="" disabled selected>Selecciona severidad</option>
                         <!-- PLACEHOLDER: Add severity options -->
-                        <option value="baja">Baja</option>
-                        <option value="media">Media</option>
-                        <option value="alta">Alta</option>
-                        <option value="critica">Critica</option>
+                        <option value="sev5_sin_afectacion">sev5_sin_afectacion</option>
+                        <option value="sev4_afectacion_ligera">sev4_afectacion_ligera</option>
+                        <option value="sev3_afectado_maquina">sev3_afectado_maquina</option>
+                        <option value="sev2_afectado_dia">sev2_afectado_dia</option>
+                        <option value="sev1_emergencia">sev1_emergencia</option>
                     </select>
                 </div>
 
@@ -377,27 +378,22 @@
                     <select class="form-select" id="resolution" required>
                         <option value="" disabled selected>Selecciona estado</option>
                         <!-- PLACEHOLDER: Add resolution options -->
-                        <option value="pendiente">Pendiente</option>
-                        <option value="en_proceso">En Proceso</option>
-                        <option value="resuelto">Resuelto</option>
-                        <option value="escalado">Escalado</option>
+                        <option value="sin_resolver">Sin resolver</option>
+                        <option value="llamada">En llamada</option>
+                        <option value="virtualmente">Virtualmente, por VNC</option>
+                        <option value="proveedor_gran_evento">Visita de un Proveedor</option>
+                        <option value="visita_externo">Visita por un Externo</option>
+                        <option value="visita_emergencia">Visita Emergencia</option>
+                        <option value="cierre">Cierre de local</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Maquina afectada</label>
-                    <select class="form-select" id="machine">
-                        <option value="" disabled selected>Selecciona maquina (opcional)</option>
-                        <!-- PLACEHOLDER: Add machine options -->
-                        <option value="lavadora_1">Lavadora 1</option>
-                        <option value="lavadora_2">Lavadora 2</option>
-                        <option value="lavadora_3">Lavadora 3</option>
-                        <option value="secadora_1">Secadora 1</option>
-                        <option value="secadora_2">Secadora 2</option>
-                        <option value="otra">Otra</option>
-                        <option value="na">No aplica</option>
+                    <select class="form-select" id="machine" disabled>
+                        <option value="" disabled selected>Primero selecciona propiedad</option>
                     </select>
-                    <p class="form-hint">Deja en blanco si no aplica a una maquina</p>
+                    <p class="form-hint">Selecciona una propiedad para ver las maquinas disponibles</p>
                 </div>
 
                 <div class="form-group">
@@ -405,12 +401,23 @@
                     <select class="form-select" id="found" required>
                         <option value="" disabled selected>Selecciona como se encontro</option>
                         <!-- PLACEHOLDER: Add found options -->
-                        <option value="llamada_cliente">Llamada de cliente</option>
-                        <option value="visita_rutina">Visita de rutina</option>
-                        <option value="queja_presencial">Queja presencial</option>
-                        <option value="camara">Por camara</option>
+                        <option value="llamada">Llamada de cliente</option>
+                        <option value="whatsapp">Whatsapp</option>
+                        <option value="visita">Visita</option>
+                        <option value="colaborador_externo">Colaborador Externo</option>
                         <option value="otro">Otro</option>
                     </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Description -->
+                <p class="section-header">Descripcion</p>
+
+                <div class="form-group">
+                    <label class="form-label">Descripcion de la incidencia</label>
+                    <textarea class="form-input" id="description" rows="3" placeholder="Describe la incidencia..." required style="min-height: 100px; resize: vertical;"></textarea>
+                    <p class="form-hint">Este texto sera el titulo de la incidencia en Notion</p>
                 </div>
 
                 <div class="divider"></div>
@@ -451,6 +458,62 @@
             user: null
         };
 
+        // Machine options per propiedad
+        const machinesByPropiedad = {
+            hortaleza: [
+                { value: 'lavadora1', label: 'Lavadora 1' },
+                { value: 'lavadora2', label: 'Lavadora 2' },
+                { value: 'lavadora3', label: 'Lavadora 3' },
+                { value: 'lavadora4', label: 'Lavadora 4' },
+                { value: 'secadora5', label: 'Secadora 5' },
+                { value: 'secadora6', label: 'Secadora 6' },
+                { value: 'secadora7', label: 'Secadora 7' },
+                { value: 'terminalpagos', label: 'Terminal de Pagos' },
+                { value: 'tpv', label: 'TPV' },
+                { value: 'otros', label: 'Otros' }
+            ],
+            usera: [
+                { value: 'secadora1', label: 'Secadora 1' },
+                { value: 'secadora2', label: 'Secadora 2' },
+                { value: 'secadora3', label: 'Secadora 3' },
+                { value: 'lavadora4', label: 'Lavadora 4' },
+                { value: 'lavadora5', label: 'Lavadora 5' },
+                { value: 'lavadora6', label: 'Lavadora 6' },
+                { value: 'lavadora7', label: 'Lavadora 7' },
+                { value: 'terminalpagos', label: 'Terminal de Pagos' },
+                { value: 'tpv', label: 'TPV' },
+                { value: 'otros', label: 'Otros' }
+            ]
+        };
+
+        // Update machine dropdown based on selected propiedad
+        function updateMachineOptions(propiedad) {
+            const machineSelect = document.getElementById('machine');
+            const machines = machinesByPropiedad[propiedad] || [];
+
+            // Clear existing options
+            machineSelect.innerHTML = '';
+
+            if (machines.length === 0) {
+                machineSelect.innerHTML = '<option value="" disabled selected>No hay maquinas disponibles</option>';
+                machineSelect.disabled = true;
+                return;
+            }
+
+            // Add default option
+            machineSelect.innerHTML = '<option value="" disabled selected>Selecciona maquina (opcional)</option>';
+
+            // Add machine options
+            machines.forEach(machine => {
+                const option = document.createElement('option');
+                option.value = machine.value;
+                option.textContent = machine.label;
+                machineSelect.appendChild(option);
+            });
+
+            machineSelect.disabled = false;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             // Read URL parameters
             const urlParams = new URLSearchParams(window.location.search);
@@ -459,6 +522,11 @@
             if (urlUser) {
                 incidenciaData.user = urlUser;
             }
+
+            // Setup propiedad change listener
+            document.getElementById('propiedad').addEventListener('change', (e) => {
+                updateMachineOptions(e.target.value);
+            });
 
             // Setup form submission
             document.getElementById('incidencia-form').addEventListener('submit', handleSubmit);
@@ -473,8 +541,9 @@
             const resolution = document.getElementById('resolution').value;
             const machine = document.getElementById('machine').value || null;
             const found = document.getElementById('found').value;
+            const description = document.getElementById('description').value.trim();
 
-            if (!severity || !propiedad || !resolution || !found) {
+            if (!severity || !propiedad || !resolution || !found || !description) {
                 alert('Por favor completa todos los campos requeridos');
                 return;
             }
@@ -488,7 +557,8 @@
                     cost,
                     resolution,
                     machine,
-                    found
+                    found,
+                    description
                 });
 
                 document.getElementById('loading-overlay').classList.remove('active');
@@ -513,7 +583,8 @@
                 cost: data.cost,
                 resolution: data.resolution,
                 machine: data.machine,
-                found: data.found
+                found: data.found,
+                description: data.description
             };
 
             console.log('Sending incidencia data to Notion:', formattedData);
