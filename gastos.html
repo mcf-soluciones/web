@@ -383,8 +383,8 @@
                     <label class="form-label">Propiedad / Centro de costo</label>
                     <select class="form-select" id="location-select" required>
                         <option value="" disabled selected>Selecciona una opcion</option>
-                        <option value="hortaleza">Hortaleza</option>
-                        <option value="usera">Usera</option>
+                        <option value="usera">(001) Usera</option>
+                        <option value="hortaleza">(002) Hortaleza</option>
                         <option value="corporate">Corporate</option>
                     </select>
                 </div>
@@ -408,16 +408,28 @@
                     <select class="form-select" id="concept-select" required>
                         <option value="" disabled selected>Selecciona un concepto</option>
                         <!-- TODO: Replace with actual concepts -->
-                        <option value="alquiler">Alquiler</option>
-                        <option value="suministros">Suministros (luz, agua, gas)</option>
-                        <option value="mantenimiento">Mantenimiento</option>
-                        <option value="limpieza">Limpieza</option>
-                        <option value="marketing">Marketing</option>
-                        <option value="seguros">Seguros</option>
-                        <option value="impuestos">Impuestos</option>
-                        <option value="nominas">Nominas</option>
-                        <option value="proveedores">Proveedores</option>
-                        <option value="otros">Otros</option>
+                        <option value="Alquiler (C)">Alquiler</option>
+                        <option value="Financiamiento (D)">Financiamiento</option>
+                        <option value="Agua, Luz (E)">Agua, Luz</option>
+                        <option value="Gas (E)">Gas</option>
+                        <option value="Detergentes (E)">Detergentes</option>
+                        <option value="Articulos para Vending o Auxiliares (F)">Articulos para Vending o Auxiliares</option>
+                        <option value="Comissiones Bancarias (F)">Comissiones Bancarias & TPV</option>
+                        <option value="Internet (G)">Internet</option>
+                        <option value="Seguro (G)">Seguro</option>
+                        <option value="Limpieza (G)">Limpieza</option>
+                        <option value="Alarma (G)">Alarma</option>
+                        <option value="Adquisición y Marketing (H)">Adquisición y Marketing</option>
+                        <option value="Atención y Retornos (H)">Atención y Retornos</option>
+                        <option value="Mantenimiento de Maquinaria y Equipo (I)">Mantenimiento de Maquinaria y Equipo</option>
+                        <option value="Tech (J)">Tech</option>
+                        <option value="Gestor (J)">Gestor</option>
+                        <option value="Financing MCF (J)">Financing MCF</option>
+                        <option value="Impuestos Autonomo (N)">Impuestos Autonomo</option>
+                        <option value="Impuestos Sociedad (N)">Impuestos Sociedad</option>
+                        <option value="Impuestos Seg. Social (N)">Impuestos Seg. Social</option>
+                        <option value="IVA Neto (N)">IVA Neto</option>
+                        <option value="Impuestos Ret IRPF Alquiler (N)">Impuestos Ret IRPF Alquiler</option>
                     </select>
                 </div>
 
@@ -458,7 +470,7 @@
                             No
                         </label>
                     </div>
-                    <p class="form-hint">Marcar si es una compra de activo (equipo, maquinaria, etc.)</p>
+                    <p class="form-hint">Marcar si es una compra de activo (traspaso, etc.)</p>
                 </div>
 
                 <div class="divider"></div>
