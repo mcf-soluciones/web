@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Encuesta - Hortaleza</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .header-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 20px;
+            padding-right: 44px;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* Star Rating */
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            cursor: pointer;
+            font-size: 32px;
+            color: var(--border);
+            transition: color 0.2s;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input:checked ~ label {
+            color: #fbbf24;
+        }
+
+        /* Emoji Rating */
+        .emoji-rating {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .emoji-option {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 8px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-primary);
+        }
+
+        .emoji-option:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .emoji-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .emoji-option input {
+            display: none;
+        }
+
+        .emoji-option .emoji {
+            font-size: 28px;
+        }
+
+        .emoji-option .emoji-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Yes/No Toggle */
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--bg-primary);
+        }
+
+        .toggle-option:hover {
+            border-color: var(--primary);
+        }
+
+        .toggle-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .toggle-option input {
+            display: none;
+        }
+
+        /* Question number */
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        /* Completion message */
+        #completion-message {
+            display: none;
+            text-align: center;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-light);
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .completion-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .completion-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .completion-text {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-card {
+            background: white;
+            padding: 32px 48px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 390px) {
+            .container {
+                padding: 16px 12px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .emoji-option .emoji {
+                font-size: 24px;
+            }
+
+            .emoji-option .emoji-label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h1>Tu opinion nos importa</h1>
+            <p>Lavanderia Hortaleza - Ayudanos a mejorar</p>
+        </div>
+
+        <!-- Survey Form -->
+        <div id="survey-form" class="fade-in">
+            <form id="encuesta-form">
+
+                <!-- Question 1: Overall Experience -->
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="question-number">1</span>
+                            ¿Como fue tu experiencia general?
+                        </label>
+                        <div class="emoji-rating">
+                            <label class="emoji-option" onclick="selectEmoji(this, 'experience')">
+                                <input type="radio" name="experience" value="muy_mala" required>
+                                <span class="emoji">😠</span>
+                                <span class="emoji-label">Muy mala</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'experience')">
+                                <input type="radio" name="experience" value="mala">
+                                <span class="emoji">😕</span>
+                                <span class="emoji-label">Mala</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'experience')">
+                                <input type="radio" name="experience" value="regular">
+                                <span class="emoji">😐</span>
+                                <span class="emoji-label">Regular</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'experience')">
+                                <input type="radio" name="experience" value="buena">
+                                <span class="emoji">🙂</span>
+                                <span class="emoji-label">Buena</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'experience')">
+                                <input type="radio" name="experience" value="excelente">
+                                <span class="emoji">😍</span>
+                                <span class="emoji-label">Excelente</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 2: Cleanliness -->
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="question-number">2</span>
+                            ¿Como calificarias la limpieza del local?
+                        </label>
+                        <div class="emoji-rating">
+                            <label class="emoji-option" onclick="selectEmoji(this, 'cleanliness')">
+                                <input type="radio" name="cleanliness" value="muy_mala" required>
+                                <span class="emoji">😠</span>
+                                <span class="emoji-label">Muy mala</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'cleanliness')">
+                                <input type="radio" name="cleanliness" value="mala">
+                                <span class="emoji">😕</span>
+                                <span class="emoji-label">Mala</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'cleanliness')">
+                                <input type="radio" name="cleanliness" value="regular">
+                                <span class="emoji">😐</span>
+                                <span class="emoji-label">Regular</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'cleanliness')">
+                                <input type="radio" name="cleanliness" value="buena">
+                                <span class="emoji">🙂</span>
+                                <span class="emoji-label">Buena</span>
+                            </label>
+                            <label class="emoji-option" onclick="selectEmoji(this, 'cleanliness')">
+                                <input type="radio" name="cleanliness" value="excelente">
+                                <span class="emoji">😍</span>
+                                <span class="emoji-label">Excelente</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 3: Machine Availability -->
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="question-number">3</span>
+                            ¿Encontraste maquinas disponibles?
+                        </label>
+                        <div class="toggle-group">
+                            <label class="toggle-option" onclick="selectToggle(this, 'availability')">
+                                <input type="radio" name="availability" value="si" required>
+                                Si, sin problema
+                            </label>
+                            <label class="toggle-option" onclick="selectToggle(this, 'availability')">
+                                <input type="radio" name="availability" value="parcial">
+                                Tuve que esperar
+                            </label>
+                            <label class="toggle-option" onclick="selectToggle(this, 'availability')">
+                                <input type="radio" name="availability" value="no">
+                                No habia
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 4: Would Recommend -->
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="question-number">4</span>
+                            ¿Nos recomendarias a un amigo o familiar?
+                        </label>
+                        <div class="toggle-group">
+                            <label class="toggle-option" onclick="selectToggle(this, 'recommend')">
+                                <input type="radio" name="recommend" value="si" required>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                Si
+                            </label>
+                            <label class="toggle-option" onclick="selectToggle(this, 'recommend')">
+                                <input type="radio" name="recommend" value="tal_vez">
+                                Tal vez
+                            </label>
+                            <label class="toggle-option" onclick="selectToggle(this, 'recommend')">
+                                <input type="radio" name="recommend" value="no">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+                                No
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional: Comments -->
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">
+                            ¿Algun comentario adicional? (opcional)
+                        </label>
+                        <textarea class="form-textarea" id="comments" placeholder="Cuentanos como podemos mejorar..."></textarea>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+                        Enviar Encuesta
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Completion Message -->
+        <div id="completion-message" class="card fade-in">
+            <div class="completion-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h3 class="completion-title">Gracias por tu tiempo</h3>
+            <p class="completion-text">Tu opinion nos ayuda a mejorar cada dia. Esperamos verte pronto.</p>
+        </div>
+
+        <div class="footer">
+            Lavanderia Hortaleza - Encuesta de Satisfaccion
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Enviando encuesta...</div>
+        </div>
+    </div>
+
+    <script>
+        // Handle emoji selection
+        function selectEmoji(element, groupName) {
+            // Remove selected class from siblings
+            const container = element.closest('.emoji-rating');
+            container.querySelectorAll('.emoji-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            // Add selected class to clicked element
+            element.classList.add('selected');
+            // Check the radio input
+            element.querySelector('input').checked = true;
+        }
+
+        // Handle toggle selection
+        function selectToggle(element, groupName) {
+            // Remove selected class from siblings
+            const container = element.closest('.toggle-group');
+            container.querySelectorAll('.toggle-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            // Add selected class to clicked element
+            element.classList.add('selected');
+            // Check the radio input
+            element.querySelector('input').checked = true;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('encuesta-form').addEventListener('submit', handleSubmit);
+        });
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const location = 'hortaleza'; // Hardcoded for this location
+            const experience = document.querySelector('input[name="experience"]:checked')?.value;
+            const cleanliness = document.querySelector('input[name="cleanliness"]:checked')?.value;
+            const availability = document.querySelector('input[name="availability"]:checked')?.value;
+            const recommend = document.querySelector('input[name="recommend"]:checked')?.value;
+            const comments = document.getElementById('comments').value.trim();
+
+            if (!experience || !cleanliness || !availability || !recommend) {
+                alert('Por favor responde todas las preguntas');
+                return;
+            }
+
+            document.getElementById('loading-overlay').classList.add('active');
+
+            try {
+                await submitSurvey({
+                    location,
+                    experience,
+                    cleanliness,
+                    availability,
+                    recommend,
+                    comments
+                });
+
+                document.getElementById('loading-overlay').classList.remove('active');
+                document.getElementById('survey-form').style.display = 'none';
+                document.getElementById('completion-message').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading-overlay').classList.remove('active');
+                alert('Error al enviar. Intentalo de nuevo.');
+            }
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function submitSurvey(data) {
+            // TODO: Replace with actual API endpoint
+            const URL = "https://9nrsbn1zu9.execute-api.us-east-1.amazonaws.com/dev-v1/contact";
+
+            const formattedData = {
+                type: 'encuesta',
+                survey_id: generateUUID(),
+                timestamp: new Date().toISOString(),
+                location: data.location,
+                experience: data.experience,
+                cleanliness: data.cleanliness,
+                availability: data.availability,
+                recommend: data.recommend,
+                comments: data.comments || ''
+            };
+
+            console.log('Sending survey data:', formattedData);
+
+            return $.ajax({
+                type: "POST",
+                url: URL,
+                dataType: "json",
+                crossDomain: true,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(formattedData),
+            });
+        }
+    </script>
+</body>
+</html>
