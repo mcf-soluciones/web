@@ -710,13 +710,20 @@
                 document.getElementById('location-select').value = urlLocation;
             }
 
-            // Load saved data if exists
+            // Load saved data if exists (only to resume an in-progress visit)
             const savedData = localStorage.getItem('visitData');
             if (savedData) {
                 const parsed = JSON.parse(savedData);
-                visitData = { ...visitData, ...parsed };
-                if (visitData.location && visitData.user) {
+                // Only restore if the visit was started less than 4 hours ago
+                const fourHoursAgo = Date.now() - (0.5 * 60 * 60 * 1000);
+                const visitStartTime = parsed.visitId ? parseInt(parsed.visitId.split('-')[1]) : 0;
+
+                if (visitStartTime > fourHoursAgo && parsed.location && parsed.user) {
+                    visitData = { ...visitData, ...parsed };
                     showChecklist();
+                } else {
+                    // Clear stale data
+                    localStorage.removeItem('visitData');
                 }
             }
 
