@@ -16,8 +16,9 @@
 **Changes to Lambda function (`mcf_movimientosForm-v3`):**
 - Updated main handler to accept and store `propiedad` field in Notion database
   - Line 116-119: Added `propiedad` select field to page properties for "transito" type
-- Updated `handleDepositoSimpleSubmission()` function
+- Updated `handleDepositoSubmission()` function (renamed from handleDepositoSimpleSubmission)
   - Line 304-307: Added `propiedad` select field to page properties for "deposito" type
+  - Changed type from 'deposito_simple' to 'deposito' for consistency
 - Both functions now store the property value in the Notion database with fallback to 'unknown' if not provided
 
 ### Issue #2: Remove mandatory validation for admin users in final-visit.html
