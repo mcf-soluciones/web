@@ -327,6 +327,16 @@
         <!-- Form -->
         <div id="form-card" class="card fade-in">
             <form id="deposito-form">
+                <!-- Property Selection -->
+                <div class="form-group">
+                    <label class="form-label">Propiedad / Sucursal</label>
+                    <select class="form-select" id="propiedad-select" required>
+                        <option value="" disabled selected>Selecciona una opción</option>
+                        <option value="hortaleza">Hortaleza</option>
+                        <option value="usera">Usera</option>
+                    </select>
+                </div>
+
                 <!-- Amount -->
                 <div class="form-group">
                     <label class="form-label">Cantidad depositada</label>
@@ -372,7 +382,8 @@
     <script>
         // State
         let depositoData = {
-            user: null
+            user: null,
+            propiedad: null
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -400,12 +411,19 @@
             e.preventDefault();
 
             const amount = parseFloat(document.getElementById('amount-input').value);
+            const propiedad = document.getElementById('propiedad-select').value;
+
+            if (!propiedad) {
+                alert('Por favor selecciona una propiedad/sucursal');
+                return;
+            }
 
             if (!amount || amount <= 0) {
                 alert('Por favor ingresa una cantidad valida');
                 return;
             }
 
+            depositoData.propiedad = propiedad;
             document.getElementById('loading-overlay').classList.add('active');
 
             try {
@@ -428,6 +446,7 @@
             const formattedData = {
                 type: 'deposito_simple',
                 mcf_user: depositoData.user,
+                propiedad: depositoData.propiedad,
                 euros: amount,
                 account: 'cash'
             };
