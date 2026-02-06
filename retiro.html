@@ -363,6 +363,18 @@
         <!-- Form -->
         <div id="form-card" class="card fade-in">
             <form id="retiro-form">
+                <!-- Property Selection -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;">Propiedad / Sucursal</label>
+                    <select class="form-select" id="propiedad-select" required style="width: 100%; padding: 12px 16px; font-size: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-primary); color: var(--text-primary); -webkit-appearance: none; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 12px center; background-size: 18px; padding-right: 40px;">
+                        <option value="" disabled selected>Selecciona una opción</option>
+                        <option value="hortaleza">Hortaleza</option>
+                        <option value="usera">Usera</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
                 <!-- Bills -->
                 <p class="section-header">Billetes</p>
                 <div class="denomination-grid">
@@ -469,7 +481,8 @@
     <script>
         // State
         let retiroData = {
-            user: null
+            user: null,
+            propiedad: null
         };
 
         // Denomination values
@@ -526,12 +539,19 @@
             e.preventDefault();
 
             const total = calculateTotal();
+            const propiedad = document.getElementById('propiedad-select').value;
+
+            if (!propiedad) {
+                alert('Por favor selecciona una propiedad/sucursal');
+                return;
+            }
 
             if (total <= 0) {
                 alert('Por favor ingresa al menos una cantidad');
                 return;
             }
 
+            retiroData.propiedad = propiedad;
             document.getElementById('loading-overlay').classList.add('active');
 
             try {
@@ -554,6 +574,7 @@
             const formattedData = {
                 type: 'transito',
                 user: retiroData.user,
+                propiedad: retiroData.propiedad,
                 b20e: parseInt(document.getElementById('b20e').value) || 0,
                 b10e: parseInt(document.getElementById('b10e').value) || 0,
                 b5e: parseInt(document.getElementById('b5e').value) || 0,

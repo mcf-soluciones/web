@@ -684,6 +684,9 @@
             L02011: { title: 'Limpieza Filtro Secadora 5', desc: 'Limpieza Filtro Secadora 5', mandatory: true, locations: ['hortaleza'] },
         };
 
+        // Admin configuration
+        const ADMIN_USERS = ['lalo', 'oscar', 'adrian'];
+
         // State
         let visitData = {
             location: null,
@@ -691,7 +694,8 @@
             limpiezaGeneral: null,
             limpiezaMaquinas: null,
             limpiezaBasurero: null,
-            tasks: {}
+            tasks: {},
+            isAdmin: false
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -703,6 +707,8 @@
             // Store user from URL params
             if (urlUser) {
                 visitData.user = urlUser;
+                // Check if user is an admin
+                visitData.isAdmin = ADMIN_USERS.includes(urlUser.toLowerCase());
             }
 
             // If location is also provided (legacy support), pre-fill the select
@@ -720,6 +726,10 @@
 
                 if (visitStartTime > fourHoursAgo && parsed.location && parsed.user) {
                     visitData = { ...visitData, ...parsed };
+                    // Re-check admin status in case it wasn't saved or user changed
+                    if (visitData.user) {
+                        visitData.isAdmin = ADMIN_USERS.includes(visitData.user.toLowerCase());
+                    }
                     showChecklist();
                 } else {
                     // Clear stale data
@@ -849,7 +859,12 @@
             const submitBtn = document.getElementById('submit-btn');
             const submitStatus = document.getElementById('submit-status');
 
-            if (mandatoryCompleted === mandatoryTotal) {
+            // Skip mandatory validation for admin users
+            if (visitData.isAdmin) {
+                submitBtn.disabled = false;
+                submitStatus.textContent = `${completed} de ${total} tareas completadas (Modo Admin: validación omitida)`;
+                submitStatus.classList.remove('warning');
+            } else if (mandatoryCompleted === mandatoryTotal) {
                 submitBtn.disabled = false;
                 submitStatus.textContent = `${completed} de ${total} tareas completadas`;
                 submitStatus.classList.remove('warning');
