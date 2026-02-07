@@ -10,3 +10,11 @@ github_username: mcfsoluciones
 
 # Build settings
 markdown: kramdown
+
+# Exclude files from Jekyll processing
+exclude:
+  - lambda_package.zip
+  - IMPLEMENTATION_SUMMARY.md
+  - README.md
+  - node_modules
+  - vendor
