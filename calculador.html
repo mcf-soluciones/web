@@ -1,5 +1,5 @@
 ---
-layout: none
+layout: null
 ---
 <!DOCTYPE html>
 <html lang="en">
