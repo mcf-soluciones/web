@@ -18,3 +18,18 @@ exclude:
   - README.md
   - node_modules
   - vendor
+  - admin.html
+  - calculador.html
+  - deposito.html
+  - encuesta-hortaleza.html
+  - encuesta-usera.html
+  - final-visit.html
+  - fondo-caja.html
+  - gastos.html
+  - incidencias.html
+  - inventario.html
+  - movimientos.html
+  - reportar-insumos.html
+  - retiro.html
+  - session-reset.html
+  - survey.html
