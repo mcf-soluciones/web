@@ -10,28 +10,3 @@ github_username: mcfsoluciones
 
 # Build settings
 markdown: kramdown
-
-# Include HTML files without front matter
-include:
-  - admin.html
-  - calculador.html
-  - deposito.html
-  - encuesta-hortaleza.html
-  - encuesta-usera.html
-  - final-visit.html
-  - fondo-caja.html
-  - gastos.html
-  - incidencias.html
-  - inventario.html
-  - reportar-insumos.html
-  - retiro.html
-  - session-reset.html
-  - survey.html
-
-# Exclude files from Jekyll processing
-exclude:
-  - lambda_package.zip
-  - IMPLEMENTATION_SUMMARY.md
-  - README.md
-  - node_modules
-  - vendor
