@@ -72,12 +72,16 @@
       </div>
       <!-- Month/year picker only for views that query by period -->
       <div class="flex items-center gap-2" x-show="viewUsesPicker()" x-cloak>
-        <select x-model.number="mm" @change="onPickerChange()" class="rounded-md border-gray-300 text-sm py-1.5 focus:ring-brand-500 focus:border-brand-500">
+        <select x-model.number="mm" @change="onPickerChange()"
+          x-init="$nextTick(() => $el.value = mm)"
+          class="rounded-md border-gray-300 text-sm py-1.5 focus:ring-brand-500 focus:border-brand-500">
           <template x-for="(m, i) in monthLabels" :key="i">
             <option :value="i + 1" x-text="m"></option>
           </template>
         </select>
-        <select x-model.number="yyyy" @change="onPickerChange()" class="rounded-md border-gray-300 text-sm py-1.5 focus:ring-brand-500 focus:border-brand-500">
+        <select x-model.number="yyyy" @change="onPickerChange()"
+          x-init="$nextTick(() => $el.value = yyyy)"
+          class="rounded-md border-gray-300 text-sm py-1.5 focus:ring-brand-500 focus:border-brand-500">
           <template x-for="y in years" :key="y"><option :value="y" x-text="y"></option></template>
         </select>
       </div>

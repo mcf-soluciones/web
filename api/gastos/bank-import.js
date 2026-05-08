@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import * as XLSX from 'xlsx';
 import turso from '../_lib/turso.js';
+import { canonicalizePropiedad } from '../_lib/propiedad.js';
 
 /**
  * POST /api/gastos/bank-import
@@ -256,14 +257,6 @@ async function categoriaForCuenta(cuenta) {
     args: [String(cuenta).trim()],
   });
   return rs.rows[0]?.categoria_gastos_mcf || null;
-}
-
-function canonicalizePropiedad(p) {
-  const s = String(p || '').trim().toLowerCase();
-  if (s === 'usera' || s === '(001) usera') return '(001) Usera';
-  if (s === 'hortaleza' || s === '(002) hortaleza') return '(002) Hortaleza';
-  if (s === 'corporate') return 'Corporate';
-  return p;
 }
 
 // =============================================================================

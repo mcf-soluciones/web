@@ -1,5 +1,6 @@
 import turso from '../_lib/turso.js';
 import { EDITABLE_FIELDS, coerce } from '../_lib/gastos-editable.js';
+import { canonicalizePropiedad } from '../_lib/propiedad.js';
 
 /**
  * PATCH /api/gastos/update
@@ -48,6 +49,11 @@ export default async function handler(req, res) {
     }
     if ('cuenta' in updates) {
       updates.categoria_gastos_mcf = await resolveCategoria(updates.cuenta);
+    }
+    // Always store propiedad in canonical form so the modal's short-form
+    // values ("hortaleza") don't overwrite "(002) Hortaleza" on edit.
+    if ('propiedad' in updates) {
+      updates.propiedad = canonicalizePropiedad(updates.propiedad);
     }
     if ('importe_total' in updates) {
       updates.gasto = updates.importe_total;

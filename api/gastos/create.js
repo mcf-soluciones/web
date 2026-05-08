@@ -2,6 +2,7 @@ import { Readable } from 'stream';
 import turso from '../_lib/turso.js';
 import { getDriveService } from '../_lib/google-auth.js';
 import { getOrCreateMonthFolder } from '../_lib/drive-folders.js';
+import { canonicalizePropiedad } from '../_lib/propiedad.js';
 
 const DRIVE_FOLDER_ID = '1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a';
 
@@ -24,12 +25,27 @@ export default async function handler(req, res) {
   try {
     const body = req.body || {};
     const { fecha, mm, yyyy } = resolvePeriod(body);
-    const propiedad = body.propiedad || null;
+    // Always store propiedad in canonical form ("(001) Usera", etc.) so reports
+    // and the gastos table show consistent values regardless of which client
+    // (simple form, detailed modal, bank import) submitted.
+    const propiedad = canonicalizePropiedad(body.propiedad) || null;
     const conceptoMcf = body.concepto_mcf || null;
-    const cuenta = body.cuenta || body.cuenta_mcf || null;
 
-    // Derive categoria_gastos_mcf from catalogo_cuentas when cuenta is known.
-    const categoria = cuenta ? await resolveCategoria(cuenta) : null;
+    // Cuenta resolution:
+    //   1. Use the explicit value if the client supplied one (detailed modal).
+    //   2. Otherwise derive from (concepto_mcf, propiedad) — this is what the
+    //      simple gastos.html form needs since it never sends cuenta.
+    let cuenta = body.cuenta || body.cuenta_mcf || null;
+    let categoria = null;
+    if (cuenta) {
+      categoria = await resolveCategoria(cuenta);
+    } else if (conceptoMcf && propiedad) {
+      const resolved = await resolveCuentaFromConcept(conceptoMcf, propiedad);
+      if (resolved) {
+        cuenta = resolved.cuenta_mcf;
+        categoria = resolved.categoria_gastos_mcf;
+      }
+    }
 
     // Optional factura upload to Drive (into a YYYY-MM subfolder of the parent).
     let reciboUrl = body.recibo_url || null;
@@ -135,6 +151,33 @@ async function resolveCategoria(cuenta) {
       args: [String(cuenta).trim()],
     });
     return r.rows[0]?.categoria_gastos_mcf || null;
+  } catch {
+    return null;
+  }
+}
+
+// Look up cuenta_mcf from (desc, propiedad) — same pair the resolve-cuenta
+// endpoint uses. Falls back to a case-insensitive propiedad match if the exact
+// canonical form doesn't hit (e.g. legacy rows stored as "Usera").
+async function resolveCuentaFromConcept(conceptoMcf, propiedad) {
+  try {
+    let r = await turso.execute({
+      sql: `SELECT cuenta_mcf, categoria_gastos_mcf
+            FROM catalogo_cuentas
+            WHERE desc = ? AND propiedad = ?
+            LIMIT 1`,
+      args: [conceptoMcf, propiedad],
+    });
+    if (r.rows.length === 0) {
+      r = await turso.execute({
+        sql: `SELECT cuenta_mcf, categoria_gastos_mcf
+              FROM catalogo_cuentas
+              WHERE desc = ? AND LOWER(propiedad) LIKE ?
+              LIMIT 1`,
+        args: [conceptoMcf, `%${String(propiedad).toLowerCase()}%`],
+      });
+    }
+    return r.rows[0] || null;
   } catch {
     return null;
   }
