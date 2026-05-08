@@ -31,7 +31,13 @@ export default async function handler(req, res) {
     const dateStr = formatDate(now);
 
     if (body.type === 'gasto') {
-      return await handleGasto(body, dateStr, now, res);
+      // Deprecated: gasto creation is now handled exclusively by
+      // POST /api/gastos/create (which also writes the matching movements row).
+      return res.status(410).json({
+        error: 'gone',
+        type: 'gasto',
+        message: 'Use POST /api/gastos/create instead of /api/movimientos for gasto entries.',
+      });
     }
     if (body.type === 'deposito') {
       return await handleDepositoSimple(body, dateStr, res);
@@ -53,31 +59,6 @@ export default async function handler(req, res) {
       message: error.message,
     });
   }
-}
-
-async function handleGasto(body, dateStr, now, res) {
-  const title = `Gasto ${body.propiedad} - ${body.concepto_mcf} - ${dateStr}`;
-  const description = `Concepto: ${body.concepto_proveedor}\nImporte: ${body.importe_total} ${body.currency}\nFiscal: ${body.is_fiscal ? 'Si' : 'No'}\nInversion: ${body.es_inversion ? 'Si' : 'No'}`;
-
-  const result = await turso.execute({
-    sql: `INSERT INTO movements (movement, type, account, euros, propiedad, mcf_user, date_real, description, icon)
-          VALUES (?, 'gasto', 'cash', ?, ?, ?, ?, ?, '💸')`,
-    args: [
-      title,
-      body.importe_total || 0,
-      body.propiedad || null,
-      body.mcf_user || 'unknown',
-      dateStr,
-      description,
-    ],
-  });
-
-  return res.status(200).json({
-    success: true,
-    type: 'gasto',
-    id: Number(result.lastInsertRowid),
-    message: 'Gasto created successfully',
-  });
 }
 
 async function handleDepositoSimple(body, dateStr, res) {

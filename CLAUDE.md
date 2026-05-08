@@ -156,11 +156,24 @@ Routes by `body.type`:
 - `insumos` -> INSERT insumos
 - default (visit) -> INSERT visits + batch INSERT visit_tasks for completed tasks
 
-### POST /api/gastos
-Expects `body.file` with base64 content. Uploads to Google Drive folder `1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a`, then INSERT gastos with Drive URL.
+### Gastos endpoints (Turso-primary; Google Sheet is retired)
 
-### POST /api/gastos-sheets
-Appends row to Google Sheets spreadsheet `1wju-dUlIOAA8qFbMX2roH0YcinsbqrXWgjSSNNyN0qs`, sheet "gastos", columns A-V.
+All gastos writes flow through Turso; the Google Sheet is a frozen archive.
+
+- **`POST /api/gastos/create`** — single write path for a new gasto. Accepts all columns + optional base64 `file` (factura PDF → Drive folder `1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a`). Inserts into `gastos` AND a matching row into `movements` (so Hub user balances stay correct). Derives `categoria_gastos_mcf` from `catalogo_cuentas` via `cuenta`.
+- **`GET /api/gastos/list?yyyy=&mm=`** — full-row list with `catalogo_cuentas` join for the month table.
+- **`PATCH /api/gastos/update`** — inline single-row edits; server-side column whitelist in `api/_lib/gastos-editable.js`. Auto-re-derives `mm`/`yyyy` on `fecha` change and `categoria_gastos_mcf` on `cuenta` change.
+- **`PATCH /api/gastos/bulk`** — apply same column change to N rows. Only categorical fields are bulk-editable; numeric importes are per-row only.
+- **`GET /api/gastos/resolve-cuenta?concepto_mcf=&propiedad=`** — `catalogo_cuentas` lookup. User never picks the cuenta code; the form derives it from (concepto × propiedad). Propiedad is normalized: `usera` → `(001) Usera`, etc.
+- **`GET /api/gastos/suggest?cuenta=&field=`** — recent distinct values for `razon_social` / `nif_proveedor` / `concepto_proveedor` / `num_factura` / `concepto_banco` within a cuenta. GROUP BY TRIM(field) to dedupe whitespace variants. Drives the clickable suggestion chips in the detailed-entry modal.
+- **`POST /api/gastos/factura`** — re-attach a factura PDF to an existing gasto. Uploads to Drive, updates `recibo_url`.
+- **`DELETE /api/gastos/delete?id=`** — hard delete a single row (no soft delete — low-volume table).
+- **`GET /api/export/month?yyyy=&mm=`** — streams a ZIP of `mcf-YYYY-MM.xlsx` (2 sheets: Ventas + Gastos with clickable Drive hyperlinks) + `facturas/*.pdf` for every gasto row with a `recibo_url`. Uses `xlsx` + `archiver`.
+
+### Deprecated (410 Gone)
+- **`POST /api/gastos`** — split into `create` (new gasto + optional factura) and `factura` (attach to existing).
+- **`POST /api/gastos-sheets`** — the Sheet is retired.
+- **`POST /api/movimientos` `type=gasto`** — returns 410; use `create` which writes the `movements` row too. Other types (`deposito`, `incidencia`, `encuesta`, denomination movements) still work.
 
 ## Sales Pipeline (AWS)
 

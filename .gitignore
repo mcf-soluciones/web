@@ -1,2 +1,10 @@
 _site/
 .sass-cache/
+.env
+node_modules/
+.vercel
+.claude/
+.vscode/
+# Sample/working Excel files used during development
+MovimientosCuenta*.xlsx
+Ventas Consolidado*.xlsx

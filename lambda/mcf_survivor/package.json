@@ -1,0 +1,8 @@
+{
+    "name": "email-lambda",
+    "version": "1.0.0",
+    "dependencies": {
+      "googleapis": "^118.0.0", 
+      "aws-sdk": "^2.1450.0"
+    }
+  }  

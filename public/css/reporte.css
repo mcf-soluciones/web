@@ -1,0 +1,305 @@
+/* Reporting suite — custom palette */
+
+:root {
+  /* Brand palette */
+  --mcf-brand: #2d6695;       /* primary accent — medium blue */
+  --mcf-brand-50: #eef3f8;    /* light tint for hover, subtle bg */
+  --mcf-brand-100: #d7e2ec;   /* chips, borders */
+  --mcf-brand-600: #27486b;   /* darker on hover/active */
+  --mcf-accent: #ab5070;      /* secondary highlight — dusty rose */
+  --mcf-teal: #446f82;        /* muted teal */
+  --mcf-mauve: #6e5558;       /* warm muted brown */
+
+  --mcf-ink: #1a1a1a;
+  --mcf-muted: #64748b;
+  --mcf-border: #e5e7eb;
+  --mcf-surface: #ffffff;
+  --mcf-surface-2: #f9fafb;
+}
+
+html, body { font-family: 'Saira', 'Inter', system-ui, -apple-system, sans-serif; }
+body { background: var(--mcf-surface-2); color: var(--mcf-ink); }
+
+/* Alpine.js — hide elements until x-data initializes */
+[x-cloak] { display: none !important; }
+
+.report-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+.report-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.report-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Tables */
+.mcf-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.mcf-table thead th {
+  background: var(--mcf-surface-2);
+  color: var(--mcf-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--mcf-border);
+  position: sticky; top: 0;
+}
+.mcf-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--mcf-border);
+  vertical-align: middle;
+}
+.mcf-table tbody tr:hover { background: var(--mcf-brand-50); }
+.mcf-table td.num, .mcf-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.mcf-table tbody tr.total-row td { font-weight: 700; background: #fafafa; border-top: 2px solid var(--mcf-border); }
+
+.mcf-spanner {
+  background: var(--mcf-brand-50);
+  color: var(--mcf-brand-600);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--mcf-brand-100);
+}
+
+/* YoY comparison columns: grouped under a spanner + muted prior-year cell */
+.mcf-table thead th.mcf-yoy-spanner {
+  background: var(--mcf-brand-50);
+  color: var(--mcf-brand-600);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--mcf-brand-100);
+  text-transform: none;
+}
+.mcf-table thead th.mcf-yoy-col,
+.mcf-table tbody td.mcf-yoy-col {
+  background: #fafbfc;
+  color: var(--mcf-muted);
+  border-right: 1px solid var(--mcf-border);
+}
+.mcf-table tbody tr:hover td.mcf-yoy-col {
+  background: #f3f5f8;
+}
+.mcf-table thead th.mcf-yoy-col {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Delta badges — use accent (rose) for down and teal-dark for up to fit palette */
+.mcf-delta {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.mcf-delta.up { background: #dcfce7; color: #166534; }
+.mcf-delta.down { background: #fde2ea; color: #9b2749; }
+.mcf-delta.flat { background: #f3f4f6; color: #4b5563; }
+
+/* Series chip (Comparar) */
+.mcf-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px;
+  background: var(--mcf-brand-50); color: var(--mcf-brand-600);
+  border: 1px solid var(--mcf-brand-100);
+}
+.mcf-chip button { color: inherit; opacity: 0.6; }
+.mcf-chip button:hover { opacity: 1; }
+
+/* P&L year table */
+.pnl-yr { min-width: 600px; }
+.pnl-yr .pnl-col-concepto {
+  min-width: 280px;
+  position: sticky; left: 0; z-index: 2;
+  background: var(--mcf-surface);
+}
+.pnl-yr thead .pnl-col-concepto { background: var(--mcf-surface-2); }
+.pnl-yr tbody tr:hover { background: var(--mcf-brand-50); }
+.pnl-yr tbody tr:hover .pnl-col-concepto { background: var(--mcf-brand-50); }
+
+.pnl-section-row { cursor: pointer; }
+.pnl-section-row .pnl-col-concepto,
+.pnl-section-row td {
+  background: var(--mcf-brand-50);
+  font-weight: 700;
+  color: var(--mcf-ink);
+}
+.pnl-section-row:hover .pnl-col-concepto,
+.pnl-section-row:hover td { background: var(--mcf-brand-100); }
+
+.pnl-sub-row { cursor: pointer; }
+.pnl-sub-row .pnl-col-concepto { padding-left: 28px; }
+.pnl-sub-row td { color: #334155; }
+
+.pnl-item-row .pnl-col-concepto { padding-left: 52px; }
+.pnl-item-row td { font-size: 12px; color: var(--mcf-muted); }
+
+/* Pass-through tax rows (N4 IVA Neto, N5 IRPF Alquiler) — paid this month but
+   not deducted from net income. Visually distinguished with a soft amber tint. */
+.pnl-passthrough-row td,
+.pnl-passthrough-row .pnl-col-concepto {
+  background: #fffbeb;
+  color: #b45309;
+}
+.pnl-passthrough-row:hover td,
+.pnl-passthrough-row:hover .pnl-col-concepto { background: #fef3c7; }
+
+.pnl-computed-row td, .pnl-computed-row .pnl-col-concepto {
+  background: #fafafa;
+  border-top: 1.5px solid var(--mcf-brand-100);
+  color: var(--mcf-brand-600);
+  font-weight: 700;
+}
+
+.pnl-neto-row td, .pnl-neto-row .pnl-col-concepto {
+  background: var(--mcf-brand-100);
+  border-top: 2px solid var(--mcf-brand);
+  font-weight: 700;
+}
+
+.pnl-pct-row td { font-size: 11px; font-style: italic; color: var(--mcf-muted); }
+.pnl-pct-row .pnl-col-concepto { padding-left: 16px; font-size: 11px; font-style: italic; color: var(--mcf-muted); font-weight: 400; }
+
+.pnl-current-mm { background: var(--mcf-brand-50) !important; }
+.pnl-yr .pnl-section-row .pnl-current-mm { background: var(--mcf-brand-100) !important; }
+.pnl-yr .pnl-neto-row .pnl-current-mm { background: #c6d1dd !important; }
+.pnl-ytd-col { border-left: 2px solid var(--mcf-border); font-weight: 600; }
+.pnl-yr thead .pnl-ytd-col { background: var(--mcf-brand-50); color: var(--mcf-brand-600); }
+
+/* P&L category card */
+.pnl-card {
+  background: var(--mcf-surface);
+  border: 1px solid var(--mcf-border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: box-shadow 0.15s;
+}
+.pnl-card:hover { box-shadow: 0 4px 14px rgba(39, 72, 107, 0.08); }
+.pnl-card .pnl-total { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pnl-card .pnl-label { font-size: 11px; text-transform: uppercase; color: var(--mcf-muted); font-weight: 600; letter-spacing: 0.04em; }
+
+/* Info icon for tooltips */
+.mcf-info {
+  display: inline-flex; width: 16px; height: 16px; border-radius: 999px;
+  background: var(--mcf-surface-2); color: var(--mcf-muted);
+  align-items: center; justify-content: center; font-size: 10px; font-weight: 700;
+  cursor: help; margin-left: 6px;
+}
+.mcf-info:hover { background: var(--mcf-brand-50); color: var(--mcf-brand-600); }
+
+/* PivotTable.js theming */
+table.pvtTable { font-family: inherit; font-size: 13px; }
+table.pvtTable thead tr th, table.pvtTable tbody tr th {
+  background: var(--mcf-surface-2); color: var(--mcf-muted);
+  border-color: var(--mcf-border); font-weight: 600;
+}
+table.pvtTable tbody tr td { border-color: var(--mcf-border); }
+.pvtAxisContainer li span.pvtAttr {
+  background: var(--mcf-brand-50); color: var(--mcf-brand-600);
+  border-color: var(--mcf-brand-100); font-weight: 500;
+}
+.pvtFilterBox { font-family: inherit; }
+
+/* Detailed-entry modal inputs — higher contrast than default Tailwind form */
+.modal-input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;   /* slate-300, visibly darker than the modal bg */
+  border-radius: 6px;
+  color: #0f172a;
+  transition: border-color 120ms, box-shadow 120ms, background 120ms;
+}
+.modal-input:hover { border-color: #94a3b8; }
+.modal-input:focus {
+  outline: none;
+  border-color: var(--mcf-brand);
+  box-shadow: 0 0 0 3px rgba(45, 102, 149, 0.15);
+  background: #ffffff;
+}
+.modal-input::placeholder { color: #94a3b8; }
+select.modal-input {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  appearance: none;
+}
+
+/* ===== Calculator (Inversión) controls ===== */
+/* Tailwind CDN's preflight strips browser input borders; we restore them
+   explicitly so number/select/range fields are clearly distinguishable. */
+.calc-section .calc-row {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.calc-section .calc-row + .calc-row { margin-top: 0; }
+.calc-section .calc-input,
+.calc-section .calc-select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #0f172a;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.calc-section .calc-input:hover,
+.calc-section .calc-select:hover { border-color: #94a3b8; }
+.calc-section .calc-input:focus,
+.calc-section .calc-select:focus {
+  outline: none;
+  border-color: var(--mcf-brand);
+  box-shadow: 0 0 0 3px rgba(45, 102, 149, 0.18);
+}
+.calc-section .calc-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  appearance: none;
+}
+/* Custom range slider — visible track + thumb on every browser */
+.calc-section input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  outline: none;
+  margin-top: 6px;
+}
+.calc-section input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mcf-brand);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.calc-section input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mcf-brand);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+/* Loading shimmer */
+.shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: 6px; height: 14px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }

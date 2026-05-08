@@ -1,0 +1,1748 @@
+{
+  "proposals": [
+    {
+      "product": "SECADORA 1",
+      "precio": 6,
+      "price_list": "edusanferric1",
+      "property": "usera",
+      "n_rows_affected": 153,
+      "euros_affected": 918,
+      "first_seen": "2021-01-11",
+      "last_seen": "2022-06-02",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 40,
+      "product_mins_source": "nearest sibling precio=4.5 (Δ1.50)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 35.94258373,
+      "notes": "Auto-proposed from sibling (4 known prices for SECADORA 1/edusanferric1/usera)",
+      "siblings": [
+        {
+          "precio": 1.5,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.5,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.5,
+          "mins": 40,
+          "price": "fidelizacion"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 2",
+      "precio": 6,
+      "price_list": "edusanferric1",
+      "property": "usera",
+      "n_rows_affected": 144,
+      "euros_affected": 864,
+      "first_seen": "2021-01-11",
+      "last_seen": "2022-06-14",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 20,
+      "product_mins_source": "nearest sibling precio=4.5 (Δ1.50)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 28.0106755,
+      "notes": "Auto-proposed from sibling (4 known prices for SECADORA 2/edusanferric1/usera)",
+      "siblings": [
+        {
+          "precio": 1.5,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.5,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.5,
+          "mins": 40,
+          "price": "fidelizacion"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 3",
+      "precio": 10,
+      "price_list": "edusanferric1",
+      "property": "usera",
+      "n_rows_affected": 35,
+      "euros_affected": 350,
+      "first_seen": "2021-01-11",
+      "last_seen": "2022-04-05",
+      "product_size": "L",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 40,
+      "product_mins_source": "nearest sibling precio=8 (Δ2.00)",
+      "capacidad": "18 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 24.20668027,
+      "notes": "Auto-proposed from sibling (4 known prices for SECADORA 3/edusanferric1/usera)",
+      "siblings": [
+        {
+          "precio": 2,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 6,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 8,
+          "mins": 40,
+          "price": "fidelizacion"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 3",
+      "precio": 11.2,
+      "price_list": "mcf1",
+      "property": "usera",
+      "n_rows_affected": 16,
+      "euros_affected": 179.2,
+      "first_seen": "2025-05-01",
+      "last_seen": "2026-03-30",
+      "product_size": "L",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 40,
+      "product_mins_source": "nearest sibling precio=12 (Δ0.80)",
+      "capacidad": "18 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 24.20668027,
+      "notes": "Auto-proposed from sibling (10 known prices for SECADORA 3/mcf1/usera)",
+      "siblings": [
+        {
+          "precio": 2.8,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 5.6,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 6,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 8.4,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 9,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 12,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 14,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 14.8,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 15,
+          "mins": 50,
+          "price": "fidelizacion"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 2",
+      "precio": 8.8,
+      "price_list": "mcf1",
+      "property": "usera",
+      "n_rows_affected": 5,
+      "euros_affected": 44,
+      "first_seen": "2025-03-09",
+      "last_seen": "2026-02-08",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 40,
+      "product_mins_source": "nearest sibling precio=9.6 (Δ0.80)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 28.0106755,
+      "notes": "Auto-proposed from sibling (8 known prices for SECADORA 2/mcf1/usera)",
+      "siblings": [
+        {
+          "precio": 2.2,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.4,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.8,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.6,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 9.6,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12,
+          "mins": 40,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 7",
+      "precio": 6.85,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 4,
+      "euros_affected": 27.4,
+      "first_seen": "2025-10-21",
+      "last_seen": "2026-03-07",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=6.75 (Δ0.10)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (37 known prices for SECADORA 7/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.65,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.75,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.8,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 3.25,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 3.45,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3.6,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.9,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 5.15,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 5.4,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 6,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.5,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 8,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 5",
+      "precio": 11.9,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 1,
+      "euros_affected": 11.9,
+      "first_seen": "2025-11-22",
+      "last_seen": "2025-11-22",
+      "product_size": "L",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 50,
+      "product_mins_source": "nearest sibling precio=12.5 (Δ0.60)",
+      "capacidad": "21 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (22 known prices for SECADORA 5/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "LAVADORA 4",
+      "precio": 5.8,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 2,
+      "euros_affected": 11.6,
+      "first_seen": "2025-09-28",
+      "last_seen": "2025-12-16",
+      "product_size": "L",
+      "product_mission": "LAVAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=6.5 (Δ0.70)",
+      "capacidad": "18 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (5 known prices for LAVADORA 4/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.5,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.85,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 8,
+          "mins": 30,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "LAVADORA 7",
+      "precio": 8,
+      "price_list": "edusanferric1",
+      "property": "usera",
+      "n_rows_affected": 1,
+      "euros_affected": 8,
+      "first_seen": "2022-06-17",
+      "last_seen": "2022-06-17",
+      "product_size": "L",
+      "product_mission": "LAVAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=7 (Δ1.00)",
+      "capacidad": "18 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 28,
+      "notes": "Auto-proposed from sibling (2 known prices for LAVADORA 7/edusanferric1/usera)",
+      "siblings": [
+        {
+          "precio": 6.3,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7,
+          "mins": 30,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 5",
+      "precio": 3.6,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 2,
+      "euros_affected": 7.2,
+      "first_seen": "2025-05-05",
+      "last_seen": "2025-09-28",
+      "product_size": "L",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 20,
+      "product_mins_source": "nearest sibling precio=4.05 (Δ0.45)",
+      "capacidad": "21 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (22 known prices for SECADORA 5/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "LAVADORA 6",
+      "precio": 7,
+      "price_list": "edusanferric1",
+      "property": "usera",
+      "n_rows_affected": 1,
+      "euros_affected": 7,
+      "first_seen": "2022-06-17",
+      "last_seen": "2022-06-17",
+      "product_size": "M",
+      "product_mission": "LAVAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=6 (Δ1.00)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 28,
+      "notes": "Auto-proposed from sibling (2 known prices for LAVADORA 6/edusanferric1/usera)",
+      "siblings": [
+        {
+          "precio": 5.4,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 6,
+          "mins": 30,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 5",
+      "precio": 6.7,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 1,
+      "euros_affected": 6.7,
+      "first_seen": "2025-01-25",
+      "last_seen": "2025-01-25",
+      "product_size": "L",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=6.75 (Δ0.05)",
+      "capacidad": "21 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (22 known prices for SECADORA 5/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 6",
+      "precio": 6.7,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 1,
+      "euros_affected": 6.7,
+      "first_seen": "2025-01-24",
+      "last_seen": "2025-01-24",
+      "product_size": "L",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=6.75 (Δ0.05)",
+      "capacidad": "21 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (22 known prices for SECADORA 6/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "LAVADORA 3",
+      "precio": 5.05,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 1,
+      "euros_affected": 5.05,
+      "first_seen": "2025-05-05",
+      "last_seen": "2025-05-05",
+      "product_size": "M",
+      "product_mission": "LAVAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=5.7 (Δ0.65)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (6 known prices for LAVADORA 3/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 5.7,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.3,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 8,
+          "mins": 30,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 7",
+      "precio": 4.35,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 1,
+      "euros_affected": 4.35,
+      "first_seen": "2025-12-16",
+      "last_seen": "2025-12-16",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 20,
+      "product_mins_source": "nearest sibling precio=4.3 (Δ0.05)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (37 known prices for SECADORA 7/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.65,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.75,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.8,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 3.25,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 3.45,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3.6,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.9,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 5.15,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 5.4,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 6,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.5,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 8,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 2",
+      "precio": 4,
+      "price_list": "edusanferric1",
+      "property": "usera",
+      "n_rows_affected": 1,
+      "euros_affected": 4,
+      "first_seen": "2022-06-17",
+      "last_seen": "2022-06-17",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 30,
+      "product_mins_source": "nearest sibling precio=4.5 (Δ0.50)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 28.0106755,
+      "notes": "Auto-proposed from sibling (4 known prices for SECADORA 2/edusanferric1/usera)",
+      "siblings": [
+        {
+          "precio": 1.5,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.5,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.5,
+          "mins": 40,
+          "price": "fidelizacion"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 1",
+      "precio": 2,
+      "price_list": "mcf1",
+      "property": "usera",
+      "n_rows_affected": 1,
+      "euros_affected": 2,
+      "first_seen": "2025-02-22",
+      "last_seen": "2025-02-22",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 10,
+      "product_mins_source": "nearest sibling precio=2.2 (Δ0.20)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 21,
+      "day_product_capacity": 35.94258373,
+      "notes": "Auto-proposed from sibling (9 known prices for SECADORA 1/mcf1/usera)",
+      "siblings": [
+        {
+          "precio": 2.2,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.4,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.8,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.6,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 8.8,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 9.6,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12,
+          "mins": 40,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 2",
+      "precio": 2,
+      "price_list": "mcf1",
+      "property": "usera",
+      "n_rows_affected": 1,
+      "euros_affected": 2,
+      "first_seen": "2025-02-22",
+      "last_seen": "2025-02-22",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 10,
+      "product_mins_source": "nearest sibling precio=2.2 (Δ0.20)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 84,
+      "day_product_capacity": 28.0106755,
+      "notes": "Auto-proposed from sibling (8 known prices for SECADORA 2/mcf1/usera)",
+      "siblings": [
+        {
+          "precio": 2.2,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 4.4,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.8,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 6.6,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 9.6,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12,
+          "mins": 40,
+          "price": "publico"
+        }
+      ]
+    },
+    {
+      "product": "SECADORA 7",
+      "precio": 1.45,
+      "price_list": "cesar1",
+      "property": "hortaleza",
+      "n_rows_affected": 1,
+      "euros_affected": 1.45,
+      "first_seen": "2025-05-05",
+      "last_seen": "2025-05-05",
+      "product_size": "M",
+      "product_mission": "SECAR",
+      "product_price": "descuento",
+      "subproducto": null,
+      "product_mins": 10,
+      "product_mins_source": "nearest sibling precio=1.65 (Δ0.20)",
+      "capacidad": "14 KGS",
+      "day_subproduct_capacity": 28,
+      "day_product_capacity": 0,
+      "notes": "Auto-proposed from sibling (37 known prices for SECADORA 7/cesar1/hortaleza)",
+      "siblings": [
+        {
+          "precio": 0,
+          "mins": 0,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.65,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.75,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 1.8,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.05,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.15,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.25,
+          "mins": 10,
+          "price": "descuento"
+        },
+        {
+          "precio": 2.4,
+          "mins": 10,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 2.5,
+          "mins": 10,
+          "price": "publico"
+        },
+        {
+          "precio": 3.25,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 3.45,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 3.6,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 4.05,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.3,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 4.5,
+          "mins": 20,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 4.9,
+          "mins": 20,
+          "price": "descuento"
+        },
+        {
+          "precio": 5,
+          "mins": 20,
+          "price": "publico"
+        },
+        {
+          "precio": 5.15,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 5.4,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 6,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 6.1,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.45,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 6.5,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 6.75,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.2,
+          "mins": 30,
+          "price": "descuento"
+        },
+        {
+          "precio": 7.5,
+          "mins": 30,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 8,
+          "mins": 30,
+          "price": "publico"
+        },
+        {
+          "precio": 8.1,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 8.55,
+          "mins": 40,
+          "price": "descuento"
+        },
+        {
+          "precio": 9,
+          "mins": 40,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 10,
+          "mins": 40,
+          "price": "publico"
+        },
+        {
+          "precio": 10.15,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 10.7,
+          "mins": 50,
+          "price": "descuento"
+        },
+        {
+          "precio": 11.25,
+          "mins": 50,
+          "price": "fidelizacion"
+        },
+        {
+          "precio": 12.5,
+          "mins": 50,
+          "price": "publico"
+        }
+      ]
+    }
+  ],
+  "skipped": []
+}

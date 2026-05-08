@@ -1,0 +1,20 @@
+{
+  "name": "mcf-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCF Soluciones web platform",
+  "scripts": {
+    "migrate": "node scripts/migrate-notion-to-turso.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "archiver": "^7.0.1",
+    "googleapis": "^144.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@notionhq/client": "^5.18.0",
+    "dotenv": "^17.4.2",
+    "vercel": "^39.0.0"
+  }
+}
