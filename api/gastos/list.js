@@ -27,10 +27,13 @@ export default async function handler(req, res) {
                    g.categoria_gastos_mcf, g.recibo_url,
                    g.user_name AS mcf_user, g.sheet_row_id,
                    g.bank_movement_hash,
+                   g.loan_id, g.loan_payment_interest, g.loan_payment_principal,
+                   l.name AS loan_name,
                    g.created_at,
                    c.desc AS cuenta_desc, c.tooltip AS cuenta_tooltip
             FROM gastos g
             LEFT JOIN catalogo_cuentas c ON g.cuenta = c.cuenta_mcf
+            LEFT JOIN loans l ON g.loan_id = l.id
             WHERE g.yyyy = ? AND g.mm = ?
             ORDER BY g.fecha DESC, g.id DESC`,
       args: [yyyy, mm],

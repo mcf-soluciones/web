@@ -95,8 +95,14 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
       args: [yyyy, mm, ...propArgs],
     }),
     turso.execute({
+      // For loan-payment rows (loan_id IS NOT NULL) only the interest portion
+      // is a P&L expense. Principal is non-cash from the P&L's perspective; it
+      // moves a balance-sheet liability and shows up under CFF in cashflow.js.
       sql: `SELECT g.cuenta, g.categoria_gastos_mcf, g.propiedad,
-                   COALESCE(g.importe_total, g.gasto, 0) AS importe,
+                   CASE
+                     WHEN g.loan_id IS NOT NULL THEN COALESCE(g.loan_payment_interest, 0)
+                     ELSE COALESCE(g.importe_total, g.gasto, 0)
+                   END AS importe,
                    COALESCE(g.importe_iva, 0) AS iva
             FROM gastos g
             WHERE g.yyyy = ? AND g.mm = ?
@@ -293,9 +299,13 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
   const sdArgs = scope === 'mcf' ? [yyyy] : [yyyy, scope];
 
   // ---- gastos by cuenta × month, with category join ------------------------
+  // Loan-payment rows: only the interest portion is a P&L expense.
   const gastos = await turso.execute({
     sql: `SELECT g.cuenta, g.mm, g.yyyy, g.propiedad,
-                 COALESCE(g.importe_total, g.gasto, 0) AS importe,
+                 CASE
+                   WHEN g.loan_id IS NOT NULL THEN COALESCE(g.loan_payment_interest, 0)
+                   ELSE COALESCE(g.importe_total, g.gasto, 0)
+                 END AS importe,
                  COALESCE(g.importe_iva, 0) AS iva,
                  g.categoria_gastos_mcf, g.concepto_mcf,
                  c.desc AS cuenta_desc, c.tooltip AS cuenta_tooltip

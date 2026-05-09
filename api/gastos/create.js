@@ -54,6 +54,32 @@ export default async function handler(req, res) {
     }
 
     const importeTotal = parseFloat(body.importe_total ?? body.gasto) || 0;
+
+    // Loan payment split — when loan_id is provided, importe_total must equal
+    // (loan_payment_interest + loan_payment_principal) so the bank movement
+    // matches the row but only the interest hits the P&L.
+    const loanId = body.loan_id ? parseInt(body.loan_id, 10) : null;
+    let loanPaymentInterest = null;
+    let loanPaymentPrincipal = null;
+    if (loanId) {
+      loanPaymentInterest = parseFloat(body.loan_payment_interest);
+      loanPaymentPrincipal = parseFloat(body.loan_payment_principal);
+      if (!Number.isFinite(loanPaymentInterest) || loanPaymentInterest < 0) {
+        return res.status(400).json({ error: 'loan_payment_interest must be ≥ 0' });
+      }
+      if (!Number.isFinite(loanPaymentPrincipal) || loanPaymentPrincipal < 0) {
+        return res.status(400).json({ error: 'loan_payment_principal must be ≥ 0' });
+      }
+      if (Math.abs((loanPaymentInterest + loanPaymentPrincipal) - importeTotal) > 0.01) {
+        return res.status(400).json({
+          error: 'loan_payment_interest + loan_payment_principal must equal importe_total',
+          interest: loanPaymentInterest,
+          principal: loanPaymentPrincipal,
+          importe_total: importeTotal,
+        });
+      }
+    }
+
     const title = `Gasto ${propiedad || '-'} - ${conceptoMcf || '-'} - ${fecha || ''}`;
     // Letter Z / category "Adquisición o Inversiones" is always capex — force
     // es_inversion='Si' so these never leak into the P&L even if the user
@@ -71,8 +97,9 @@ export default async function handler(req, res) {
               concepto_banco, gasto, importe_iva, importe_irpf, importe_otro,
               recibo_url, is_fiscal,
               categoria_gastos_mcf, es_inversion, fecha, mm, yyyy,
-              importe_total, propiedad
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              importe_total, propiedad,
+              loan_id, loan_payment_interest, loan_payment_principal
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         title,
         mcfUser,
@@ -97,6 +124,9 @@ export default async function handler(req, res) {
         yyyy,
         importeTotal,
         propiedad,
+        loanId,
+        loanPaymentInterest,
+        loanPaymentPrincipal,
       ],
     });
 

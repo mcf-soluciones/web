@@ -59,6 +59,47 @@ export default async function handler(req, res) {
       updates.gasto = updates.importe_total;
     }
 
+    // Loan-payment invariant. If we're touching any of the three loan fields
+    // we need to fetch the current row to validate the final state, since the
+    // patch may only contain a subset.
+    const touchesLoan = 'loan_id' in updates
+      || 'loan_payment_interest' in updates
+      || 'loan_payment_principal' in updates
+      || 'importe_total' in updates;
+    if (touchesLoan) {
+      const cur = await turso.execute({
+        sql: `SELECT loan_id, loan_payment_interest, loan_payment_principal,
+                     COALESCE(importe_total, gasto, 0) AS importe_total
+              FROM gastos WHERE id = ?`,
+        args: [id],
+      });
+      if (cur.rows.length === 0) return res.status(404).json({ error: 'gasto not found' });
+      const merged = {
+        loan_id: 'loan_id' in updates ? updates.loan_id : cur.rows[0].loan_id,
+        interest: 'loan_payment_interest' in updates ? updates.loan_payment_interest : cur.rows[0].loan_payment_interest,
+        principal: 'loan_payment_principal' in updates ? updates.loan_payment_principal : cur.rows[0].loan_payment_principal,
+        importe: 'importe_total' in updates ? updates.importe_total : Number(cur.rows[0].importe_total),
+      };
+      if (merged.loan_id == null) {
+        // Clearing the loan link — wipe the split so we don't keep stale halves.
+        updates.loan_id = null;
+        updates.loan_payment_interest = null;
+        updates.loan_payment_principal = null;
+      } else {
+        const interest = Number(merged.interest);
+        const principal = Number(merged.principal);
+        if (!Number.isFinite(interest) || interest < 0 || !Number.isFinite(principal) || principal < 0) {
+          return res.status(400).json({ error: 'loan_payment_interest and loan_payment_principal must both be ≥ 0' });
+        }
+        if (Math.abs((interest + principal) - merged.importe) > 0.01) {
+          return res.status(400).json({
+            error: 'loan_payment_interest + loan_payment_principal must equal importe_total',
+            interest, principal, importe_total: merged.importe,
+          });
+        }
+      }
+    }
+
     // Build SQL ----------------------------------------------------------------
     const fields = Object.keys(updates);
     const setClause = fields.map(f => `${quote(f)} = ?`).join(', ');

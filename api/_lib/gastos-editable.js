@@ -25,6 +25,10 @@ export const EDITABLE_FIELDS = new Set([
   'user_name',
   'concepto_banco',
   'recibo_url',
+  // Loan-payment fields — see api/gastos/update.js for the invariant check.
+  'loan_id',
+  'loan_payment_interest',
+  'loan_payment_principal',
 ]);
 
 /** Fields safe to modify in a single bulk operation (N rows share one value). */
@@ -42,9 +46,18 @@ export const BULK_FIELDS = new Set([
 /** Coerce an incoming value to match the column's declared type. */
 export function coerce(field, value) {
   if (value === null || value === undefined) return null;
-  const numeric = ['importe_total', 'importe_iva', 'importe_irpf', 'importe_otro'];
+  const numeric = [
+    'importe_total', 'importe_iva', 'importe_irpf', 'importe_otro',
+    'loan_payment_interest', 'loan_payment_principal',
+  ];
   if (numeric.includes(field)) {
+    if (value === '') return null;
     const n = parseFloat(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (field === 'loan_id') {
+    if (value === '' || value === null) return null;
+    const n = parseInt(value, 10);
     return Number.isFinite(n) ? n : null;
   }
   if (field === 'is_fiscal') {

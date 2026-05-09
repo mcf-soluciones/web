@@ -1284,6 +1284,10 @@
                           <template x-if="row.is_bank_import">
                             <span class="ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200" title="Importado del banco — revisar y completar datos">Banco</span>
                           </template>
+                          <template x-if="row.loan_id">
+                            <span class="ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 border border-purple-200"
+                              :title="(row.loan_name || 'Préstamo') + ' · interés ' + fmtEUR(row.loan_payment_interest||0) + ' / principal ' + fmtEUR(row.loan_payment_principal||0)">Préstamo</span>
+                          </template>
                         </td>
                         <td>
                           <span x-show="row.es_inversion === 'Si'" class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Sí</span>
@@ -1321,6 +1325,478 @@
           </div>
         </template>
       </section>
+
+      <!-- ============================================================ -->
+      <!-- Financiamiento (admin only)                                  -->
+      <!-- ============================================================ -->
+      <section x-show="view === 'financiamiento'" x-cloak class="space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="font-semibold text-gray-900">Financiamiento</h3>
+            <p class="text-xs text-gray-500">Préstamos y eventos de financiación. Alimenta la sección CFF del flujo de caja.</p>
+          </div>
+          <button @click="loadFinanciamiento()" :disabled="loading"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+            <svg x-show="!loading" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <svg x-show="loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- Loans table -->
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-gray-900">Préstamos</h3>
+              <p class="text-xs text-gray-500">Maestro de préstamos. El saldo pendiente se calcula con los pagos registrados en la pestaña Gastos.</p>
+            </div>
+            <button @click="openLoanModal(null)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-brand-500 text-brand-600 hover:bg-brand-50 text-sm font-medium">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo préstamo
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="mcf-table text-[12px]">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Prestamista</th>
+                  <th>Fecha inicio</th>
+                  <th class="num">Principal</th>
+                  <th class="num">Pagado (principal)</th>
+                  <th class="num">Pagado (interés)</th>
+                  <th class="num">Saldo pendiente</th>
+                  <th>Estado</th>
+                  <th style="width:80px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="loan in (financiamiento.loans || [])" :key="loan.id">
+                  <tr class="hover:bg-gray-50 cursor-pointer" @click="openLoanDetail(loan.id)">
+                    <td>
+                      <div class="font-medium text-brand-600 hover:text-brand-700 underline-offset-2 hover:underline" x-text="loan.name"></div>
+                      <template x-if="loan.notes"><div class="text-[10px] text-gray-500 truncate max-w-[260px]" x-text="loan.notes"></div></template>
+                    </td>
+                    <td x-text="loan.lender || '—'"></td>
+                    <td class="font-mono text-[11px]" x-text="loan.start_date || '—'"></td>
+                    <td class="num font-semibold" x-text="fmtEUR(loan.principal_original)"></td>
+                    <td class="num text-red-600" x-text="loan.total_principal_paid > 0 ? fmtEUR(loan.total_principal_paid) : '—'"></td>
+                    <td class="num text-red-600" x-text="loan.total_interest_paid > 0 ? fmtEUR(loan.total_interest_paid) : '—'"></td>
+                    <td class="num font-bold" :class="loan.outstanding_principal > 0 ? 'text-gray-900' : 'text-emerald-600'"
+                        x-text="fmtEUR(loan.outstanding_principal)"></td>
+                    <td>
+                      <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                        :class="loan.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'"
+                        x-text="loan.status"></span>
+                    </td>
+                    <td class="text-center whitespace-nowrap" @click.stop>
+                      <button @click.stop="openLoanModal(loan)" class="text-gray-400 hover:text-brand-600 mr-1" title="Editar">
+                        <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button @click.stop="deleteLoan(loan.id)" class="text-gray-300 hover:text-red-500" title="Eliminar">
+                        <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+                <template x-if="(financiamiento.loans || []).length === 0">
+                  <tr><td colspan="9" class="text-center text-gray-400 py-6">Sin préstamos. Haz clic en "Nuevo préstamo".</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Financing events table -->
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-gray-900">Eventos de financiación · <span x-text="yyyy"></span></h3>
+              <p class="text-xs text-gray-500">Desembolsos, aportes y retiros de capital, comisiones únicas. Los pagos mensuales de préstamo se registran como gastos normales.</p>
+            </div>
+            <button @click="openEventModal()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-brand-500 text-brand-600 hover:bg-brand-50 text-sm font-medium">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo evento
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="mcf-table text-[12px]">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Préstamo</th>
+                  <th>Contraparte</th>
+                  <th class="num">Importe</th>
+                  <th>Notas</th>
+                  <th style="width:50px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="ev in (financiamiento.events || [])" :key="ev.id">
+                  <tr>
+                    <td class="font-mono text-[11px]" x-text="ev.fecha"></td>
+                    <td>
+                      <span class="font-medium" x-text="eventTypeLabel(ev.event_type)"></span>
+                      <span class="ml-1 font-mono text-[10px]"
+                        :class="eventTypeSign(ev.event_type) === '+' ? 'text-emerald-600' : 'text-red-600'"
+                        x-text="eventTypeSign(ev.event_type)"></span>
+                    </td>
+                    <td x-text="ev.loan_name || '—'"></td>
+                    <td x-text="ev.counterparty || '—'"></td>
+                    <td class="num font-semibold"
+                      :class="eventTypeSign(ev.event_type) === '+' ? 'text-emerald-600' : 'text-red-600'"
+                      x-text="(eventTypeSign(ev.event_type) === '−' ? '−' : '+') + fmtEUR(ev.euros)"></td>
+                    <td class="max-w-[260px] truncate" :title="ev.notes || ''" x-text="ev.notes || '—'"></td>
+                    <td class="text-center">
+                      <button @click="deleteEvent(ev.id)" class="text-gray-300 hover:text-red-500" title="Eliminar">
+                        <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+                <template x-if="(financiamiento.events || []).length === 0">
+                  <tr><td colspan="7" class="text-center text-gray-400 py-6">Sin eventos en este año.</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Loan modal -->
+      <div x-show="loanModal.open" x-cloak @keydown.escape.window="closeLoanModal()"
+           class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="!loanModal.saving && closeLoanModal()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden">
+          <div class="flex items-start justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="font-semibold text-gray-900" x-text="loanModal.mode === 'edit' ? 'Editar préstamo' : 'Nuevo préstamo'"></h3>
+            <button @click="closeLoanModal()" :disabled="loanModal.saving" class="text-gray-400 hover:text-gray-700 p-1">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="flex-1 overflow-auto px-6 py-4 space-y-3 bg-gray-50">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="col-span-2">
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Nombre *</label>
+                <input x-model="loanModal.name" placeholder="Préstamo BBVA Mayo 2025" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Prestamista</label>
+                <input x-model="loanModal.lender" placeholder="BBVA" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Fecha inicio *</label>
+                <input type="date" x-model="loanModal.start_date" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Principal original (€) *</label>
+                <input type="number" step="0.01" x-model="loanModal.principal_original" placeholder="50000" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Plazo (meses)</label>
+                <input type="number" x-model="loanModal.term_months" placeholder="60" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Tasa anual (%)</label>
+                <input type="number" step="0.01" x-model="loanModal.interest_rate" placeholder="5.5" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Estado</label>
+                <select x-model="loanModal.status" class="modal-input">
+                  <option value="active">active</option>
+                  <option value="paid">paid</option>
+                  <option value="refinanced">refinanced</option>
+                  <option value="cancelled">cancelled</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Propiedad</label>
+                <select x-model="loanModal.propiedad" class="modal-input">
+                  <option value="Corporate">Corporate</option>
+                  <option value="(001) Usera">(001) Usera</option>
+                  <option value="(002) Hortaleza">(002) Hortaleza</option>
+                </select>
+              </div>
+              <div class="col-span-2">
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Notas</label>
+                <textarea x-model="loanModal.notes" rows="2" class="modal-input"></textarea>
+              </div>
+            </div>
+            <template x-if="loanModal.error">
+              <div class="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-800" x-text="loanModal.error"></div>
+            </template>
+          </div>
+          <div class="px-6 py-3 border-t border-gray-200 bg-white flex justify-end gap-2">
+            <button @click="closeLoanModal()" :disabled="loanModal.saving" class="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm font-medium text-gray-700">Cancelar</button>
+            <button @click="saveLoan()" :disabled="loanModal.saving || !loanModal.name || !loanModal.start_date || !loanModal.principal_original"
+              class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold">
+              <span x-show="!loanModal.saving">Guardar</span>
+              <span x-show="loanModal.saving">Guardando…</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event modal -->
+      <div x-show="eventModal.open" x-cloak @keydown.escape.window="closeEventModal()"
+           class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="!eventModal.saving && closeEventModal()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden">
+          <div class="flex items-start justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="font-semibold text-gray-900">Nuevo evento de financiación</h3>
+            <button @click="closeEventModal()" :disabled="eventModal.saving" class="text-gray-400 hover:text-gray-700 p-1">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="flex-1 overflow-auto px-6 py-4 space-y-3 bg-gray-50">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Fecha *</label>
+                <input type="date" x-model="eventModal.fecha" class="modal-input">
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Tipo *</label>
+                <select x-model="eventModal.event_type" class="modal-input">
+                  <option value="disbursement">Desembolso (+)</option>
+                  <option value="equity_in">Aportación capital (+)</option>
+                  <option value="equity_out">Retiro capital (−)</option>
+                  <option value="fee_one_time">Comisión única (−)</option>
+                  <option value="refinance">Refinanciación</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Importe (€) *</label>
+                <input type="number" step="0.01" x-model="eventModal.euros" placeholder="0.00" class="modal-input">
+                <p class="text-[10px] text-gray-500 mt-0.5">Siempre positivo. El signo se infiere del tipo.</p>
+              </div>
+              <div>
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Préstamo (opcional)</label>
+                <select x-model="eventModal.loan_id" class="modal-input">
+                  <option value="">— sin préstamo —</option>
+                  <template x-for="loan in (financiamiento.loans || [])" :key="loan.id">
+                    <option :value="loan.id" x-text="loan.name"></option>
+                  </template>
+                </select>
+              </div>
+              <div class="col-span-2">
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Contraparte</label>
+                <input x-model="eventModal.counterparty" placeholder="BBVA / Eduardo Flores / …" class="modal-input">
+              </div>
+              <div class="col-span-2">
+                <label class="text-[11px] uppercase font-semibold text-gray-600">Notas</label>
+                <textarea x-model="eventModal.notes" rows="2" class="modal-input"></textarea>
+              </div>
+            </div>
+            <template x-if="eventModal.error">
+              <div class="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-800" x-text="eventModal.error"></div>
+            </template>
+          </div>
+          <div class="px-6 py-3 border-t border-gray-200 bg-white flex justify-end gap-2">
+            <button @click="closeEventModal()" :disabled="eventModal.saving" class="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm font-medium text-gray-700">Cancelar</button>
+            <button @click="saveEvent()" :disabled="eventModal.saving || !eventModal.fecha || !eventModal.euros"
+              class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold">
+              <span x-show="!eventModal.saving">Guardar</span>
+              <span x-show="eventModal.saving">Guardando…</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loan detail modal -->
+      <div x-show="loanDetail.open" x-cloak @keydown.escape.window="closeLoanDetail()"
+           class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="closeLoanDetail()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+          <div class="flex items-start justify-between gap-3 px-6 py-4 border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white">
+            <div class="min-w-0">
+              <template x-if="loanDetail.data">
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-semibold text-gray-900 text-lg" x-text="loanDetail.data.loan.name"></h3>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded"
+                      :class="loanDetail.data.loan.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'"
+                      x-text="loanDetail.data.loan.status"></span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    <span x-text="loanDetail.data.loan.lender || 'Sin prestamista'"></span>
+                    <span class="mx-1">·</span>
+                    <span x-text="'Desde ' + (loanDetail.data.loan.start_date || '—')"></span>
+                    <template x-if="loanDetail.data.loan.term_months">
+                      <span><span class="mx-1">·</span><span x-text="loanDetail.data.loan.term_months + ' meses'"></span></span>
+                    </template>
+                    <template x-if="loanDetail.data.loan.interest_rate != null">
+                      <span><span class="mx-1">·</span><span x-text="loanDetail.data.loan.interest_rate + '% anual'"></span></span>
+                    </template>
+                  </p>
+                </div>
+              </template>
+              <template x-if="loanDetail.loading">
+                <h3 class="font-semibold text-gray-900">Cargando…</h3>
+              </template>
+            </div>
+            <button @click="closeLoanDetail()" class="text-gray-400 hover:text-gray-700 p-1 rounded hover:bg-gray-100 shrink-0">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-auto px-6 py-4 bg-gray-50 space-y-4">
+            <template x-if="loanDetail.loading">
+              <div class="text-center text-sm text-gray-400 py-12">Cargando detalle del préstamo…</div>
+            </template>
+            <template x-if="loanDetail.error">
+              <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" x-text="loanDetail.error"></div>
+            </template>
+            <template x-if="loanDetail.data">
+              <div class="space-y-4">
+                <!-- Snapshot metric cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="bg-white border border-gray-200 rounded-lg p-3">
+                    <div class="text-[10px] uppercase tracking-wide font-semibold text-gray-500">Saldo pendiente</div>
+                    <div class="text-lg font-bold tabular-nums mt-0.5"
+                      :class="loanDetail.data.loan.outstanding_principal > 0 ? 'text-gray-900' : 'text-emerald-600'"
+                      x-text="fmtEUR(loanDetail.data.loan.outstanding_principal)"></div>
+                    <div class="text-[10px] text-gray-500 mt-0.5"
+                      x-text="'de ' + fmtEUR(loanDetail.data.loan.principal_original)"></div>
+                  </div>
+                  <div class="bg-white border border-gray-200 rounded-lg p-3">
+                    <div class="text-[10px] uppercase tracking-wide font-semibold text-gray-500">Principal pagado</div>
+                    <div class="text-lg font-bold tabular-nums text-red-600 mt-0.5"
+                      x-text="fmtEUR(loanDetail.data.loan.total_principal_paid)"></div>
+                    <div class="text-[10px] text-gray-500 mt-0.5"
+                      x-text="loanDetail.data.loan.payments_count + ' pagos'"></div>
+                  </div>
+                  <div class="bg-white border border-gray-200 rounded-lg p-3">
+                    <div class="text-[10px] uppercase tracking-wide font-semibold text-gray-500">Interés pagado</div>
+                    <div class="text-lg font-bold tabular-nums text-red-600 mt-0.5"
+                      x-text="fmtEUR(loanDetail.data.loan.total_interest_paid)"></div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">Coste real del crédito</div>
+                  </div>
+                  <div class="bg-white border border-gray-200 rounded-lg p-3">
+                    <div class="text-[10px] uppercase tracking-wide font-semibold text-gray-500">Desembolsado</div>
+                    <div class="text-lg font-bold tabular-nums text-emerald-600 mt-0.5"
+                      x-text="loanDetail.data.loan.total_disbursed > 0 ? fmtEUR(loanDetail.data.loan.total_disbursed) : '—'"></div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">Eventos tipo "disbursement"</div>
+                  </div>
+                </div>
+
+                <!-- Notes -->
+                <template x-if="loanDetail.data.loan.notes">
+                  <div class="bg-white border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                    <div class="text-[10px] uppercase tracking-wide font-semibold text-gray-500 mb-1">Notas</div>
+                    <div x-text="loanDetail.data.loan.notes"></div>
+                  </div>
+                </template>
+
+                <!-- Payments timeline -->
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <div class="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+                    <h4 class="font-semibold text-gray-900 text-sm">Historial de pagos</h4>
+                    <span class="text-[11px] text-gray-500" x-text="loanDetail.data.payments.length + ' pagos'"></span>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="mcf-table text-[11px]">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th class="num">Total</th>
+                          <th class="num">Interés</th>
+                          <th class="num">Principal</th>
+                          <th class="num">Saldo después</th>
+                          <th>Concepto</th>
+                          <th>Factura</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="p in loanDetail.data.payments" :key="p.id">
+                          <tr>
+                            <td class="font-mono" x-text="p.fecha"></td>
+                            <td class="num font-semibold" x-text="fmtEUR2(p.importe_total)"></td>
+                            <td class="num text-red-600" x-text="fmtEUR2(p.loan_payment_interest)"></td>
+                            <td class="num text-gray-700" x-text="fmtEUR2(p.loan_payment_principal)"></td>
+                            <td class="num text-gray-900 font-medium" x-text="fmtEUR2(p.balance_after)"></td>
+                            <td class="max-w-[180px] truncate" :title="p.concepto_proveedor || ''" x-text="p.concepto_proveedor || '—'"></td>
+                            <td>
+                              <template x-if="p.recibo_url">
+                                <a :href="p.recibo_url" target="_blank" rel="noopener" class="text-brand-600 hover:text-brand-700">PDF</a>
+                              </template>
+                              <template x-if="!p.recibo_url"><span class="text-gray-300">—</span></template>
+                            </td>
+                          </tr>
+                        </template>
+                        <template x-if="loanDetail.data.payments.length === 0">
+                          <tr><td colspan="7" class="text-center text-gray-400 py-6">Sin pagos registrados.</td></tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Linked events -->
+                <template x-if="loanDetail.data.events.length > 0">
+                  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="px-4 py-2.5 border-b border-gray-200">
+                      <h4 class="font-semibold text-gray-900 text-sm">Eventos vinculados</h4>
+                      <p class="text-[11px] text-gray-500">Desembolsos, comisiones, refinanciaciones — registrados en la pestaña Financiamiento.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                      <table class="mcf-table text-[11px]">
+                        <thead>
+                          <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Contraparte</th>
+                            <th class="num">Importe</th>
+                            <th>Notas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template x-for="e in loanDetail.data.events" :key="e.id">
+                            <tr>
+                              <td class="font-mono" x-text="e.fecha"></td>
+                              <td>
+                                <span x-text="eventTypeLabel(e.event_type)"></span>
+                                <span class="ml-1 font-mono text-[10px]"
+                                  :class="eventTypeSign(e.event_type) === '+' ? 'text-emerald-600' : 'text-red-600'"
+                                  x-text="eventTypeSign(e.event_type)"></span>
+                              </td>
+                              <td x-text="e.counterparty || '—'"></td>
+                              <td class="num font-semibold"
+                                :class="eventTypeSign(e.event_type) === '+' ? 'text-emerald-600' : 'text-red-600'"
+                                x-text="(eventTypeSign(e.event_type) === '−' ? '−' : '+') + fmtEUR(e.euros)"></td>
+                              <td class="max-w-[260px] truncate" :title="e.notes || ''" x-text="e.notes || '—'"></td>
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <div class="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center gap-2">
+            <div class="flex gap-2">
+              <template x-if="loanDetail.data">
+                <button @click="openLoanModal(loanDetail.data.loan); closeLoanDetail()"
+                  class="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                  Editar préstamo
+                </button>
+              </template>
+              <template x-if="loanDetail.data && loanDetail.data.loan.status === 'active'">
+                <button @click="archiveLoan(loanDetail.data.loan.id)"
+                  class="px-3 py-1.5 rounded-md border border-emerald-500 text-emerald-700 hover:bg-emerald-50 text-sm font-medium">
+                  Marcar como pagado
+                </button>
+              </template>
+            </div>
+            <button @click="closeLoanDetail()" class="px-3 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium">Cerrar</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Bulk edit floating panel -->
       <div x-show="view === 'gastos' && gastosSelectedCount() > 0" x-cloak
@@ -1497,6 +1973,48 @@
               </div>
             </div>
 
+            <!-- Loan payment split (admin only) -->
+            <div x-show="adminMode" class="rounded-lg border border-gray-200 bg-white p-3 space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" x-model="gastosModal.is_loan_payment"
+                  class="rounded border-gray-300 text-brand-500 focus:ring-brand-500">
+                <span class="text-[11px] uppercase tracking-wide font-semibold text-gray-600">
+                  Es pago de préstamo
+                </span>
+              </label>
+              <p class="text-[11px] text-gray-500" x-show="!gastosModal.is_loan_payment">
+                Marca esta casilla cuando el gasto sea una cuota de préstamo. Sólo el interés afectará la utilidad neta; el principal va a CFF.
+              </p>
+              <template x-if="gastosModal.is_loan_payment">
+                <div class="space-y-2">
+                  <div>
+                    <label class="text-[11px] uppercase tracking-wide font-semibold text-gray-600">Préstamo *</label>
+                    <select x-model="gastosModal.loan_id" class="modal-input">
+                      <option value="">— elegir préstamo —</option>
+                      <template x-for="loan in (financiamiento.loans || [])" :key="loan.id">
+                        <option :value="loan.id" x-text="loan.name + (loan.lender ? ' · ' + loan.lender : '')"></option>
+                      </template>
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-[11px] uppercase tracking-wide font-semibold text-gray-600">Interés (€) *</label>
+                      <input type="number" step="0.01" x-model="gastosModal.loan_payment_interest"
+                        @input="syncLoanSplit('interest')" class="modal-input">
+                    </div>
+                    <div>
+                      <label class="text-[11px] uppercase tracking-wide font-semibold text-gray-600">Principal (€) *</label>
+                      <input type="number" step="0.01" x-model="gastosModal.loan_payment_principal"
+                        @input="syncLoanSplit('principal')" class="modal-input">
+                    </div>
+                  </div>
+                  <p class="text-[11px]"
+                    :class="loanSplitOk() ? 'text-emerald-600' : 'text-red-600'"
+                    x-text="loanSplitOk() ? 'Cuadra con el importe ✓' : ('Interés + Principal debe ser ' + (parseFloat(gastosModal.importe_total) || 0).toFixed(2) + ' €.')"></p>
+                </div>
+              </template>
+            </div>
+
             <div>
               <label class="text-[11px] uppercase tracking-wide font-semibold text-gray-600">
                 Factura (PDF o imagen)
@@ -1530,7 +2048,7 @@
 
           <div class="px-6 py-3 border-t border-gray-200 bg-gray-100 flex items-center justify-end gap-2">
             <button @click="closeGastosModal()" class="px-3 py-1.5 rounded-md bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 text-sm font-medium">Cancelar</button>
-            <button @click="gastosModalSave()" :disabled="gastosModal.saving"
+            <button @click="gastosModalSave()" :disabled="gastosModal.saving || !loanSplitOk()"
               class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
               <svg x-show="gastosModal.saving" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
               <span x-text="gastosModal.mode === 'edit' ? 'Guardar cambios' : 'Guardar'"></span>
@@ -2108,6 +2626,7 @@ function reportApp() {
     cashflow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 10 12 15 17 10"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="3" x2="12" y2="21"/></svg>',
     gastos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13h4M10 17h4"/></svg>',
     pivot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    financiamiento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/><circle cx="8" cy="14" r="1"/></svg>',
     calculator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>',
   };
 
@@ -2232,12 +2751,24 @@ function reportApp() {
       { id: 'pnl', label: 'P&L', icon: icons.pnl },
       { id: 'cashflow', label: 'Cash Flow', icon: icons.cashflow },
       { id: 'gastos', label: 'Gastos', icon: icons.gastos },
+      { id: 'financiamiento', label: 'Financiamiento', icon: icons.financiamiento, adminOnly: true },
       { id: 'pivot', label: 'Pivot Libre', icon: icons.pivot },
       { id: 'calculator', label: 'Inversión', icon: icons.calculator },
     ],
 
     // Accountant mode (set by /cuentas after password): UI is locked to gastos.
     accountantMode: false,
+    // Admin mode (set by /admin after password): unlocks the Financiamiento tab.
+    adminMode: false,
+    // Financiamiento tab state
+    financiamiento: { loans: null, events: null, loadedYear: null },
+    loanModal: { open: false, mode: 'create', id: null, saving: false, error: null,
+      name: '', lender: '', principal_original: '', start_date: '',
+      term_months: '', interest_rate: '', status: 'active', propiedad: 'Corporate', notes: '' },
+    eventModal: { open: false, saving: false, error: null,
+      fecha: '', event_type: 'disbursement', euros: '', loan_id: '',
+      counterparty: '', notes: '' },
+    loanDetail: { open: false, loading: false, error: null, data: null },
 
     monthLabels: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
     years: (() => { const out = []; for (let y = now.getFullYear(); y >= 2023; y--) out.push(y); return out; })(),
@@ -2245,6 +2776,12 @@ function reportApp() {
     init() {
       // Detect accountant session — locks the UI to gastos and hides everything else.
       this.accountantMode = sessionStorage.getItem('mcf_accountant_session') === 'gastos_only';
+      // Detect admin session (set by /admin) — unlocks the Financiamiento tab.
+      try {
+        const raw = sessionStorage.getItem('mcf_admin_authenticated');
+        const data = raw ? JSON.parse(raw) : null;
+        this.adminMode = !!(data && data.authenticated);
+      } catch { this.adminMode = false; }
 
       if (this.accountantMode) {
         this.view = 'gastos';
@@ -2262,7 +2799,9 @@ function reportApp() {
 
       // Seed default view from hash
       const h = (location.hash || '').replace('#', '');
-      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'gastos', 'pivot', 'calculator'].includes(h)) this.view = h;
+      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'gastos', 'financiamiento', 'pivot', 'calculator'].includes(h)) this.view = h;
+      // Block admin-only tab on first load if no session.
+      if (this.view === 'financiamiento' && !this.adminMode) this.view = 'hub';
       // Auto-load initial data (skip Comparar — it's range-driven, user builds series first;
       // skip calculator — it's a self-contained tool with no fetched data)
       if (this.view !== 'comparar' && this.view !== 'calculator') this.refresh();
@@ -2270,7 +2809,8 @@ function reportApp() {
 
     visibleNav() {
       if (this.accountantMode) return this.nav.filter(n => n.id === 'gastos');
-      return this.nav;
+      // Admin-only items hidden when not authenticated as admin.
+      return this.nav.filter(n => !n.adminOnly || this.adminMode);
     },
 
     accountantLogout() {
@@ -2316,6 +2856,9 @@ function reportApp() {
     setView(id) {
       // Accountant mode is locked to gastos — silently ignore any other request.
       if (this.accountantMode && id !== 'gastos') return;
+      // Non-admins can't navigate to admin-only tabs (e.g. via #financiamiento URL).
+      const target = this.nav.find(n => n.id === id);
+      if (target && target.adminOnly && !this.adminMode) return;
       this.view = id;
       location.hash = id;
       if (id === 'pivot' && this.pivotRows) this.renderPivot();
@@ -2337,6 +2880,7 @@ function reportApp() {
         else if (this.view === 'pnl') await this.loadPnl();
         else if (this.view === 'cashflow') await this.loadCashflow();
         else if (this.view === 'gastos') await this.loadGastos();
+        else if (this.view === 'financiamiento') await this.loadFinanciamiento();
         else if (this.view === 'pivot') await this.loadPivot();
       } catch (e) {
         console.error(e);
@@ -3173,6 +3717,205 @@ function reportApp() {
       }
     },
 
+    // ==================================================================
+    // Financiamiento — loans + financing events
+    // ==================================================================
+    async loadFinanciamiento() {
+      this.loading = true;
+      try {
+        const yyyy = this.yyyy;
+        const [loansR, eventsR] = await Promise.all([
+          fetch('/api/financing/loans/list'),
+          fetch(`/api/financing/events/list?yyyy=${yyyy}`),
+        ]);
+        if (!loansR.ok) throw new Error('loans HTTP ' + loansR.status);
+        if (!eventsR.ok) throw new Error('events HTTP ' + eventsR.status);
+        const loansData = await loansR.json();
+        const eventsData = await eventsR.json();
+        this.financiamiento = {
+          loans: loansData.rows || [],
+          events: eventsData.rows || [],
+          loadedYear: yyyy,
+        };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    activeLoans() {
+      return (this.financiamiento.loans || []).filter(l => l.status === 'active');
+    },
+
+    openLoanModal(row) {
+      if (row && row.id) {
+        this.loanModal = {
+          open: true, mode: 'edit', id: row.id, saving: false, error: null,
+          name: row.name || '',
+          lender: row.lender || '',
+          principal_original: row.principal_original ?? '',
+          start_date: (row.start_date || '').slice(0, 10),
+          term_months: row.term_months ?? '',
+          interest_rate: row.interest_rate ?? '',
+          status: row.status || 'active',
+          propiedad: row.propiedad || 'Corporate',
+          notes: row.notes || '',
+        };
+      } else {
+        this.loanModal = {
+          open: true, mode: 'create', id: null, saving: false, error: null,
+          name: '', lender: '', principal_original: '', start_date: '',
+          term_months: '', interest_rate: '', status: 'active',
+          propiedad: 'Corporate', notes: '',
+        };
+      }
+    },
+    closeLoanModal() { this.loanModal.open = false; },
+    async saveLoan() {
+      const m = this.loanModal;
+      m.saving = true; m.error = null;
+      try {
+        if (m.mode === 'create') {
+          const r = await fetch('/api/financing/loans/create', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: m.name, lender: m.lender, principal_original: m.principal_original,
+              start_date: m.start_date, term_months: m.term_months || null,
+              interest_rate: m.interest_rate || null, status: m.status,
+              propiedad: m.propiedad, notes: m.notes,
+            }),
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        } else {
+          const patch = {
+            name: m.name, lender: m.lender,
+            principal_original: m.principal_original,
+            start_date: m.start_date, term_months: m.term_months || null,
+            interest_rate: m.interest_rate || null, status: m.status,
+            propiedad: m.propiedad, notes: m.notes,
+          };
+          const r = await fetch('/api/financing/loans/update', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: m.id, patch }),
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        }
+        await this.loadFinanciamiento();
+        this.closeLoanModal();
+      } catch (e) {
+        m.error = e.message || String(e);
+      } finally {
+        m.saving = false;
+      }
+    },
+    async deleteLoan(id) {
+      if (!confirm('¿Eliminar este préstamo? Solo funciona si no tiene pagos ni eventos vinculados.')) return;
+      try {
+        const r = await fetch(`/api/financing/loans/delete?id=${id}`, { method: 'DELETE' });
+        const data = await r.json();
+        if (!r.ok) {
+          if (data.gastos_count != null) {
+            alert(`No se puede eliminar — quedan ${data.gastos_count} pagos y ${data.events_count} eventos vinculados. Reasigna o elimina esas filas primero.`);
+          } else {
+            alert('Error: ' + (data.error || 'HTTP ' + r.status));
+          }
+          return;
+        }
+        await this.loadFinanciamiento();
+      } catch (e) {
+        alert('Error: ' + (e.message || e));
+      }
+    },
+
+    openEventModal() {
+      this.eventModal = {
+        open: true, saving: false, error: null,
+        fecha: new Date().toISOString().slice(0, 10),
+        event_type: 'disbursement',
+        euros: '', loan_id: '', counterparty: '', notes: '',
+      };
+    },
+    closeEventModal() { this.eventModal.open = false; },
+    async saveEvent() {
+      const m = this.eventModal;
+      m.saving = true; m.error = null;
+      try {
+        const r = await fetch('/api/financing/events/create', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fecha: m.fecha, event_type: m.event_type, euros: m.euros,
+            loan_id: m.loan_id || null, counterparty: m.counterparty || null,
+            notes: m.notes || null,
+            user_name: new URLSearchParams(location.search).get('user') || null,
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        await this.loadFinanciamiento();
+        this.closeEventModal();
+      } catch (e) {
+        m.error = e.message || String(e);
+      } finally {
+        m.saving = false;
+      }
+    },
+    async deleteEvent(id) {
+      if (!confirm('¿Eliminar este evento de financiación?')) return;
+      try {
+        const r = await fetch(`/api/financing/events/delete?id=${id}`, { method: 'DELETE' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        await this.loadFinanciamiento();
+      } catch (e) {
+        alert('Error: ' + (e.message || e));
+      }
+    },
+
+    eventTypeLabel(t) {
+      const map = {
+        disbursement: 'Desembolso',
+        equity_in: 'Aportación capital',
+        equity_out: 'Retiro capital',
+        fee_one_time: 'Comisión única',
+        refinance: 'Refinanciación',
+      };
+      return map[t] || t;
+    },
+
+    async openLoanDetail(id) {
+      this.loanDetail = { open: true, loading: true, error: null, data: null };
+      try {
+        const r = await fetch(`/api/financing/loans/detail?id=${id}`);
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || 'HTTP ' + r.status);
+        }
+        this.loanDetail.data = await r.json();
+      } catch (e) {
+        this.loanDetail.error = e.message || String(e);
+      } finally {
+        this.loanDetail.loading = false;
+      }
+    },
+    closeLoanDetail() { this.loanDetail = { open: false, loading: false, error: null, data: null }; },
+    async archiveLoan(id) {
+      if (!confirm('¿Marcar este préstamo como pagado? Cambia el estado a "paid" y deja de aparecer como activo en los selects.')) return;
+      try {
+        const r = await fetch('/api/financing/loans/update', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, patch: { status: 'paid' } }),
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        await this.loadFinanciamiento();
+        await this.openLoanDetail(id);  // refresh detail
+      } catch (e) {
+        alert('Error: ' + (e.message || e));
+      }
+    },
+    eventTypeSign(t) {
+      return ({ disbursement: '+', equity_in: '+', refinance: '+', equity_out: '−', fee_one_time: '−' })[t] || '';
+    },
+
     async gastosApplyBulk() {
       const ids = this.gastosSelectedIds();
       if (ids.length === 0) return;
@@ -3251,8 +3994,15 @@ function reportApp() {
         currency: 'EUR', file: null, file_name: '', existing_recibo_url: null,
         proveedores: [],
         suggestions: { concepto_proveedor: [] },
+        // Loan payment split (optional). When is_loan_payment is true, importe
+        // must equal interest + principal so only interest hits the P&L.
+        is_loan_payment: false,
+        loan_id: '',
+        loan_payment_interest: '',
+        loan_payment_principal: '',
       };
       this._ensureCatalogLoaded();
+      this._ensureLoansLoaded();
     },
 
     // Load catalogo_cuentas the first time the modal is opened from a view
@@ -3261,6 +4011,16 @@ function reportApp() {
       if (this.gastosCatalog.all_descs.length === 0) {
         await this.loadConceptoOptions();
       }
+    },
+    // Load loans for the loan-payment dropdown. Cached for the session.
+    async _ensureLoansLoaded() {
+      if (this.financiamiento.loans !== null) return;
+      try {
+        const r = await fetch('/api/financing/loans/list');
+        if (!r.ok) return;
+        const data = await r.json();
+        this.financiamiento.loans = data.rows || [];
+      } catch { /* non-fatal */ }
     },
 
     // Open the modal in EDIT mode pre-populated from an existing row.
@@ -3300,6 +4060,10 @@ function reportApp() {
         existing_recibo_url: row.recibo_url || null,
         proveedores: [],
         suggestions: { concepto_proveedor: [] },
+        is_loan_payment: row.loan_id != null,
+        loan_id: row.loan_id ?? '',
+        loan_payment_interest: row.loan_payment_interest ?? '',
+        loan_payment_principal: row.loan_payment_principal ?? '',
       };
       // Kick off resolve + suggestion fetch so the chip row / cuenta badge populate.
       this.gastosModalResolve();
@@ -3307,6 +4071,7 @@ function reportApp() {
       // edit modal is opened from a view (P&L / Cash Flow) that hasn't visited
       // the Gastos tab and therefore hasn't populated gastosCatalog yet.
       this._ensureCatalogLoaded();
+      this._ensureLoansLoaded();
     },
 
     closeGastosModal() { this.gastosModal.open = false; },
@@ -3435,6 +4200,7 @@ function reportApp() {
 
     async _gastosModalSaveCreate() {
       const m = this.gastosModal;
+      const loanFields = this._loanPayloadFields(m);
       const payload = {
         mcf_user: new URLSearchParams(location.search).get('user') || 'admin',
         propiedad: m.propiedad,
@@ -3452,17 +4218,57 @@ function reportApp() {
         es_inversion: m.es_inversion ? 'Si' : 'No',
         fecha: m.fecha,
         file: m.file ? { name: m.file_name, type: m.file.type, content: m.file.content } : null,
+        ...loanFields,
       };
       const r = await fetch('/api/gastos/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || 'HTTP ' + r.status);
+      }
+    },
+
+    // Extract loan-payment fields from the modal in the shape both endpoints expect.
+    // Returns null portions when not in loan-payment mode (the API treats nulls as "regular gasto").
+    _loanPayloadFields(m) {
+      if (!m.is_loan_payment) {
+        return { loan_id: null, loan_payment_interest: null, loan_payment_principal: null };
+      }
+      return {
+        loan_id: m.loan_id ? parseInt(m.loan_id, 10) : null,
+        loan_payment_interest: parseFloat(m.loan_payment_interest) || 0,
+        loan_payment_principal: parseFloat(m.loan_payment_principal) || 0,
+      };
+    },
+
+    // Live computation: when interest is typed, principal = total - interest.
+    syncLoanSplit(side) {
+      const m = this.gastosModal;
+      const total = parseFloat(m.importe_total) || 0;
+      if (side === 'interest') {
+        const i = parseFloat(m.loan_payment_interest);
+        if (Number.isFinite(i)) m.loan_payment_principal = (total - i).toFixed(2);
+      } else if (side === 'principal') {
+        const p = parseFloat(m.loan_payment_principal);
+        if (Number.isFinite(p)) m.loan_payment_interest = (total - p).toFixed(2);
+      }
+    },
+    loanSplitOk() {
+      const m = this.gastosModal;
+      if (!m.is_loan_payment) return true;
+      const total = parseFloat(m.importe_total) || 0;
+      const i = parseFloat(m.loan_payment_interest);
+      const p = parseFloat(m.loan_payment_principal);
+      return m.loan_id && Number.isFinite(i) && i >= 0 && Number.isFinite(p) && p >= 0
+        && Math.abs((i + p) - total) < 0.01;
     },
 
     async _gastosModalSaveEdit() {
       const m = this.gastosModal;
+      const loanFields = this._loanPayloadFields(m);
       // Text/number fields go through the whitelist in /api/gastos/update.
       const patch = {
         propiedad: m.propiedad,
@@ -3479,13 +4285,17 @@ function reportApp() {
         is_fiscal: m.is_fiscal ? 1 : 0,
         es_inversion: m.es_inversion ? 'Si' : 'No',
         fecha: m.fecha,
+        ...loanFields,
       };
       const r = await fetch('/api/gastos/update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: m.id, patch }),
       });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || 'HTTP ' + r.status);
+      }
       // If a new factura was attached, upload it via the factura endpoint.
       if (m.file) {
         const r2 = await fetch('/api/gastos/factura', {
