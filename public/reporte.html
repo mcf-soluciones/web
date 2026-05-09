@@ -41,10 +41,15 @@
   <!-- Sidebar (desktop) -->
   <aside class="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-gray-200 bg-white">
     <div class="h-14 flex items-center px-5 border-b border-gray-200">
-      <a href="/admin" class="font-semibold text-gray-900 text-base">MCF <span class="text-brand-500">Reportes</span></a>
+      <template x-if="!accountantMode">
+        <a href="/admin" class="font-semibold text-gray-900 text-base">MCF <span class="text-brand-500">Reportes</span></a>
+      </template>
+      <template x-if="accountantMode">
+        <span class="font-semibold text-gray-900 text-base">MCF <span class="text-brand-500">Contable</span></span>
+      </template>
     </div>
     <nav class="flex-1 p-3 space-y-1">
-      <template x-for="item in nav" :key="item.id">
+      <template x-for="item in visibleNav()" :key="item.id">
         <button
           @click="setView(item.id)"
           :class="view === item.id ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-100'"
@@ -55,7 +60,12 @@
       </template>
     </nav>
     <div class="p-4 border-t border-gray-200 text-xs text-gray-400">
-      <a href="/admin" class="hover:text-gray-700">← Admin</a>
+      <template x-if="!accountantMode">
+        <a href="/admin" class="hover:text-gray-700">← Admin</a>
+      </template>
+      <template x-if="accountantMode">
+        <button @click="accountantLogout()" class="hover:text-red-500">Cerrar sesión</button>
+      </template>
     </div>
   </aside>
 
@@ -1087,6 +1097,13 @@
               <span x-show="!gastosExportBusy">Exportar mes (zip)</span>
               <span x-show="gastosExportBusy">Preparando…</span>
             </button>
+            <button @click="openDriveFolder()" :disabled="driveFolderBusy"
+              title="Abrir la carpeta de Google Drive del mes seleccionado"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 text-sm font-medium text-gray-700">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+              <span x-show="!driveFolderBusy">Ir a Drive</span>
+              <span x-show="driveFolderBusy">Abriendo…</span>
+            </button>
             <button @click="loadGastos()" :disabled="loading"
               :class="isStale() ? 'ring-2 ring-amber-400 ring-offset-1' : ''"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
@@ -1827,7 +1844,7 @@
 
     <!-- Mobile bottom nav -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 h-14 border-t border-gray-200 bg-white flex justify-around items-center z-30">
-      <template x-for="item in nav" :key="item.id">
+      <template x-for="item in visibleNav()" :key="item.id">
         <button @click="setView(item.id)"
           :class="view === item.id ? 'text-brand-600' : 'text-gray-500'"
           class="flex flex-col items-center justify-center text-[10px] gap-0.5 flex-1 py-1">
@@ -2115,6 +2132,7 @@ function reportApp() {
     gastosBulk: { field: '', value: '' },
     gastosBusy: false,           // inline save in flight
     gastosExportBusy: false,
+    driveFolderBusy: false,
     gastosFilter: 'all',         // 'all' | 'bank' | 'no_factura' | 'incomplete'
     gastosShowConceptoBanco: false,
     bankImport: {
@@ -2206,6 +2224,7 @@ function reportApp() {
     // Line-item detail modal
     detailModal: { open: false, loading: false, error: null, cuenta: null, label: null, data: null },
 
+    // Full nav. In accountantMode the UI filters this down to just Gastos via `visibleNav()`.
     nav: [
       { id: 'hub', label: 'Hub', icon: icons.hub },
       { id: 'resumen', label: 'Resumen', icon: icons.resumen },
@@ -2217,16 +2236,46 @@ function reportApp() {
       { id: 'calculator', label: 'Inversión', icon: icons.calculator },
     ],
 
+    // Accountant mode (set by /cuentas after password): UI is locked to gastos.
+    accountantMode: false,
+
     monthLabels: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
     years: (() => { const out = []; for (let y = now.getFullYear(); y >= 2023; y--) out.push(y); return out; })(),
 
     init() {
+      // Detect accountant session — locks the UI to gastos and hides everything else.
+      this.accountantMode = sessionStorage.getItem('mcf_accountant_session') === 'gastos_only';
+
+      if (this.accountantMode) {
+        this.view = 'gastos';
+        location.hash = 'gastos';
+        // Block hash-based escape attempts (e.g. typing #pnl in the address bar).
+        window.addEventListener('hashchange', () => {
+          if (this.view !== 'gastos' || location.hash.replace('#', '') !== 'gastos') {
+            this.view = 'gastos';
+            location.hash = 'gastos';
+          }
+        });
+        this.refresh();
+        return;
+      }
+
       // Seed default view from hash
       const h = (location.hash || '').replace('#', '');
       if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'gastos', 'pivot', 'calculator'].includes(h)) this.view = h;
       // Auto-load initial data (skip Comparar — it's range-driven, user builds series first;
       // skip calculator — it's a self-contained tool with no fetched data)
       if (this.view !== 'comparar' && this.view !== 'calculator') this.refresh();
+    },
+
+    visibleNav() {
+      if (this.accountantMode) return this.nav.filter(n => n.id === 'gastos');
+      return this.nav;
+    },
+
+    accountantLogout() {
+      sessionStorage.removeItem('mcf_accountant_session');
+      location.replace('/cuentas');
     },
 
     // Views that use the global month/year picker
@@ -2265,6 +2314,8 @@ function reportApp() {
     },
 
     setView(id) {
+      // Accountant mode is locked to gastos — silently ignore any other request.
+      if (this.accountantMode && id !== 'gastos') return;
       this.view = id;
       location.hash = id;
       if (id === 'pivot' && this.pivotRows) this.renderPivot();
@@ -2833,23 +2884,41 @@ function reportApp() {
               // Items with a real gastos cuenta code (anything but Ingresos) get a Detalle button
               const hasDetail = section.key !== 'Ingresos';
               const passthroughSet = new Set(this.pnl?.margins?.passthrough_tax_codes || ['N4', 'N5']);
+              // IVA Cobrado items (K1, K2) — already netted into EBITDA, shown
+              // here informatively. Same "no afecta neto" badge as N4/N5 but
+              // with an IVA-specific tooltip.
+              const ivaInfoSet = new Set(['K1', 'K2']);
               sub.items.forEach((it, i) => {
-                const isPassthrough = passthroughSet.has(String(it.code || '').toUpperCase());
+                const code = String(it.code || '').toUpperCase();
+                const isPassthrough = passthroughSet.has(code);
+                const isIvaInfo = ivaInfoSet.has(code);
+                const noAfectaNeto = isPassthrough || isIvaInfo;
+                let tooltip;
+                if (isIvaInfo) {
+                  tooltip = 'El IVA ya se deduce del EBITA, por lo que no se vuelve a deducir del net income. Este renglón es solo informativo';
+                } else if (isPassthrough) {
+                  tooltip = `${it.code}: Este impuesto ya se generado en meses previos y se ha reflejado como una reducción del P&L. Este pago afecta el Cash Flow solamente.`;
+                } else {
+                  tooltip = it.tooltip || it.desc || '';
+                }
                 rows.push({
                   id: `item:${subKey}:${i}`,
-                  label: it.property_label || it.label,
-                  rowClass: isPassthrough ? 'pnl-item-row pnl-passthrough-row' : 'pnl-item-row',
-                  labelClass: isPassthrough ? 'pnl-label-item italic text-amber-700' : 'pnl-label-item',
-                  valueClass: isPassthrough ? 'text-xs text-amber-700 italic' : 'text-xs text-gray-500',
+                  // Use the full catalogo descriptor ("Agua, Luz (E) — (001) Usera")
+                  // instead of just the propiedad — otherwise sibling rows like
+                  // E1/E4/E7 all collapse to "(001) Usera" and become indistinguishable.
+                  label: it.label || it.property_label || '',
+                  rowClass: noAfectaNeto ? 'pnl-item-row pnl-passthrough-row' : 'pnl-item-row',
+                  labelClass: noAfectaNeto ? 'pnl-label-item italic text-amber-700' : 'pnl-label-item',
+                  valueClass: noAfectaNeto ? 'text-xs text-amber-700 italic' : 'text-xs text-gray-500',
                   by_month: it.by_month,
                   ytd: it.ytd,
                   chevron: '',
                   codeBadge: it.code,
-                  tooltip: isPassthrough
-                    ? `${it.code}: Este impuesto ya se generado en meses previos y se ha reflejado como una reducción del P&L. Este pago afecta el Cash Flow solamente.`
-                    : (it.tooltip || it.desc || ''),
-                  passthrough: isPassthrough,
-                  synthetic: !!it.synthetic,
+                  tooltip,
+                  passthrough: noAfectaNeto,
+                  // Suppress the synthetic "ⓘ" icon when the row already shows
+                  // the "no afecta neto" badge — keeps the row tidy.
+                  synthetic: !!it.synthetic && !noAfectaNeto,
                   formatValue: fmtEur,
                   detailCode: hasDetail && !it.synthetic ? it.code : null,
                   detailLabel: `${sub.label} — ${it.property_label || it.label}`,
@@ -3446,6 +3515,25 @@ function reportApp() {
         window.location.href = `/api/export/month?mm=${mm}&yyyy=${yyyy}`;
       } finally {
         setTimeout(() => { this.gastosExportBusy = false; }, 1500);
+      }
+    },
+
+    async openDriveFolder() {
+      // Open a placeholder window synchronously so popup blockers don't kill it
+      // while we wait for the API to resolve the folder id.
+      const win = window.open('about:blank', '_blank');
+      this.driveFolderBusy = true;
+      try {
+        const r = await fetch(`/api/gastos/drive-folder?mm=${this.mm}&yyyy=${this.yyyy}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        if (win) win.location.href = data.url;
+        else window.open(data.url, '_blank');
+      } catch (e) {
+        if (win) win.close();
+        alert('No se pudo abrir la carpeta de Drive: ' + (e.message || e));
+      } finally {
+        this.driveFolderBusy = false;
       }
     },
 

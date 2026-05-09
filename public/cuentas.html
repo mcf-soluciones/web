@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>MCF · Acceso Contable</title>
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,.06), 0 2px 4px -2px rgba(0,0,0,.06);
+    }
+    .brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 18px; font-weight: 700; color: #0f172a; }
+    .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 6px;
+      margin-top: 20px;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      transition: border-color .15s, background .15s;
+      font-family: inherit;
+    }
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #2563eb;
+      background: #fff;
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: #2563eb;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    button:hover:not(:disabled) { background: #1d4ed8; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .error {
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .hint {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="brand-mark">€</div>
+      <h1>Acceso Contable MCF</h1>
+      <div class="subtitle">Visualiza y gestiona los gastos del mes.</div>
+    </div>
+    <form id="login-form">
+      <label for="pwd">Contraseña</label>
+      <input id="pwd" type="password" autocomplete="off" autofocus required>
+      <button id="submit" type="submit">Entrar</button>
+      <div id="error" class="error" style="display:none;"></div>
+    </form>
+    <div class="hint">Solo se concede acceso a la pestaña Gastos.</div>
+  </div>
+
+  <script>
+    // Already authenticated? Skip the form.
+    if (sessionStorage.getItem('mcf_accountant_session') === 'gastos_only') {
+      location.replace('/reporte#gastos');
+    }
+
+    const form = document.getElementById('login-form');
+    const pwd = document.getElementById('pwd');
+    const btn = document.getElementById('submit');
+    const errBox = document.getElementById('error');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Verificando…';
+      try {
+        const r = await fetch('/api/auth/cuentas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd.value }),
+        });
+        if (r.ok) {
+          sessionStorage.setItem('mcf_accountant_session', 'gastos_only');
+          location.replace('/reporte#gastos');
+          return;
+        }
+        const data = await r.json().catch(() => ({}));
+        errBox.textContent = data.error === 'invalid password'
+          ? 'Contraseña incorrecta.'
+          : (data.error || `Error ${r.status}`);
+        errBox.style.display = 'block';
+      } catch (err) {
+        errBox.textContent = 'Error de red. Intenta de nuevo.';
+        errBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    });
+  </script>
+</body>
+</html>
