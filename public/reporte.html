@@ -2360,17 +2360,48 @@
 
     </div>
 
-    <!-- Mobile bottom nav -->
+    <!-- Mobile bottom nav: 4 primary buttons + overflow "Más" sheet -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 h-14 border-t border-gray-200 bg-white flex justify-around items-center z-30">
-      <template x-for="item in visibleNav()" :key="item.id">
-        <button @click="setView(item.id)"
+      <template x-for="item in mobileNavPrimary()" :key="item.id">
+        <button @click="setView(item.id); mobileNavMore = false"
           :class="view === item.id ? 'text-brand-600' : 'text-gray-500'"
           class="flex flex-col items-center justify-center text-[10px] gap-0.5 flex-1 py-1">
           <span class="w-5 h-5" x-html="item.icon"></span>
           <span x-text="item.label"></span>
         </button>
       </template>
+      <template x-if="mobileNavOverflow().length > 0">
+        <button @click="mobileNavMore = !mobileNavMore"
+          :class="(mobileNavOverflow().some(n => n.id === view) || mobileNavMore) ? 'text-brand-600' : 'text-gray-500'"
+          class="flex flex-col items-center justify-center text-[10px] gap-0.5 flex-1 py-1">
+          <span class="w-5 h-5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </span>
+          <span>Más</span>
+        </button>
+      </template>
     </nav>
+
+    <!-- Mobile overflow sheet: opens above the bottom nav with the secondary tabs -->
+    <div x-show="mobileNavMore" x-cloak
+         @keydown.escape.window="mobileNavMore = false"
+         class="lg:hidden fixed inset-0 z-40">
+      <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="mobileNavMore = false"></div>
+      <div class="absolute bottom-14 left-0 right-0 bg-white border-t border-gray-200 rounded-t-xl shadow-xl p-2 max-h-[60vh] overflow-y-auto"
+           x-transition:enter="transition ease-out duration-150"
+           x-transition:enter-start="translate-y-2 opacity-0"
+           x-transition:enter-end="translate-y-0 opacity-100">
+        <div class="px-2 py-1 text-[10px] uppercase tracking-wide font-semibold text-gray-400">Más vistas</div>
+        <template x-for="item in mobileNavOverflow()" :key="item.id">
+          <button @click="setView(item.id); mobileNavMore = false"
+            :class="view === item.id ? 'bg-brand-50 text-brand-600' : 'text-gray-700 hover:bg-gray-100'"
+            class="w-full flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium">
+            <span class="w-5 h-5 shrink-0" x-html="item.icon"></span>
+            <span x-text="item.label"></span>
+          </button>
+        </template>
+      </div>
+    </div>
   </main>
 
   <!-- ================================================================ -->
@@ -2812,6 +2843,18 @@ function reportApp() {
       // Admin-only items hidden when not authenticated as admin.
       return this.nav.filter(n => !n.adminOnly || this.adminMode);
     },
+
+    // Mobile nav splits into a primary row + an overflow sheet.
+    // Primary row = the four most-used tabs that fit the bottom bar.
+    mobileNavPrimary() {
+      const ids = ['hub', 'gastos', 'pnl', 'cashflow'];
+      return this.visibleNav().filter(n => ids.includes(n.id));
+    },
+    mobileNavOverflow() {
+      const ids = ['hub', 'gastos', 'pnl', 'cashflow'];
+      return this.visibleNav().filter(n => !ids.includes(n.id));
+    },
+    mobileNavMore: false,
 
     accountantLogout() {
       sessionStorage.removeItem('mcf_accountant_session');
