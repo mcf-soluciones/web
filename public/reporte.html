@@ -846,7 +846,7 @@
                   </template>
 
                   <div class="text-[11px] text-gray-500 mt-2 leading-snug">
-                    Los impuestos N1, N2, N3 y N8 (Imp. Sociedades estimado) reducen la utilidad neta. La depreciación es un gasto contable no monetario: reduce la base imponible para calcular N8 y luego se suma de vuelta a la utilidad neta.
+                    Los impuestos N1 (Autónomo), N3 (Seg. Social empleados) y N8 (Imp. Sociedades estimado, o N8a real cuando el año está cerrado) reducen la utilidad neta. N2 (pagos de IS) es passthrough — afecta cash flow pero no net income, ya cargado vía N8/N8a. La depreciación es un gasto contable no monetario: reduce la base imponible para calcular N8 y luego se suma de vuelta a la utilidad neta.
                   </div>
                 </div>
               </div>
@@ -997,16 +997,7 @@
               <div class="pnl-card">
                 <div class="pnl-label">Cambio neto en caja</div>
                 <div :class="cashflow.year.net_change.ytd >= 0 ? 'text-gray-900' : 'text-red-600'" class="pnl-total" x-text="fmtEUR(cashflow.year.net_change.ytd)"></div>
-                <div class="text-xs text-gray-500 mt-1">CFO + CFI (+ CFF pendiente)</div>
-              </div>
-            </div>
-
-            <!-- CFF placeholder banner -->
-            <div class="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 flex items-start gap-3 text-sm">
-              <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div class="text-amber-900">
-                <span class="font-semibold">CFF (Financiamiento) aún no rastreado.</span>
-                <span class="text-amber-800">Próxima fase: tabla <code>financing_events</code> para préstamos, aportes de capital y retiros. Hasta entonces el "cambio neto en caja" solo refleja operación e inversión.</span>
+                <div class="text-xs text-gray-500 mt-1">CFO + CFI + CFF</div>
               </div>
             </div>
 
@@ -1064,6 +1055,239 @@
                     </template>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </template>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Balance Sheet                                                -->
+      <!-- ============================================================ -->
+      <section x-show="view === 'balance'" x-cloak class="space-y-5">
+        <!-- Work-in-progress banner -->
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2 text-sm text-amber-900">
+          <svg class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><strong>El balance está inconcluso</strong> — estamos revisando.</span>
+        </div>
+
+        <!-- Header: year selector + actions -->
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h3 class="font-semibold text-gray-900">Balance General</h3>
+            <p class="text-xs text-gray-500">Activos, Pasivos y Patrimonio mes a mes. Cierra un periodo para congelar valores.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="flex gap-1 p-1 rounded-md bg-gray-100">
+              <button @click="balanceGranularity = 'monthly'"
+                :class="balanceGranularity === 'monthly' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                class="px-2.5 py-1 rounded text-xs font-medium">Mensual</button>
+              <button @click="balanceGranularity = 'quarterly'"
+                :class="balanceGranularity === 'quarterly' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                class="px-2.5 py-1 rounded text-xs font-medium">Trimestral</button>
+            </div>
+            <select x-model.number="balanceYear" @change="loadBalance()"
+                    class="border border-gray-300 rounded-md text-sm px-2 py-1.5">
+              <template x-for="y in years" :key="y">
+                <option :value="y" x-text="y"></option>
+              </template>
+            </select>
+            <button @click="loadBalance()" :disabled="loading"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+              <svg x-show="!loading" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <svg x-show="loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              Actualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty / loading state -->
+        <template x-if="!balance && !loading">
+          <div class="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-500 text-sm">
+            Selecciona un año y haz clic en Actualizar.
+          </div>
+        </template>
+
+        <template x-if="balance">
+          <div class="space-y-5">
+
+            <!-- Snapshot panel: list + actions -->
+            <div class="bg-white border border-gray-200 rounded-xl">
+              <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-900">Periodos cerrados</h4>
+                  <p class="text-[11px] text-gray-500">
+                    <template x-if="balance.anchor_date">
+                      <span>Ancla actual: <span class="font-mono text-gray-700" x-text="balance.anchor_date"></span></span>
+                    </template>
+                    <template x-if="!balance.anchor_date">
+                      <span>Sin snapshots — cálculo desde el inicio de los datos.</span>
+                    </template>
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2" x-show="adminMode">
+                  <button @click="openSnapshotModal('manual')"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-xs font-medium text-gray-700">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Apertura manual
+                  </button>
+                  <button @click="openSnapshotModal('capture')"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Cerrar periodo
+                  </button>
+                </div>
+              </div>
+              <div class="px-5 py-3" x-show="balanceSnapshots && balanceSnapshots.snapshots.length > 0">
+                <ul class="divide-y divide-gray-100 text-sm">
+                  <template x-for="s in (balanceSnapshots?.snapshots || [])" :key="s.id">
+                    <li class="py-2 flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <span class="font-mono text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-700" x-text="s.as_of_date"></span>
+                        <span :class="s.mode === 'manual' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'"
+                              class="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase" x-text="s.mode"></span>
+                        <span class="text-gray-900 truncate" x-text="s.name || '(sin nombre)'"></span>
+                        <span class="text-[11px] text-gray-400" x-text="s.line_count + ' líneas'"></span>
+                      </div>
+                      <button x-show="adminMode" @click="deleteSnapshot(s)"
+                              class="text-xs text-red-600 hover:text-red-700 font-medium">Reabrir</button>
+                    </li>
+                  </template>
+                </ul>
+              </div>
+              <div class="px-5 py-4 text-xs text-gray-400" x-show="!balanceSnapshots || balanceSnapshots.snapshots.length === 0">
+                Sin snapshots todavía. Crea una <em>apertura manual</em> para anclar el sistema, o cierra un periodo para capturar el estado actual.
+              </div>
+            </div>
+
+            <!-- BS table -->
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
+                <h4 class="text-sm font-semibold text-gray-900">Balance — <span x-text="balance.yyyy"></span></h4>
+                <div class="text-[11px] text-gray-500 flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Snapshot cerrado</span>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span>Derivado (engine)</span>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Override manual</span>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300"></span>Sin dato</span>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="mcf-table pnl-yr">
+                  <thead>
+                    <tr>
+                      <th class="pnl-col-concepto">Línea</th>
+                      <template x-for="m in bsVisibleMonths()" :key="m">
+                        <th class="num" :class="bsIsClosed(m) ? 'bg-emerald-50' : ''" x-text="bsMonthHeader(m)"></th>
+                      </template>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="entry in bsFlatRows()" :key="entry.kind + ':' + entry.section + ':' + (entry.subsection || '') + ':' + (entry.subgroup || '') + ':' + (entry.line ? entry.line.code : '')">
+                      <tr
+                        x-show="entry.kind === 'section'
+                          || (entry.kind === 'subsection_header' && bsOpenSections[entry.section])
+                          || (entry.kind === 'subgroup_header' && bsOpenSections[entry.section] && bsSubsectionOpen(entry.section, entry.subsection))
+                          || (entry.kind === 'line' && bsOpenSections[entry.section] && bsSubsectionOpen(entry.section, entry.subsection) && (entry.subgroup === null || bsSubgroupOpen(entry.section, entry.subsection, entry.subgroup)))"
+                        :class="{
+                          'bg-gray-100 font-semibold cursor-pointer hover:bg-gray-200': entry.kind === 'section',
+                          'bg-gray-50 text-xs font-semibold cursor-pointer hover:bg-gray-100': entry.kind === 'subsection_header',
+                          'text-xs font-medium cursor-pointer hover:bg-gray-50': entry.kind === 'subgroup_header',
+                        }"
+                        @click="entry.kind === 'section'
+                          ? (bsOpenSections[entry.section] = !bsOpenSections[entry.section])
+                          : entry.kind === 'subsection_header'
+                            ? bsToggleSubsection(entry.section, entry.subsection)
+                            : (entry.kind === 'subgroup_header' && bsToggleSubgroup(entry.section, entry.subsection, entry.subgroup))">
+                        <!-- Concept column -->
+                        <td class="pnl-col-concepto">
+                          <template x-if="entry.kind === 'section'">
+                            <span>
+                              <span class="inline-block w-4 text-center" x-text="bsOpenSections[entry.section] ? '▾' : '▸'"></span>
+                              <span x-text="entry.label"></span>
+                            </span>
+                          </template>
+                          <template x-if="entry.kind === 'subsection_header'">
+                            <span class="pl-4">
+                              <span class="inline-block w-4 text-center text-gray-500" x-text="bsSubsectionOpen(entry.section, entry.subsection) ? '▾' : '▸'"></span>
+                              <span x-text="entry.subsection"></span>
+                            </span>
+                          </template>
+                          <template x-if="entry.kind === 'subgroup_header'">
+                            <span class="pl-10">
+                              <span class="inline-block w-4 text-center text-gray-400" x-text="bsSubgroupOpen(entry.section, entry.subsection, entry.subgroup) ? '▾' : '▸'"></span>
+                              <span x-text="entry.subgroup"></span>
+                            </span>
+                          </template>
+                          <template x-if="entry.kind === 'line'">
+                            <span :class="entry.subgroup ? 'pl-16' : 'pl-12'" class="text-xs">
+                              <span x-show="entry.line.is_contra" class="text-[10px] text-gray-400 mr-1">(–)</span>
+                              <span class="font-mono text-[10px] text-gray-400 mr-1" x-text="entry.line.code"></span>
+                              <span x-text="entry.line.label"></span>
+                              <template x-if="entry.line.is_derivable">
+                                <button type="button"
+                                        @click.stop="showInfoTip($event, 'Derivado · ' + (entry.line.derivation_note || ''))"
+                                        class="inline-flex items-center ml-1.5 text-[9px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded px-1 py-px hover:bg-blue-100 focus:outline-none cursor-pointer">
+                                  derivado ⓘ
+                                </button>
+                              </template>
+                              <template x-if="!entry.line.is_derivable && entry.line.derivation_note">
+                                <button type="button"
+                                        @click.stop="showInfoTip($event, entry.line.derivation_note)"
+                                        class="ml-1.5 inline-flex items-center text-gray-400 hover:text-brand-600 focus:outline-none align-middle"
+                                        aria-label="Descripción">
+                                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                </button>
+                              </template>
+                            </span>
+                          </template>
+                        </td>
+                        <!-- Month columns -->
+                        <template x-for="m in bsVisibleMonths()" :key="m">
+                          <td class="num">
+                            <template x-if="entry.kind === 'line'">
+                              <span style="cursor:pointer" @click.stop="openBsModal(entry.line, m)">
+                                <span :class="{
+                                  'text-emerald-700 font-medium': bsCellTag(entry.line, m) === 'snapshot',
+                                  'text-amber-700 font-medium': bsCellTag(entry.line, m) === 'override',
+                                  'text-blue-700': bsCellTag(entry.line, m) === 'derived' && bsCellAmount(entry.line, m) !== 0,
+                                  'text-gray-400 italic': bsCellAmount(entry.line, m) === 0,
+                                }" x-text="fmtEUR(bsCellAmount(entry.line, m))"></span>
+                              </span>
+                            </template>
+                            <!-- Inline subtotals on header rows (same pattern as P&L) -->
+                            <template x-if="entry.kind === 'section'">
+                              <span x-text="fmtEUR(bsSectionTotals(entry.section, m))"></span>
+                            </template>
+                            <template x-if="entry.kind === 'subsection_header'">
+                              <span x-text="fmtEUR(bsSubsectionTotal(entry.lines, m))"></span>
+                            </template>
+                            <template x-if="entry.kind === 'subgroup_header'">
+                              <span class="text-gray-700" x-text="fmtEUR(bsSubsectionTotal(entry.lines, m))"></span>
+                            </template>
+                          </td>
+                        </template>
+                      </tr>
+                    </template>
+
+                    <!-- Cuadre row -->
+                    <tr class="border-t-2 border-gray-300">
+                      <td class="pnl-col-concepto font-semibold text-gray-900">Cuadre (A − P − Pat)</td>
+                      <template x-for="m in bsVisibleMonths()" :key="m">
+                        <td class="num">
+                          <span :class="{
+                            'text-emerald-600 font-semibold': Math.abs(bsBalanceCheck(m)) < 1,
+                            'text-amber-600 font-semibold': Math.abs(bsBalanceCheck(m)) >= 1 && Math.abs(bsBalanceCheck(m)) < 200,
+                            'text-red-600 font-semibold': Math.abs(bsBalanceCheck(m)) >= 200,
+                          }" x-text="fmtEUR(bsBalanceCheck(m))"></span>
+                        </td>
+                      </template>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="px-5 py-3 text-[11px] text-gray-500 border-t border-gray-100">
+                Haz clic en cualquier celda para sobrescribir su valor. Las líneas marcadas en verde provienen de un snapshot cerrado.
               </div>
             </div>
           </div>
@@ -1798,6 +2022,142 @@
         </div>
       </div>
 
+      <!-- Balance Sheet: override modal -->
+      <div x-show="bsModal.open" x-cloak @keydown.escape.window="closeBsModal()"
+           class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="!bsModal.saving && closeBsModal()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden">
+          <div class="flex items-start justify-between px-6 py-4 border-b border-gray-200">
+            <div>
+              <h3 class="font-semibold text-gray-900">Override de línea</h3>
+              <p class="text-[11px] text-gray-500 mt-0.5">
+                <span x-text="bsModal.line?.label || ''"></span>
+                · <span class="font-mono" x-text="bsModal.yyyy + '-' + String(bsModal.mm || 0).padStart(2, '0')"></span>
+              </p>
+            </div>
+            <button @click="closeBsModal()" :disabled="bsModal.saving" class="text-gray-400 hover:text-gray-700 p-1">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="flex-1 overflow-auto px-6 py-4 space-y-3">
+            <div class="bg-gray-50 border border-gray-200 rounded-md p-3 text-xs space-y-1">
+              <div class="flex justify-between"><span class="text-gray-500">Valor actual</span><span class="font-mono" x-text="fmtEUR(bsModal.currentValue)"></span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Valor derivado</span><span class="font-mono text-gray-600" x-text="fmtEUR(bsModal.derivedValue)"></span></div>
+              <div class="text-[11px] text-gray-500 pt-1 border-t border-gray-200" x-show="bsModal.line?.derivation_note" x-text="bsModal.line?.derivation_note"></div>
+            </div>
+            <label class="block">
+              <span class="text-xs font-medium text-gray-700">Importe override (€)</span>
+              <input type="number" step="0.01" x-model="bsModal.amount"
+                     class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+            </label>
+            <label class="block">
+              <span class="text-xs font-medium text-gray-700">Notas</span>
+              <textarea x-model="bsModal.notes" rows="2"
+                        class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5"></textarea>
+            </label>
+            <p x-show="bsModal.error" x-text="bsModal.error" class="text-xs text-red-600"></p>
+          </div>
+          <div class="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50 gap-2">
+            <button x-show="bsModal.line && bsCellTag(bsModal.line, bsModal.mm) === 'override'"
+                    @click="clearBsOverride()" :disabled="bsModal.saving"
+                    class="px-3 py-1.5 rounded-md border border-red-300 text-red-700 hover:bg-red-50 text-sm font-medium">
+              Eliminar override
+            </button>
+            <div class="flex-1"></div>
+            <button @click="closeBsModal()" :disabled="bsModal.saving"
+                    class="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm font-medium">
+              Cancelar
+            </button>
+            <button @click="saveBsOverride()" :disabled="bsModal.saving"
+                    class="px-4 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold">
+              Guardar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance Sheet: snapshot modal -->
+      <div x-show="bsSnapshotModal.open" x-cloak @keydown.escape.window="closeSnapshotModal()"
+           class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="!bsSnapshotModal.saving && closeSnapshotModal()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+          <div class="flex items-start justify-between px-6 py-4 border-b border-gray-200">
+            <div>
+              <h3 class="font-semibold text-gray-900" x-text="bsSnapshotModal.mode === 'manual' ? 'Apertura manual' : 'Cerrar periodo'"></h3>
+              <p class="text-[11px] text-gray-500 mt-0.5" x-text="bsSnapshotModal.mode === 'manual'
+                ? 'Define los saldos iniciales del sistema. Cualquier flujo posterior se construye sobre estos valores.'
+                : 'Captura el balance derivado a la fecha indicada. Quedará congelado.'"></p>
+            </div>
+            <button @click="closeSnapshotModal()" :disabled="bsSnapshotModal.saving" class="text-gray-400 hover:text-gray-700 p-1">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="flex-1 overflow-auto px-6 py-4 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Fecha (fin de mes)</span>
+                <input type="date" x-model="bsSnapshotModal.as_of_date"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+              </label>
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Nombre</span>
+                <input type="text" x-model="bsSnapshotModal.name"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5">
+              </label>
+            </div>
+            <label class="block">
+              <span class="text-xs font-medium text-gray-700">Notas</span>
+              <textarea x-model="bsSnapshotModal.notes" rows="2"
+                        class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5"></textarea>
+            </label>
+
+            <!-- Manual lines table (only when mode='manual') -->
+            <template x-if="bsSnapshotModal.mode === 'manual'">
+              <div class="border border-gray-200 rounded-md overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead class="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-600">
+                    <tr><th class="text-left px-3 py-2">Línea</th><th class="text-right px-3 py-2">Importe</th></tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    <template x-for="(L, i) in bsSnapshotModal.manualLines" :key="L.line_code">
+                      <tr>
+                        <td class="px-3 py-1.5 text-xs">
+                          <span class="font-mono text-[10px] text-gray-400 mr-1.5" x-text="L.line_code"></span>
+                          <span x-text="L.label"></span>
+                        </td>
+                        <td class="px-3 py-1.5 text-right">
+                          <input type="number" step="0.01" x-model.number="bsSnapshotModal.manualLines[i].amount"
+                                 class="w-32 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right">
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+
+            <template x-if="bsSnapshotModal.mode === 'capture'">
+              <div class="bg-emerald-50 border border-emerald-200 rounded-md p-3 text-xs text-emerald-800">
+                Se capturará el balance derivado al <span class="font-mono" x-text="bsSnapshotModal.as_of_date"></span>,
+                incluyendo cualquier override aplicado. Para reabrir el periodo, elimina el snapshot desde la lista.
+              </div>
+            </template>
+
+            <p x-show="bsSnapshotModal.error" x-text="bsSnapshotModal.error" class="text-xs text-red-600"></p>
+          </div>
+          <div class="flex items-center justify-end px-6 py-3 border-t border-gray-200 bg-gray-50 gap-2">
+            <button @click="closeSnapshotModal()" :disabled="bsSnapshotModal.saving"
+                    class="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm font-medium">
+              Cancelar
+            </button>
+            <button @click="saveSnapshot()" :disabled="bsSnapshotModal.saving"
+                    class="px-4 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold">
+              <span x-text="bsSnapshotModal.mode === 'manual' ? 'Crear apertura' : 'Cerrar periodo'"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Bulk edit floating panel -->
       <div x-show="view === 'gastos' && gastosSelectedCount() > 0" x-cloak
            class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-full shadow-xl px-4 py-2 flex items-center gap-3 text-sm">
@@ -2095,266 +2455,861 @@
       </section>
 
       <!-- ============================================================ -->
-      <!-- Calculator (Investment Analysis)                             -->
+      <!-- Inversión / Proyecciones                                     -->
       <!-- ============================================================ -->
       <section x-show="view === 'calculator'" x-cloak class="calc-section space-y-5">
+
+        <!-- Header: title + 3-tab switcher -->
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 class="font-semibold text-gray-900">Análisis de Inversión</h3>
-            <p class="text-xs text-gray-500">Calculadora NPV / IRR / cash flow para evaluar nuevas ubicaciones</p>
+            <h3 class="font-semibold text-gray-900">Inversión y Proyecciones</h3>
+            <p class="text-xs text-gray-500">Modela un nuevo sucursal y observa el impacto consolidado en P&amp;L, Cash Flow y Balance.</p>
           </div>
           <div class="flex gap-1 p-1 rounded-lg bg-gray-100">
-            <button @click="calc.tab = 'investment'"
-              :class="calc.tab === 'investment' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+            <button @click="proj.tab = 'config'"
+              :class="proj.tab === 'config' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+              class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">Configuración</button>
+            <button @click="proj.tab = 'invest'"
+              :class="proj.tab === 'invest' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
               class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">Inversión</button>
-            <button @click="calc.tab = 'monthly'"
-              :class="calc.tab === 'monthly' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
-              class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">Cash Flow Mensual</button>
+            <button @click="proj.tab = 'estados'"
+              :class="proj.tab === 'estados' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+              class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">Estados</button>
           </div>
         </div>
 
-        <!-- ====== Investment Analysis tab ====== -->
-        <div x-show="calc.tab === 'investment'" class="space-y-5">
+        <!-- ====== Project bar (slim, top) ====== -->
+        <div class="flex flex-wrap items-center gap-2 px-1">
+          <select x-model.number="proj.currentId" @change="loadProjection(proj.currentId)"
+                  class="min-w-[180px] rounded-md border border-gray-300 text-sm px-2 py-1.5 bg-white">
+            <option :value="null">— Nuevo proyecto —</option>
+            <template x-for="p in (proj.list || [])" :key="p.id">
+              <option :value="p.id" x-text="p.name"></option>
+            </template>
+          </select>
+          <input type="text" x-model="proj.currentName"
+                 class="flex-1 min-w-[160px] rounded-md border border-gray-300 text-sm px-2 py-1.5"
+                 placeholder="Nombre del escenario (ej. Vallecas — base)">
+          <button @click="saveProjection()" :disabled="proj.saveBusy || !proj.currentName"
+            class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-xs font-semibold">
+            <span x-text="proj.currentId ? 'Guardar' : 'Crear'"></span>
+          </button>
+          <button x-show="proj.currentId" @click="saveProjectionAs()" :disabled="proj.saveBusy"
+            title="Guardar como…"
+            class="px-2.5 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium">
+            +
+          </button>
+          <button x-show="proj.currentId" @click="deleteProjection()"
+            title="Eliminar"
+            class="px-2.5 py-1.5 rounded-md border border-red-200 text-red-700 hover:bg-red-50 text-xs font-medium">
+            ✕
+          </button>
+          <button @click="exportProjectionJson()" title="Exportar JSON"
+            class="px-2.5 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium">
+            JSON
+          </button>
+        </div>
+        <p x-show="proj.error" x-text="proj.error" class="text-xs text-red-600"></p>
 
-          <!-- Pre-defined scenario -->
+        <!-- ============================================================ -->
+        <!-- Configuración tab                                            -->
+        <!-- ============================================================ -->
+        <div x-show="proj.tab === 'config'" class="space-y-5">
+
+          <!-- Step 1: define context (kind + anchor) -->
           <div class="bg-white border border-gray-200 rounded-xl p-4">
-            <h4 class="text-sm font-semibold text-gray-900 mb-3">Cargar escenario pre-definido</h4>
-            <div class="flex flex-wrap items-center gap-2">
-              <select x-model="calc.scenarioName" class="calc-select sm:w-64">
-                <template x-for="s in calcScenarios" :key="s.name">
-                  <option :value="s.name" x-text="s.name"></option>
-                </template>
-              </select>
-              <button @click="loadScenario()"
-                class="inline-flex items-center px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold">
-                Cargar escenario
-              </button>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold">1</span>
+              <h4 class="text-sm font-semibold text-gray-900">Define el escenario</h4>
             </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3 max-w-2xl">
+              <label class="block sm:col-span-2">
+                <span class="text-xs font-medium text-gray-700">Tipo de inversión</span>
+                <select x-model="proj.payload.kind"
+                        @change="if (proj.payload.kind === 'new_sucursal' && proj.payload.new_sucursales.length === 0) addSucursal()"
+                        class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5">
+                  <template x-for="opt in projKindOptions()" :key="opt.value">
+                    <option :value="opt.value" x-text="opt.label"></option>
+                  </template>
+                </select>
+              </label>
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Periodo base (T12M)</span>
+                <input type="month" x-model="proj.baselineYm" @change="loadProjBaseline()"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+              </label>
+            </div>
+            <p class="mt-2 text-[11px] text-gray-500"
+               x-text="(projKindOptions().find(o => o.value === proj.payload.kind) || {}).desc || ''"></p>
           </div>
 
-          <!-- Two-column: Investment Parameters + Operating Costs -->
-          <div class="grid lg:grid-cols-2 gap-4">
-
-            <!-- Investment Parameters -->
-            <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-              <h4 class="text-sm font-semibold text-gray-900">Parámetros de inversión</h4>
-
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Precio de compra</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="fmtEUR(calc.purchase_price)"></span>
-                </div>
-                <input type="range" min="10000" max="200000" step="1000" x-model.number="calc.purchase_price">
-              </div>
-
-              <div class="calc-row">
-                <label class="text-xs font-medium text-gray-700 block mb-1">(A+B) Ventas anuales esperadas (€)</label>
-                <input type="number" min="25000" max="200000" step="1000" x-model.number="calc.annual_sales" class="calc-input">
-              </div>
-
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Down payment</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="calc.down_payment_pct + '%'"></span>
-                </div>
-                <input type="range" min="10" max="100" step="5" x-model.number="calc.down_payment_pct">
-              </div>
-
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Tasa de interés del préstamo</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="Number(calc.interest_rate).toFixed(2) + '%'"></span>
-                </div>
-                <input type="range" min="0" max="20" step="0.05" x-model.number="calc.interest_rate">
-              </div>
-
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Plazo del préstamo (años)</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="calc.loan_term"></span>
-                </div>
-                <input type="range" min="1" max="25" step="1" x-model.number="calc.loan_term">
-              </div>
-
-              <label class="calc-row flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input type="checkbox" x-model="calc.tax_toggle"
-                  class="h-4 w-4 rounded border-gray-400 text-brand-500 focus:ring-brand-500">
-                <span>Incluir impacto fiscal (IVA + IRPF)</span>
+          <!-- Investment params -->
+          <div x-show="projShowSection('investment')" class="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
+            <h4 class="text-sm font-semibold text-gray-900">Compra y financiamiento</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 max-w-2xl">
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Precio de compra (€)</span>
+                <input type="number" step="100" x-model.number="proj.payload.investment.purchase_price"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+              </label>
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Down payment (%)</span>
+                <input type="number" step="1" min="0" max="100" x-model.number="proj.payload.investment.down_payment_pct"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+              </label>
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Interés del préstamo (%)</span>
+                <input type="number" step="0.05" min="0" x-model.number="proj.payload.investment.interest_rate"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+              </label>
+              <label class="block">
+                <span class="text-xs font-medium text-gray-700">Plazo (años)</span>
+                <input type="number" step="1" min="0" x-model.number="proj.payload.investment.loan_term"
+                       class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
               </label>
             </div>
 
-            <!-- Operating Costs -->
-            <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-              <h4 class="text-sm font-semibold text-gray-900">Costos operativos</h4>
-
-              <template x-for="f in [
-                { key: 'monthly_rent',        label: '(C) Renta mensual (€)',           min: 300, max: 3000, step: 20  },
-                { key: 'monthly_utilities',   label: '(E+F) Variable mensual (€)',      min: 100, max: 3000, step: 50  },
-                { key: 'monthly_fixed',       label: '(G+H) Fijo mensual (€)',          min: 100, max: 3000, step: 50  },
-                { key: 'annual_maintenance',  label: '(I) Mantenimiento anual (€)',     min: 0,   max: 30000, step: 200 },
-                { key: 'annual_corp',         label: '(J) Costos corporativos (€)',     min: 0,   max: 5000,  step: 50  },
-                { key: 'annual_depreciation', label: '(O) Depreciación anual (€)',      min: 0,   max: 30000, step: 500 }
-              ]" :key="f.key">
-                <div class="calc-row">
-                  <div class="flex justify-between items-baseline">
-                    <label class="text-xs font-medium text-gray-700" x-text="f.label"></label>
-                    <span class="text-sm font-mono text-gray-900" x-text="fmtEUR(calc[f.key])"></span>
-                  </div>
-                  <input type="range" :min="f.min" :max="f.max" :step="f.step"
-                    :value="calc[f.key]" @input="calc[f.key] = +$event.target.value">
-                </div>
-              </template>
-
-              <!-- Live EBITDA summary -->
-              <div class="mt-1 rounded-lg border border-brand-100 bg-brand-50 p-3 space-y-1.5">
-                <div class="flex items-center justify-between text-xs text-gray-600">
-                  <span>Costos operativos (sin depreciación)</span>
-                  <span class="font-mono text-gray-900" x-text="fmtEUR(calcOpCostsExDeprec())"></span>
-                </div>
-                <div class="flex items-center justify-between text-xs text-gray-600">
-                  <span>Costos operativos totales</span>
-                  <span class="font-mono text-gray-900" x-text="fmtEUR(calcTotalOpCosts())"></span>
-                </div>
-                <div class="flex items-center justify-between pt-1 border-t border-brand-100">
-                  <span class="text-sm font-semibold text-gray-900">EBITDA %</span>
-                  <span class="text-base font-bold tabular-nums"
-                        :class="(calcEbitdaPct() ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'"
-                        x-text="calcEbitdaPct() == null ? '–' : calcEbitdaPct().toFixed(1) + '%'"></span>
-                </div>
+            <details class="border-t border-gray-100 pt-3">
+              <summary class="cursor-pointer text-xs font-semibold text-gray-700 hover:text-gray-900">
+                ▸ Supuestos de análisis (NPV, inflación, valor terminal)
+              </summary>
+              <div class="mt-3 max-w-2xl bg-amber-50 border border-amber-200 rounded-md p-2.5 text-[11px] text-amber-900">
+                <strong>⚠ Inflación y aumento de precios</strong> aplican un multiplicador uniforme a
+                <em>todas</em> las cuentas existentes (Usera y Hortaleza) durante los 12 meses proyectados.
+                Si pones inflación = 2%, verás un Δ pequeño en cada línea de gastos aunque no la hayas modificado;
+                si pones aumento de precios = 3%, verás un Δ proporcional en los ingresos. Déjalos en 0 si solo
+                quieres ver el efecto del nuevo escenario.
               </div>
-            </div>
+              <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 max-w-2xl">
+                <label class="block">
+                  <span class="text-xs font-medium text-gray-700">Tasa de descuento NPV (%)</span>
+                  <input type="number" step="0.5" min="0" x-model.number="proj.payload.investment.discount_rate"
+                         class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                </label>
+                <label class="block">
+                  <span class="text-xs font-medium text-gray-700">Período de análisis (años)</span>
+                  <input type="number" step="1" min="1" max="20" x-model.number="proj.payload.investment.analysis_period"
+                         class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                </label>
+                <label class="block">
+                  <span class="text-xs font-medium text-gray-700">Valor terminal (€)</span>
+                  <input type="number" step="1000" min="0" x-model.number="proj.payload.investment.terminal_value"
+                         class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                </label>
+                <label class="block">
+                  <span class="text-xs font-medium text-gray-700">Inflación anual (%)</span>
+                  <input type="number" step="0.1" x-model.number="proj.payload.investment.inflation_rate"
+                         class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                </label>
+                <label class="block">
+                  <span class="text-xs font-medium text-gray-700">Incremento de precios (%)</span>
+                  <input type="number" step="0.1" x-model.number="proj.payload.investment.price_increase_rate"
+                         class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                </label>
+              </div>
+            </details>
           </div>
 
-          <!-- Analysis Assumptions -->
-          <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
-            <h4 class="text-sm font-semibold text-gray-900">Supuestos del análisis</h4>
-
-            <div class="grid sm:grid-cols-3 gap-3">
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Tasa de descuento (NPV)</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="Number(calc.discount_rate).toFixed(1) + '%'"></span>
-                </div>
-                <input type="range" min="1" max="15" step="0.5" x-model.number="calc.discount_rate">
+          <!-- New sucursales (repeater) -->
+          <div x-show="projShowSection('new_sucursal')" class="space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h4 class="text-sm font-semibold text-gray-900">Sucursales nuevas</h4>
+                <p class="text-[11px] text-gray-500">Cada sucursal contribuye con sus propios ingresos, costos y depreciación.</p>
               </div>
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Período de análisis (años)</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="calc.analysis_period"></span>
-                </div>
-                <input type="range" min="2" max="20" step="1" x-model.number="calc.analysis_period">
-              </div>
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Valor terminal</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="fmtEUR(calc.terminal_value)"></span>
-                </div>
-                <input type="range" min="0" max="250000" step="1000" x-model.number="calc.terminal_value">
-              </div>
+              <button @click="addSucursal()"
+                class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold">
+                + Añadir sucursal
+              </button>
             </div>
 
-            <button @click="calculate()"
-              class="inline-flex items-center px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm">
-              Calcular métricas de inversión
+            <template x-if="proj.payload.new_sucursales.length === 0">
+              <div class="bg-white border border-dashed border-gray-300 rounded-xl p-6 text-center text-sm text-gray-500">
+                Sin sucursales en el escenario. Haz clic en <span class="font-semibold">+ Añadir sucursal</span>.
+              </div>
+            </template>
+
+            <template x-for="(ns, si) in proj.payload.new_sucursales" :key="si">
+              <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <h5 class="text-sm font-semibold text-gray-900">
+                    Sucursal #<span x-text="si + 1"></span><span x-show="ns.name"> · <span x-text="ns.name"></span></span>
+                  </h5>
+                  <button @click="removeSucursal(si)"
+                    class="text-[11px] text-red-600 hover:text-red-700 font-medium">
+                    Eliminar
+                  </button>
+                </div>
+
+                <!-- Basics -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 max-w-4xl">
+                  <label class="block">
+                    <span class="text-xs font-medium text-gray-700">Nombre</span>
+                    <input type="text" x-model="ns.name"
+                           class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5"
+                           placeholder="ej. Vallecas">
+                  </label>
+                  <label class="block">
+                    <span class="text-xs font-medium text-gray-700">Plantilla de costos</span>
+                    <select x-model="ns.template" @change="applyProjTemplate(si)"
+                            class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5">
+                      <template x-if="!proj.baseline">
+                        <option value="" disabled>Cargando…</option>
+                      </template>
+                      <template x-for="key in (proj.baseline ? Object.keys(proj.baseline.sucursal_templates).filter(k => k !== 'corporate') : [])" :key="key">
+                        <option :value="key" x-text="key"></option>
+                      </template>
+                      <option value="blank">en blanco</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="text-xs font-medium text-gray-700">Mes de inicio</span>
+                    <input type="month" x-model="ns.start_month"
+                           class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                  </label>
+                  <label class="block">
+                    <span class="text-xs font-medium text-gray-700">Ventas anuales (€)</span>
+                    <input type="number" step="500" x-model.number="ns.annual_sales"
+                           class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                  </label>
+                </div>
+
+                <!-- Costos por cuenta -->
+                <div class="border border-gray-200 rounded-md">
+                  <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                    <div>
+                      <h6 class="text-xs font-semibold text-gray-700">Costos por cuenta</h6>
+                      <p class="text-[10px] text-gray-500" x-show="ns.cost_lines.length > 0">
+                        Total mensual: <span class="font-mono" x-text="fmtEUR(costLinesTotal(si))"></span>
+                      </p>
+                    </div>
+                    <button @click="restoreTemplateMix(si)"
+                      class="text-[11px] text-brand-600 hover:text-brand-700">↻ Restaurar plantilla</button>
+                  </div>
+                  <table class="w-full text-sm" x-show="ns.cost_lines.length > 0">
+                    <thead class="text-[11px] text-gray-500">
+                      <tr>
+                        <th class="text-left px-3 py-1.5 w-20">Cuenta</th>
+                        <th class="text-left px-3 py-1.5">Descripción</th>
+                        <th class="text-right px-3 py-1.5 w-32">€/mes</th>
+                        <th class="w-8"></th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                      <template x-for="(line, i) in ns.cost_lines" :key="i">
+                        <tr>
+                          <td class="px-3 py-1.5 font-mono text-xs" x-text="line.cuenta"></td>
+                          <td class="px-3 py-1.5 text-xs text-gray-600" x-text="cuentaLabel(line.cuenta)"></td>
+                          <td class="px-3 py-1.5 text-right">
+                            <input type="number" step="10" x-model.number="ns.cost_lines[i].monthly"
+                              class="w-24 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right">
+                          </td>
+                          <td class="px-3 py-1.5 text-right">
+                            <button @click="removeCostLine(si, i)" class="text-[11px] text-red-400 hover:text-red-600">✕</button>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                  <p x-show="ns.cost_lines.length === 0"
+                     class="px-3 py-3 text-center text-xs text-gray-400">
+                    Selecciona una plantilla arriba para precargar costos por cuenta.
+                  </p>
+                  <div class="px-3 py-2 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] text-gray-500">Añadir cuenta:</span>
+                    <select x-model="proj.addCuentaSelectedBySucursal[si]"
+                      class="border border-gray-300 rounded text-xs px-2 py-1 max-w-xs">
+                      <option value="">— elegir —</option>
+                      <template x-for="c in availableCuentasToAdd(si)" :key="c.cuenta">
+                        <option :value="c.cuenta" x-text="c.cuenta + ' — ' + c.desc"></option>
+                      </template>
+                    </select>
+                    <button @click="addCostLine(si)" :disabled="!proj.addCuentaSelectedBySucursal[si]"
+                      class="px-2 py-1 rounded bg-brand-500 disabled:opacity-50 text-white text-xs">+ Añadir</button>
+                  </div>
+                </div>
+
+                <!-- Advanced: seasonality + depreciation, collapsible -->
+                <details class="border-t border-gray-100 pt-3">
+                  <summary class="cursor-pointer text-xs font-semibold text-gray-700 hover:text-gray-900">
+                    ▸ Avanzado (estacionalidad y depreciación)
+                  </summary>
+                  <div class="mt-3 space-y-3">
+                    <label class="block max-w-xs">
+                      <span class="text-xs font-medium text-gray-700">Depreciación anual (€)</span>
+                      <input type="number" step="100" x-model.number="ns.depreciation_annual"
+                             class="mt-1 w-full border border-gray-300 rounded-md text-sm px-2 py-1.5 font-mono">
+                    </label>
+                    <div>
+                      <div class="flex items-baseline justify-between mb-1">
+                        <span class="text-xs font-medium text-gray-700">Estacionalidad mensual (% de ventas anuales)</span>
+                        <span class="text-[11px]">Total:
+                          <span class="font-mono font-semibold"
+                                :class="seasonalityValid(si) ? 'text-emerald-700' : 'text-amber-700'"
+                                x-text="seasonalitySum(si).toFixed(1) + '%'"></span>
+                          <button x-show="!seasonalityValid(si)" @click="normalizeSeasonality(si)"
+                                  class="ml-2 text-[10px] text-brand-600 hover:text-brand-700">
+                            normalizar a 100%
+                          </button>
+                        </span>
+                      </div>
+                      <p class="text-[10px] text-gray-500 mb-2">
+                        Las casillas siguen los 12 meses de la proyección (la ventana arranca con la sucursal de inicio más temprano).
+                        El motor empareja cada mes con su porcentaje calendario.
+                      </p>
+                      <div class="grid grid-cols-6 sm:grid-cols-12 gap-1">
+                        <template x-for="(fm, i) in projForwardMonths()" :key="i">
+                          <label class="block text-center">
+                            <span class="text-[10px] text-gray-500" x-text="monthLabels[fm.mm-1].slice(0, 3) + ' ' + String(fm.yyyy).slice(2)"></span>
+                            <input type="number" step="0.1" min="0" max="100"
+                              x-model.number="ns.monthly_seasonality[fm.mm - 1]"
+                              class="mt-0.5 w-full border border-gray-300 rounded text-xs px-1 py-0.5 font-mono text-center"
+                              :class="!seasonalityValid(si) ? 'border-amber-300 bg-amber-50' : ''">
+                          </label>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </template>
+          </div>
+
+          <!-- Existing-sucursal sales adjustments -->
+          <div x-show="projShowSection('adjustments')" class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-semibold text-gray-900">Ajustes a sucursales existentes</h4>
+              <button @click="addSalesAdjustment()" class="px-2 py-1 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs">+ Ajuste</button>
+            </div>
+            <table class="w-full text-sm" x-show="proj.payload.existing_adjustments.length > 0">
+              <thead class="text-[11px] text-gray-500"><tr>
+                <th class="text-left px-2 py-1">Propiedad</th><th class="text-left px-2 py-1">Tipo</th>
+                <th class="text-right px-2 py-1">Valor (%)</th><th class="text-left px-2 py-1">Desde</th><th></th>
+              </tr></thead>
+              <tbody>
+                <template x-for="(adj, i) in proj.payload.existing_adjustments" :key="i">
+                  <tr>
+                    <td class="px-2 py-1">
+                      <select x-model="adj.propiedad" class="border border-gray-300 rounded text-xs px-2 py-1">
+                        <option value="usera">Usera</option><option value="hortaleza">Hortaleza</option>
+                      </select>
+                    </td>
+                    <td class="px-2 py-1 text-xs text-gray-600">% ventas</td>
+                    <td class="px-2 py-1 text-right">
+                      <input type="number" step="0.5" x-model.number="adj.value" class="w-20 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right">
+                    </td>
+                    <td class="px-2 py-1">
+                      <input type="month" x-model="adj.start_month" class="border border-gray-300 rounded text-xs px-2 py-1 font-mono">
+                    </td>
+                    <td class="px-2 py-1 text-right"><button @click="removeAdjustment(i)" class="text-[11px] text-red-500 hover:text-red-600">✕</button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+            <p x-show="proj.payload.existing_adjustments.length === 0" class="text-xs text-gray-400">
+              Sin ajustes. Añade uno para escalar las ventas de una sucursal existente desde un mes específico.
+            </p>
+          </div>
+
+          <!-- Capex events -->
+          <div x-show="projShowSection('capex')" class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-semibold text-gray-900">Eventos de capex</h4>
+              <button @click="addCapex()" class="px-2 py-1 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs">+ Capex</button>
+            </div>
+            <table class="w-full text-sm" x-show="proj.payload.capex_events.length > 0">
+              <thead class="text-[11px] text-gray-500"><tr>
+                <th class="text-left px-2 py-1">Fecha</th><th class="text-left px-2 py-1">Descripción</th>
+                <th class="text-right px-2 py-1">Monto (€)</th><th class="text-right px-2 py-1">Vida útil (años)</th><th></th>
+              </tr></thead>
+              <tbody>
+                <template x-for="(ev, i) in proj.payload.capex_events" :key="i">
+                  <tr>
+                    <td class="px-2 py-1"><input type="month" x-model="ev.date" class="border border-gray-300 rounded text-xs px-2 py-1 font-mono"></td>
+                    <td class="px-2 py-1"><input type="text" x-model="ev.description" class="w-full border border-gray-300 rounded text-xs px-2 py-1"></td>
+                    <td class="px-2 py-1 text-right"><input type="number" step="100" x-model.number="ev.amount" class="w-28 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right"></td>
+                    <td class="px-2 py-1 text-right"><input type="number" step="1" min="1" x-model.number="ev.depreciation_years" class="w-16 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right"></td>
+                    <td class="px-2 py-1 text-right"><button @click="removeCapex(i)" class="text-[11px] text-red-500 hover:text-red-600">✕</button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Extra loans -->
+          <div x-show="projShowSection('loans')" class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-semibold text-gray-900">Préstamos adicionales</h4>
+              <button @click="addExtraLoan()" class="px-2 py-1 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs">+ Préstamo</button>
+            </div>
+            <table class="w-full text-sm" x-show="proj.payload.extra_loans.length > 0">
+              <thead class="text-[11px] text-gray-500"><tr>
+                <th class="text-left px-2 py-1">Nombre</th><th class="text-right px-2 py-1">Principal (€)</th>
+                <th class="text-left px-2 py-1">Inicio</th><th class="text-right px-2 py-1">Plazo (meses)</th>
+                <th class="text-right px-2 py-1">Interés (%)</th><th></th>
+              </tr></thead>
+              <tbody>
+                <template x-for="(l, i) in proj.payload.extra_loans" :key="i">
+                  <tr>
+                    <td class="px-2 py-1"><input type="text" x-model="l.name" class="w-full border border-gray-300 rounded text-xs px-2 py-1"></td>
+                    <td class="px-2 py-1 text-right"><input type="number" step="1000" x-model.number="l.principal" class="w-32 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right"></td>
+                    <td class="px-2 py-1"><input type="month" x-model="l.start_month" class="border border-gray-300 rounded text-xs px-2 py-1 font-mono"></td>
+                    <td class="px-2 py-1 text-right"><input type="number" step="1" min="1" x-model.number="l.term_months" class="w-20 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right"></td>
+                    <td class="px-2 py-1 text-right"><input type="number" step="0.05" x-model.number="l.interest_rate" class="w-20 border border-gray-300 rounded text-xs px-2 py-1 font-mono text-right"></td>
+                    <td class="px-2 py-1 text-right"><button @click="removeExtraLoan(i)" class="text-[11px] text-red-500 hover:text-red-600">✕</button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Compute step -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 text-[10px] font-bold">2</span>
+              <div>
+                <div class="text-sm font-semibold text-gray-900">Listo para calcular</div>
+                <div class="text-[11px] text-gray-600" x-show="proj.computed">
+                  Último cálculo: <span class="font-mono" x-text="proj.computedAt || ''"></span>
+                </div>
+              </div>
+            </div>
+            <button @click="computeProjection()" :disabled="proj.computeBusy"
+              class="px-6 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+              <span x-show="!proj.computeBusy">Calcular →</span>
+              <span x-show="proj.computeBusy">Calculando…</span>
             </button>
           </div>
+        </div>
 
-          <!-- Results: Metrics + Chart -->
-          <template x-if="calc.result">
+        <!-- ============================================================ -->
+        <!-- Inversión tab — investment metrics                           -->
+        <!-- ============================================================ -->
+        <div x-show="proj.tab === 'invest'" class="space-y-5">
+          <template x-if="!proj.computed">
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+              Configura el escenario y haz clic en <span class="font-semibold">Calcular</span>.
+            </div>
+          </template>
+          <template x-if="proj.computed">
             <div class="grid lg:grid-cols-2 gap-4">
               <div class="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 class="text-sm font-semibold text-gray-900 mb-3">Métricas de inversión</h4>
+                <h4 class="text-sm font-semibold text-gray-900 mb-3">Métricas de inversión (sucursal nueva)</h4>
                 <table class="w-full text-sm">
                   <tbody class="divide-y divide-gray-100">
                     <tr><td class="py-2 text-gray-600">Net Present Value (NPV)</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900" x-text="fmtEUR(calc.result.npv)"></td></tr>
+                        <td class="py-2 text-right font-mono font-semibold" x-text="fmtEUR(proj.computed.investment_metrics.npv)"></td></tr>
                     <tr><td class="py-2 text-gray-600">Internal Rate of Return (IRR)</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900"
-                            x-text="calc.result.irr == null ? 'No se pudo calcular' : (calc.result.irr * 100).toFixed(2) + '%'"></td></tr>
-                    <tr><td class="py-2 text-gray-600">Cash-on-Cash Return</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900"
-                            x-text="(calc.result.cash_on_cash * 100).toFixed(2) + '%'"></td></tr>
-                    <tr><td class="py-2 text-gray-600">Payback Period</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900"
-                            x-text="!isFinite(calc.result.payback_period) || calc.result.payback_period <= 0 ? 'Nunca' : calc.result.payback_period.toFixed(2) + ' años'"></td></tr>
-                    <tr><td class="py-2 text-gray-600">Return on Investment (ROI)</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900"
-                            x-text="calc.result.roi.toFixed(2) + '%'"></td></tr>
-                    <tr><td class="py-2 text-gray-600">Annual Cash Flow</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900" x-text="fmtEUR(calc.result.annual_cash_flow)"></td></tr>
-                    <tr><td class="py-2 text-gray-600">Annual Net Income</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900" x-text="fmtEUR(calc.result.annual_net_income)"></td></tr>
-                    <tr><td class="py-2 text-gray-600">Annual Debt Service</td>
-                        <td class="py-2 text-right font-mono font-semibold text-gray-900" x-text="fmtEUR(calc.result.debt_service)"></td></tr>
+                        <td class="py-2 text-right font-mono font-semibold"
+                            x-text="proj.computed.investment_metrics.irr == null ? 'No se pudo calcular' : (proj.computed.investment_metrics.irr * 100).toFixed(2) + '%'"></td></tr>
+                    <tr><td class="py-2 text-gray-600">Cash-on-Cash</td>
+                        <td class="py-2 text-right font-mono font-semibold"
+                            x-text="(proj.computed.investment_metrics.cash_on_cash * 100).toFixed(2) + '%'"></td></tr>
+                    <tr><td class="py-2 text-gray-600">Payback (años)</td>
+                        <td class="py-2 text-right font-mono font-semibold"
+                            x-text="!isFinite(proj.computed.investment_metrics.payback_period) ? 'Nunca' : proj.computed.investment_metrics.payback_period.toFixed(2)"></td></tr>
+                    <tr><td class="py-2 text-gray-600">ROI total</td>
+                        <td class="py-2 text-right font-mono font-semibold"
+                            x-text="proj.computed.investment_metrics.roi.toFixed(2) + '%'"></td></tr>
+                    <tr><td class="py-2 text-gray-600">Cash flow operativo anual</td>
+                        <td class="py-2 text-right font-mono font-semibold" x-text="fmtEUR(proj.computed.investment_metrics.annual_operating_cash)"></td></tr>
+                    <tr><td class="py-2 text-gray-600">Servicio de deuda anual</td>
+                        <td class="py-2 text-right font-mono font-semibold" x-text="fmtEUR(proj.computed.investment_metrics.annual_loan_service)"></td></tr>
+                    <tr><td class="py-2 text-gray-600">Cash flow neto anual</td>
+                        <td class="py-2 text-right font-mono font-semibold" x-text="fmtEUR(proj.computed.investment_metrics.annual_cash_flow)"></td></tr>
                   </tbody>
                 </table>
               </div>
-
               <div class="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 class="text-sm font-semibold text-gray-900 mb-3">Cash flows proyectados por año</h4>
-                <div id="calc-cashflow-chart"></div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-3">Cash flows de la inversión</h4>
+                <table class="w-full text-xs">
+                  <thead class="text-gray-500"><tr><th class="text-left py-1">Año</th><th class="text-right py-1">Cash flow</th></tr></thead>
+                  <tbody class="divide-y divide-gray-100">
+                    <template x-for="(cf, i) in proj.computed.investment_metrics.cashflows" :key="i">
+                      <tr>
+                        <td class="py-1" x-text="i === 0 ? 'Inicial' : ('Año ' + i)"></td>
+                        <td class="py-1 text-right font-mono" :class="cf >= 0 ? 'text-emerald-700' : 'text-red-600'" x-text="fmtEUR(cf)"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </template>
-
-          <template x-if="calc.result">
-            <div class="bg-white border border-gray-200 rounded-xl p-4">
-              <div class="flex items-center justify-between mb-3">
-                <h4 class="text-sm font-semibold text-gray-900">Supuestos clave usados</h4>
-                <button @click="downloadCalcJson()"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                  Descargar JSON
-                </button>
-              </div>
-              <pre class="text-xs font-mono text-gray-700 whitespace-pre-wrap leading-relaxed" x-text="calcAssumptionsText()"></pre>
             </div>
           </template>
         </div>
 
-        <!-- ====== Monthly Cash Flow tab ====== -->
-        <div x-show="calc.tab === 'monthly'" class="space-y-5">
-          <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-4">
-            <h4 class="text-sm font-semibold text-gray-900">Supuestos del flujo mensual</h4>
-
-            <div class="grid sm:grid-cols-2 gap-3">
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Inflación anual</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="Number(calc.inflation_rate).toFixed(1) + '%'"></span>
-                </div>
-                <input type="range" min="0" max="10" step="0.1" x-model.number="calc.inflation_rate">
-              </div>
-              <div class="calc-row">
-                <div class="flex justify-between items-baseline">
-                  <label class="text-xs font-medium text-gray-700">Incremento anual de precios</label>
-                  <span class="text-sm font-mono text-gray-900" x-text="Number(calc.price_increase_rate).toFixed(1) + '%'"></span>
-                </div>
-                <input type="range" min="0" max="10" step="0.1" x-model.number="calc.price_increase_rate">
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <button @click="calculate()"
-                class="inline-flex items-center px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm">
-                Re-calcular
-              </button>
-              <span class="text-xs text-gray-500">No incluye gastos por depreciación, que son fiscales pero no de flujo.</span>
-            </div>
-          </div>
-
-          <template x-if="!calc.result">
+        <!-- ============================================================ -->
+        <!-- Estados tab — P&L | Cash Flow | Balance Sheet                -->
+        <!-- ============================================================ -->
+        <div x-show="proj.tab === 'estados'" class="space-y-5">
+          <template x-if="!proj.computed">
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-              Calcula primero la inversión en la pestaña <span class="font-semibold">Inversión</span>.
+              Configura el escenario y haz clic en <span class="font-semibold">Calcular</span>.
             </div>
           </template>
 
-          <template x-if="calc.monthlyResult">
-            <div class="bg-white border border-gray-200 rounded-xl p-4">
-              <h4 class="text-sm font-semibold text-gray-900 mb-3">Cash flow mensual proyectado</h4>
-              <div id="calc-monthly-chart"></div>
+          <template x-if="proj.computed">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex gap-1 p-1 rounded-lg bg-gray-100">
+                  <button @click="proj.estadosView = 'pnl'"
+                    :class="proj.estadosView === 'pnl' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                    class="px-3 py-1 rounded-md text-xs font-medium">P&amp;L</button>
+                  <button @click="proj.estadosView = 'cashflow'"
+                    :class="proj.estadosView === 'cashflow' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                    class="px-3 py-1 rounded-md text-xs font-medium">Cash Flow</button>
+                  <button @click="proj.estadosView = 'balance_sheet'"
+                    :class="proj.estadosView === 'balance_sheet' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                    class="px-3 py-1 rounded-md text-xs font-medium">Balance</button>
+                </div>
+                <div class="flex gap-1 p-1 rounded-lg bg-gray-100">
+                  <button @click="proj.estadosShow = 'projected'"
+                    :class="proj.estadosShow === 'projected' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                    class="px-3 py-1 rounded-md text-xs font-medium">Proyectado</button>
+                  <button @click="proj.estadosShow = 'baseline'"
+                    :class="proj.estadosShow === 'baseline' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                    class="px-3 py-1 rounded-md text-xs font-medium">Baseline</button>
+                  <button @click="proj.estadosShow = 'delta'"
+                    :class="proj.estadosShow === 'delta' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                    class="px-3 py-1 rounded-md text-xs font-medium">Δ</button>
+                </div>
+              </div>
+
+              <!-- P&L view -->
+              <div x-show="proj.estadosView === 'pnl'" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="mcf-table pnl-yr">
+                    <thead><tr>
+                      <th class="pnl-col-concepto">Línea</th>
+                      <template x-for="(m, i) in proj.computed.pnl.forward_months" :key="i">
+                        <th class="num" x-text="monthLabels[m.mm-1].slice(0,3) + ' ' + String(m.yyyy).slice(2)"></th>
+                      </template>
+                      <th class="num pnl-ytd-col">Total</th>
+                    </tr></thead>
+                    <tbody>
+                      <!-- Ingresos (top-level total, expandable into per-source rows) -->
+                      <tr class="bg-emerald-50 font-semibold cursor-pointer hover:bg-emerald-100"
+                          @click="togglePnlSection('__INGRESOS__')">
+                        <td class="pnl-col-concepto">
+                          <span class="inline-block w-4 text-center text-gray-500" x-text="isPnlSectionOpen('__INGRESOS__') ? '▾' : '▸'"></span>
+                          Ingresos
+                          <template x-if="(proj.computed.pnl.revenue_rows || []).length">
+                            <span class="ml-2 text-[10px] font-normal text-gray-500" x-text="'(' + proj.computed.pnl.revenue_rows.length + ')'"></span>
+                          </template>
+                        </td>
+                        <template x-for="(_, i) in proj.computed.pnl.forward_months" :key="i">
+                          <td class="num" x-html="fmtEstadosCell(proj.computed.pnl.totals.revenue, i, true)"></td>
+                        </template>
+                        <td class="num pnl-ytd-col" x-text="fmtEUR(estadosArrSum(proj.computed.pnl.totals.revenue))"></td>
+                      </tr>
+                      <template x-for="row in (proj.computed.pnl.revenue_rows || [])" :key="row.key">
+                        <tr x-show="isPnlSectionOpen('__INGRESOS__')" class="text-gray-700">
+                          <td class="pnl-col-concepto pl-10">
+                            <span class="text-xs" x-text="row.label"></span>
+                            <template x-if="row.kind === 'new'">
+                              <span class="ml-2 inline-flex items-center text-[9px] font-semibold text-brand-700 bg-brand-50 border border-brand-200 rounded px-1 py-px">nueva</span>
+                            </template>
+                          </td>
+                          <template x-for="(_, i) in proj.computed.pnl.forward_months" :key="i">
+                            <td class="num text-xs" x-html="fmtEstadosCell(row, i, true)"></td>
+                          </template>
+                          <td class="num pnl-ytd-col text-xs" x-text="fmtEUR(estadosArrSum(row))"></td>
+                        </tr>
+                      </template>
+
+                      <!-- Gastos / Depreciación / Impuestos — grouped by letter, collapsible -->
+                      <template x-for="entry in pnlFlatRows()" :key="entry.kind + ':' + (entry.code || entry.letter)">
+                        <tr
+                          x-show="entry.kind === 'header' || isPnlSectionOpen(entry.letter)"
+                          :class="entry.kind === 'header'
+                            ? 'bg-gray-50 font-semibold cursor-pointer hover:bg-gray-100'
+                            : 'text-gray-700'"
+                          @click="entry.kind === 'header' && togglePnlSection(entry.letter)">
+                          <td class="pnl-col-concepto" :class="entry.kind === 'detail' ? 'pl-10' : ''">
+                            <template x-if="entry.kind === 'header'">
+                              <span>
+                                <span class="inline-block w-4 text-center text-gray-500"
+                                      x-text="isPnlSectionOpen(entry.letter) ? '▾' : '▸'"></span>
+                                <span class="font-mono text-[10px] text-gray-400 mr-1" x-text="entry.letter"></span>
+                                <span x-text="entry.label"></span>
+                                <span class="ml-2 text-[10px] font-normal text-gray-500" x-text="'(' + entry.count + ')'"></span>
+                              </span>
+                            </template>
+                            <template x-if="entry.kind === 'detail'">
+                              <span>
+                                <span class="font-mono text-[10px] text-gray-400 mr-1" x-text="entry.code"></span>
+                                <span class="text-xs" x-text="entry.label"></span>
+                              </span>
+                            </template>
+                          </td>
+                          <template x-for="(_, i) in proj.computed.pnl.forward_months" :key="i">
+                            <td class="num" :class="entry.kind === 'detail' ? 'text-xs' : ''" x-html="fmtEstadosCell(entry.data, i, false)"></td>
+                          </template>
+                          <td class="num pnl-ytd-col" :class="entry.kind === 'detail' ? 'text-xs' : ''" x-text="fmtEUR(estadosArrSum(entry.data))"></td>
+                        </tr>
+                      </template>
+
+                      <!-- Net Income (with margin %) -->
+                      <tr class="bg-emerald-50 font-semibold border-t-2 border-gray-300">
+                        <td class="pnl-col-concepto">Net Income</td>
+                        <template x-for="(_, i) in proj.computed.pnl.forward_months" :key="i">
+                          <td class="num" x-html="niCellHtml(i)"></td>
+                        </template>
+                        <td class="num pnl-ytd-col" x-html="niTotalHtml()"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="px-4 py-2 border-t border-gray-100 flex items-center justify-end gap-3">
+                  <button @click="proj.pnlExpanded = Object.fromEntries(pnlGroupedByLetter().map(g => [g.letter, true]))"
+                          class="text-[11px] text-brand-600 hover:text-brand-700">Expandir todo</button>
+                  <button @click="proj.pnlExpanded = {}"
+                          class="text-[11px] text-brand-600 hover:text-brand-700">Colapsar todo</button>
+                </div>
+              </div>
+
+              <!-- Cash Flow view -->
+              <div x-show="proj.estadosView === 'cashflow'" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="mcf-table pnl-yr">
+                    <thead><tr>
+                      <th class="pnl-col-concepto">Sección</th>
+                      <template x-for="(m, i) in proj.computed.cashflow.months" :key="i">
+                        <th class="num" x-text="monthLabels[m.mm-1].slice(0,3) + ' ' + String(m.yyyy).slice(2)"></th>
+                      </template>
+                      <th class="num pnl-ytd-col">Total</th>
+                    </tr></thead>
+                    <tbody>
+                      <template x-for="row in proj.computed.cashflow.rows" :key="row.key">
+                        <tr :class="row.key === 'net' ? 'bg-gray-50 font-semibold border-t-2 border-gray-300' : ''">
+                          <td class="pnl-col-concepto" x-text="row.label"></td>
+                          <template x-for="(_, i) in proj.computed.cashflow.months" :key="i">
+                            <td class="num" x-html="fmtEstadosCell(row, i, true)"></td>
+                          </template>
+                          <td class="num pnl-ytd-col" x-text="fmtEUR(estadosArrSum(row))"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Balance Sheet view (quarterly, hierarchical) -->
+              <div x-show="proj.estadosView === 'balance_sheet'" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="mcf-table pnl-yr">
+                    <thead><tr>
+                      <th class="pnl-col-concepto">Línea</th>
+                      <template x-for="q in projBsQuarters()" :key="q.idx">
+                        <th class="num">
+                          <div class="font-semibold" x-text="q.label"></div>
+                          <div class="text-[9px] font-normal text-gray-500" x-text="q.sublabel"></div>
+                        </th>
+                      </template>
+                    </tr></thead>
+                    <tbody>
+                      <template x-for="entry in projBsFlatRows()" :key="entry.kind + ':' + entry.section + ':' + (entry.subsection || '') + ':' + (entry.subgroup || '') + ':' + (entry.line ? entry.line.code : '')">
+                        <tr
+                          x-show="entry.kind === 'section'
+                            || (entry.kind === 'subsection_header' && projBsSectionOpen(entry.section))
+                            || (entry.kind === 'subgroup_header' && projBsSectionOpen(entry.section) && projBsSubOpen(entry.section, entry.subsection))
+                            || (entry.kind === 'line' && projBsSectionOpen(entry.section) && projBsSubOpen(entry.section, entry.subsection) && (entry.subgroup === null || projBsSubgroupOpen(entry.section, entry.subsection, entry.subgroup)))"
+                          :class="{
+                            'bg-gray-100 font-semibold cursor-pointer hover:bg-gray-200': entry.kind === 'section',
+                            'bg-gray-50 text-xs font-semibold cursor-pointer hover:bg-gray-100': entry.kind === 'subsection_header',
+                            'text-xs font-medium cursor-pointer hover:bg-gray-50': entry.kind === 'subgroup_header',
+                          }"
+                          @click="entry.kind === 'section'
+                            ? projBsToggleSection(entry.section)
+                            : entry.kind === 'subsection_header'
+                              ? projBsToggleSub(entry.section, entry.subsection)
+                              : (entry.kind === 'subgroup_header' && projBsToggleSubgroup(entry.section, entry.subsection, entry.subgroup))">
+                          <!-- Concept column -->
+                          <td class="pnl-col-concepto">
+                            <template x-if="entry.kind === 'section'">
+                              <span>
+                                <span class="inline-block w-4 text-center" x-text="projBsSectionOpen(entry.section) ? '▾' : '▸'"></span>
+                                <span x-text="entry.label"></span>
+                              </span>
+                            </template>
+                            <template x-if="entry.kind === 'subsection_header'">
+                              <span class="pl-4">
+                                <span class="inline-block w-4 text-center text-gray-500" x-text="projBsSubOpen(entry.section, entry.subsection) ? '▾' : '▸'"></span>
+                                <span x-text="entry.subsection"></span>
+                              </span>
+                            </template>
+                            <template x-if="entry.kind === 'subgroup_header'">
+                              <span class="pl-10">
+                                <span class="inline-block w-4 text-center text-gray-400" x-text="projBsSubgroupOpen(entry.section, entry.subsection, entry.subgroup) ? '▾' : '▸'"></span>
+                                <span x-text="entry.subgroup"></span>
+                              </span>
+                            </template>
+                            <template x-if="entry.kind === 'line'">
+                              <span :class="entry.subgroup ? 'pl-16' : 'pl-12'" class="text-xs">
+                                <span x-show="entry.line.is_contra" class="text-[10px] text-gray-400 mr-1">(–)</span>
+                                <span class="font-mono text-[10px] text-gray-400 mr-1" x-text="entry.line.code"></span>
+                                <span x-text="entry.line.label"></span>
+                              </span>
+                            </template>
+                          </td>
+                          <!-- Quarterly columns -->
+                          <template x-for="q in projBsQuarters()" :key="q.idx">
+                            <td class="num">
+                              <template x-if="entry.kind === 'line'">
+                                <span x-html="projBsCellHtml([entry.line], q.idx, entry.section !== 'liabilities')"></span>
+                              </template>
+                              <template x-if="entry.kind === 'section'">
+                                <span x-html="projBsCellHtml(entry.lines, q.idx, entry.section !== 'liabilities')"></span>
+                              </template>
+                              <template x-if="entry.kind === 'subsection_header'">
+                                <span x-html="projBsCellHtml(entry.lines, q.idx, entry.section !== 'liabilities')"></span>
+                              </template>
+                              <template x-if="entry.kind === 'subgroup_header'">
+                                <span class="text-gray-700" x-html="projBsCellHtml(entry.lines, q.idx, entry.section !== 'liabilities')"></span>
+                              </template>
+                            </td>
+                          </template>
+                        </tr>
+                      </template>
+
+                      <!-- Cuadre row -->
+                      <tr class="border-t-2 border-gray-300">
+                        <td class="pnl-col-concepto font-semibold text-gray-900">Cuadre (A − P − Pat)</td>
+                        <template x-for="q in projBsQuarters()" :key="q.idx">
+                          <td class="num">
+                            <span :class="{
+                              'text-emerald-600 font-semibold': Math.abs(projBsBalanceCheckAtIdx(q.idx)) < 1,
+                              'text-amber-600 font-semibold': Math.abs(projBsBalanceCheckAtIdx(q.idx)) >= 1 && Math.abs(projBsBalanceCheckAtIdx(q.idx)) < 200,
+                              'text-red-600 font-semibold': Math.abs(projBsBalanceCheckAtIdx(q.idx)) >= 200,
+                            }" x-text="fmtEUR(projBsBalanceCheckAtIdx(q.idx))"></span>
+                          </td>
+                        </template>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </template>
+        </div>
+
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Configuración (admin-only)                                  -->
+      <!-- ============================================================ -->
+      <section x-show="view === 'configuraciones'" x-cloak class="space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="font-semibold text-gray-900">Configuración</h3>
+            <p class="text-xs text-gray-500">Ajustes puntuales que afectan a todo el sistema (cierre fiscal, etc.).</p>
+          </div>
+          <button @click="loadTaxSettlements()" :disabled="taxSettlements.loading"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+            <svg x-show="!taxSettlements.loading" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <svg x-show="taxSettlements.loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- Explainer card -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <div class="flex items-center gap-2">
+            <h4 class="font-semibold text-gray-900">Cerrar año fiscal (Impuesto Sociedades)</h4>
+            <button type="button" @click.stop="showInfoTip($event, configTaxTooltipText)"
+              class="inline-flex items-center text-amber-600 hover:text-amber-700 focus:outline-none"
+              aria-label="Más información">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            Cuando AEAT confirme el IS real de un año, regístralo aquí. El P&L de ese año reemplazará la estimación mensual <span class="font-mono">N8</span> (20%) por el IS real, asignado por mes según la utilidad de cada periodo (etiqueta <span class="font-mono">N8a</span>). Toca el ícono de información para ver el detalle.
+          </p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+          <h4 class="text-sm font-semibold text-gray-900">Registrar IS real de un año cerrado</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="text-xs">
+              <span class="text-gray-600">Año fiscal</span>
+              <select x-model.number="taxSettlements.form.yyyy"
+                class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:ring-brand-500 focus:border-brand-500">
+                <option value="">— Selecciona —</option>
+                <template x-for="y in availableYearsToClose()" :key="y">
+                  <option :value="y" x-text="y"></option>
+                </template>
+              </select>
+            </label>
+            <label class="text-xs">
+              <span class="text-gray-600">IS pagado total (€)</span>
+              <input type="number" step="0.01" min="0" x-model="taxSettlements.form.actual_is"
+                placeholder="ej. 4855.39"
+                class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:ring-brand-500 focus:border-brand-500">
+            </label>
+            <label class="text-xs">
+              <span class="text-gray-600">Notas (opcional)</span>
+              <input type="text" x-model="taxSettlements.form.notes"
+                placeholder="ref. liquidación, comentarios"
+                class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:ring-brand-500 focus:border-brand-500">
+            </label>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button @click="saveTaxSettlement()"
+              :disabled="taxSettlements.saving || !taxSettlements.form.yyyy || taxSettlements.form.actual_is === '' || taxSettlements.form.actual_is === null"
+              class="inline-flex items-center px-4 py-2 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+              <span x-show="!taxSettlements.saving">Cerrar año fiscal</span>
+              <span x-show="taxSettlements.saving">Guardando…</span>
+            </button>
+            <span class="text-[11px] text-gray-500">Suma pagos a cuenta + liquidación final del año.</span>
+          </div>
+        </div>
+
+        <!-- History table -->
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div class="px-5 py-3 border-b border-gray-200">
+            <h4 class="text-sm font-semibold text-gray-900">Años cerrados</h4>
+            <p class="text-xs text-gray-500">El P&L de estos años usa el IS real (<span class="font-mono">N8a</span>) en vez de la estimación <span class="font-mono">N8</span>.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="mcf-table text-[12px]">
+              <thead>
+                <tr>
+                  <th>Año</th>
+                  <th class="num">IS real</th>
+                  <th class="num">Profit base</th>
+                  <th>Cerrado</th>
+                  <th>Notas</th>
+                  <th style="width:160px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="row in (taxSettlements.list || [])" :key="row.yyyy">
+                  <tr class="hover:bg-gray-50">
+                    <td class="font-semibold" x-text="row.yyyy"></td>
+                    <td class="num font-semibold" x-text="fmtEUR(row.actual_is)"></td>
+                    <td class="num text-gray-600" x-text="fmtEUR(row.year_profit_base)"></td>
+                    <td class="font-mono text-[11px] text-gray-500" x-text="(row.filed_at || '').slice(0, 10)"></td>
+                    <td class="max-w-[260px] truncate" :title="row.notes || ''" x-text="row.notes || '—'"></td>
+                    <td class="text-center whitespace-nowrap">
+                      <button @click="recalcTaxSettlement(row.yyyy)" :disabled="taxSettlements.busy[row.yyyy]"
+                        class="text-[11px] text-brand-600 hover:text-brand-700 mr-2 disabled:opacity-50"
+                        title="Recalcular profit base con los gastos actuales">Recalcular</button>
+                      <button @click="deleteTaxSettlement(row.yyyy)"
+                        class="text-[11px] text-red-500 hover:text-red-600"
+                        title="Reabrir año (vuelve a usar estimación N8)">Reabrir</button>
+                    </td>
+                  </tr>
+                </template>
+                <template x-if="(taxSettlements.list || []).length === 0 && !taxSettlements.loading">
+                  <tr><td colspan="6" class="text-center text-gray-400 py-6">Aún no se ha cerrado ningún año.</td></tr>
+                </template>
+                <template x-if="taxSettlements.loading && !taxSettlements.list">
+                  <tr><td colspan="6" class="text-center text-gray-400 py-6">Cargando…</td></tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -2655,10 +3610,12 @@ function reportApp() {
     comparar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>',
     pnl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
     cashflow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 10 12 15 17 10"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="3" x2="12" y2="21"/></svg>',
+    balance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M12 6v15"/><path d="M7 6l-3 6h6L7 6Z"/><path d="M17 6l-3 6h6L17 6Z"/><path d="M4 12a3 3 0 0 0 6 0"/><path d="M14 12a3 3 0 0 0 6 0"/><path d="M9 21h6"/></svg>',
     gastos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13h4M10 17h4"/></svg>',
     pivot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
     financiamiento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/><circle cx="8" cy="14" r="1"/></svg>',
     calculator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>',
+    configuraciones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
   };
 
   return {
@@ -2669,7 +3626,7 @@ function reportApp() {
 
     // Track what is currently loaded per view, so the header can show the
     // LOADED period (not the picker) and we can flag a "Pendiente" state.
-    loaded: { hub: false, resumen: null, pnl: null, pivot: null, cashflow: null, gastos: null },
+    loaded: { hub: false, resumen: null, pnl: null, pivot: null, cashflow: null, gastos: null, balance: null },
 
     hub: null,
     hubCharts: { weekly: null, monthly: null },
@@ -2719,6 +3676,31 @@ function reportApp() {
     cfAllOpen: false,
     cfShowAllMonths: false,
 
+    // Balance Sheet view
+    balance: null,                                // /api/balance-sheet/timeseries response
+    balanceYear: now.getFullYear(),
+    balanceGranularity: 'monthly',                // 'monthly' | 'quarterly'
+    balanceSnapshots: null,                       // /api/balance-sheet/snapshots/list response
+    balanceShowDerivation: false,                 // toggle to show line breakdowns
+    bsOpenSections: { assets: true, liabilities: true, equity: true },
+    bsClosedSubs: {},                             // { 'assets|Activo corriente': true } — subsection collapsed
+    bsModal: {                                    // override editor (click on a cell)
+      open: false, saving: false, error: null,
+      yyyy: null, mm: null, line: null,           // line = full line object for context
+      currentValue: null,                         // amount currently displayed
+      derivedValue: null,                         // engine-derived value (or snapshot value)
+      mode: 'override',                           // 'override' | 'clear'
+      amount: '', notes: '',
+    },
+    bsSnapshotModal: {                            // create-snapshot modal (close period)
+      open: false, saving: false, error: null,
+      mode: 'capture',                            // 'manual' | 'capture'
+      as_of_date: '',
+      name: '',
+      notes: '',
+      manualLines: [],                            // [{ line_code, label, amount }] for mode=manual
+    },
+
     compareSeries: [
       { id: 1, property: 'all', mission: 'all', metric: 'ventas', range: 'T12M' },
     ],
@@ -2756,6 +3738,50 @@ function reportApp() {
       monthlyResult: null, // monthly_cash_flow plot data
     },
     calcCharts: { cashflow: null, monthly: null },
+
+    // ===== Projections (Inversión tab v2) =====
+    proj: {
+      tab: 'config',                                // 'config' | 'invest' | 'estados'
+      estadosView: 'pnl',                           // 'pnl' | 'cashflow' | 'balance_sheet'
+      estadosShow: 'projected',                     // 'projected' | 'baseline' | 'delta'
+      currentId: null,
+      currentName: '',
+      baselineYm: (() => {
+        // Default to the previous month — the most recent completed period.
+        // Using the current month would include partial data and create gaps
+        // when the calendar lookup hits this month for a forward projection.
+        const d = new Date();
+        d.setDate(0);                                                         // last day of previous month
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      })(),
+      baseline: null,
+      computed: null,
+      computedAt: null,
+      list: null,
+      pnlExpanded: {},                              // { [letter]: true } — collapsible state for P&L sections
+      bsOpenSections: { assets: true, liabilities: true, equity: true },
+      bsClosedSubs: {},                             // { 'assets|Activo corriente': true, 'sg:...': true }
+      saveBusy: false,
+      computeBusy: false,
+      error: null,
+      addCuentaSelected: '',                       // legacy — kept for backwards-compat
+      addCuentaSelectedBySucursal: {},             // { [si]: 'cuenta_code' }
+      payload: {
+        investment: {
+          purchase_price: 60000, down_payment_pct: 50, interest_rate: 6, loan_term: 5,
+          discount_rate: 5, analysis_period: 5, terminal_value: 10000,
+          inflation_rate: 0, price_increase_rate: 0,
+        },
+        // Array of new sucursales. Each entry models a separate location with
+        // its own start month, sales, seasonality, cost lines and depreciation.
+        new_sucursales: [],
+        existing_adjustments: [],
+        capex_events: [],
+        extra_loans: [],
+        kind: 'new_sucursal',                     // 'new_sucursal' | 'capex_only' | 'existing_changes' | 'mixto'
+      },
+    },
+
     calcScenarios: [
       { name: 'Default',   purchase_price: 60000, annual_sales: 50000, down_payment_pct: 100, interest_rate: 5, loan_term: 5, monthly_rent: 800,  monthly_utilities: 1000, monthly_fixed: 1000, annual_maintenance: 2500, annual_corp: 100, annual_depreciation: 3000, discount_rate: 6, analysis_period: 5, terminal_value: 25000 },
       { name: 'Usera',     purchase_price: 81000, annual_sales: 78000, down_payment_pct: 100, interest_rate: 5, loan_term: 5, monthly_rent: 650,  monthly_utilities: 1100, monthly_fixed: 400,  annual_maintenance: 2000, annual_corp: 300, annual_depreciation: 2000, discount_rate: 6, analysis_period: 5, terminal_value: 23000 },
@@ -2781,10 +3807,12 @@ function reportApp() {
       { id: 'comparar', label: 'Comparar', icon: icons.comparar },
       { id: 'pnl', label: 'P&L', icon: icons.pnl },
       { id: 'cashflow', label: 'Cash Flow', icon: icons.cashflow },
+      { id: 'balance', label: 'Balance', icon: icons.balance },
       { id: 'gastos', label: 'Gastos', icon: icons.gastos },
       { id: 'financiamiento', label: 'Financiamiento', icon: icons.financiamiento, adminOnly: true },
       { id: 'pivot', label: 'Pivot Libre', icon: icons.pivot },
       { id: 'calculator', label: 'Inversión', icon: icons.calculator },
+      { id: 'configuraciones', label: 'Configuración', icon: icons.configuraciones, adminOnly: true },
     ],
 
     // Accountant mode (set by /cuentas after password): UI is locked to gastos.
@@ -2801,6 +3829,25 @@ function reportApp() {
       counterparty: '', notes: '' },
     loanDetail: { open: false, loading: false, error: null, data: null },
 
+    // Configuración / Cerrar año fiscal
+    taxSettlements: {
+      list: null, loading: false, error: null, saving: false, busy: {},
+      form: { yyyy: '', actual_is: '', notes: '' },
+    },
+    configTaxTooltipText:
+      '¿Por qué existe este formulario?\n\n' +
+      'El Impuesto sobre Sociedades (IS) se devenga durante todo el año, pero AEAT solo lo cobra mediante:\n' +
+      '  • Pagos a cuenta trimestrales (cuenta N2)\n' +
+      '  • Liquidación anual (también N2), unos meses después del cierre del año fiscal\n\n' +
+      'Si esos pagos N2 redujeran el net income del mes en que se pagan, los meses con pago saldrían con doble carga fiscal y los demás sin nada — un P&L muy ruidoso y poco útil para decisiones operativas.\n\n' +
+      'Por eso usamos dos mecanismos:\n\n' +
+      '1) Mensual: estimación sintética N8 = 20% × max(0, EBITDA − Depreciación). Aproxima el IS que se está devengando y mantiene cada mes "cargado" con su porción de impuestos.\n\n' +
+      '2) Anual: cuando se cierra el año fiscal y se conoce el IS real, lo registramos aquí. El P&L sustituye N8 por el IS real (etiqueta N8a), asignándolo a cada mes proporcionalmente a su utilidad. El total del año pasa a coincidir con la realidad.\n\n' +
+      '¿Qué pasa con los pagos N2 (efectivo)?\n' +
+      'N2 sigue restando del cash flow real (es dinero saliendo) pero ya NO reduce net income en P&L (está marcado como passthrough, junto con N4 IVA Neto y N5 IRPF retenido). Así evitamos contar el impuesto dos veces.\n\n' +
+      '¿Cuándo usar "Recalcular"?\n' +
+      'Si editas gastos de un año ya cerrado, la base de utilidad cambia. Recalcular vuelve a tomar la foto del profit_base para que la asignación mensual sea coherente. No cambia el IS real — solo redistribuye su asignación por mes.',
+
     monthLabels: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
     years: (() => { const out = []; for (let y = now.getFullYear(); y >= 2023; y--) out.push(y); return out; })(),
 
@@ -2815,11 +3862,15 @@ function reportApp() {
       } catch { this.adminMode = false; }
 
       if (this.accountantMode) {
-        this.view = 'gastos';
-        location.hash = 'gastos';
-        // Block hash-based escape attempts (e.g. typing #pnl in the address bar).
+        // Accountant has access to Gastos (default landing) + P&L (read-only).
+        const allowed = ['gastos', 'pnl'];
+        const initialHash = (location.hash || '').replace('#', '');
+        this.view = allowed.includes(initialHash) ? initialHash : 'gastos';
+        location.hash = this.view;
+        // Block hash-based escape attempts (typing #cashflow etc.).
         window.addEventListener('hashchange', () => {
-          if (this.view !== 'gastos' || location.hash.replace('#', '') !== 'gastos') {
+          const h = location.hash.replace('#', '');
+          if (!allowed.includes(h)) {
             this.view = 'gastos';
             location.hash = 'gastos';
           }
@@ -2830,16 +3881,21 @@ function reportApp() {
 
       // Seed default view from hash
       const h = (location.hash || '').replace('#', '');
-      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'gastos', 'financiamiento', 'pivot', 'calculator'].includes(h)) this.view = h;
+      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'balance', 'gastos', 'financiamiento', 'pivot', 'calculator', 'configuraciones'].includes(h)) this.view = h;
       // Block admin-only tab on first load if no session.
       if (this.view === 'financiamiento' && !this.adminMode) this.view = 'hub';
-      // Auto-load initial data (skip Comparar — it's range-driven, user builds series first;
-      // skip calculator — it's a self-contained tool with no fetched data)
+      // Auto-load initial data (skip Comparar — it's range-driven, user builds series first)
       if (this.view !== 'comparar' && this.view !== 'calculator') this.refresh();
+      // Calculator: load baseline + project list so templates dropdown isn't empty
+      if (this.view === 'calculator') {
+        this.ensureProjPayloadShape();
+        this.loadProjBaseline();
+        this.loadProjList();
+      }
     },
 
     visibleNav() {
-      if (this.accountantMode) return this.nav.filter(n => n.id === 'gastos');
+      if (this.accountantMode) return this.nav.filter(n => n.id === 'gastos' || n.id === 'pnl');
       // Admin-only items hidden when not authenticated as admin.
       return this.nav.filter(n => !n.adminOnly || this.adminMode);
     },
@@ -2874,6 +3930,13 @@ function reportApp() {
       if (this.view === 'comparar') {
         return `${item?.label} · hasta ${this.monthLabels[this.mm - 1]} ${this.yyyy}`;
       }
+      if (this.view === 'balance') {
+        const loaded = this.loaded.balance;
+        return loaded ? `${item?.label} · ${loaded.yyyy}` : `${item?.label} · Sin datos`;
+      }
+      if (this.view === 'configuraciones' || this.view === 'calculator') {
+        return item?.label || 'Reportes';
+      }
       const loaded = this.loaded[this.view];
       if (!loaded) {
         return `${item?.label || 'Reportes'} · Sin datos`;
@@ -2897,8 +3960,8 @@ function reportApp() {
     },
 
     setView(id) {
-      // Accountant mode is locked to gastos — silently ignore any other request.
-      if (this.accountantMode && id !== 'gastos') return;
+      // Accountant mode: Gastos + P&L are the only allowed views.
+      if (this.accountantMode && id !== 'gastos' && id !== 'pnl') return;
       // Non-admins can't navigate to admin-only tabs (e.g. via #financiamiento URL).
       const target = this.nav.find(n => n.id === id);
       if (target && target.adminOnly && !this.adminMode) return;
@@ -2910,8 +3973,16 @@ function reportApp() {
       if (id === 'calculator') this.$nextTick(() => this.renderCalcCharts());
       // Auto-load when entering a view whose data hasn't been fetched
       const needsLoad = (id === 'hub' && !this.loaded.hub)
+        || (id === 'balance' && !this.loaded.balance)
+        || (id === 'configuraciones' && !this.taxSettlements.list)
         || (this.viewUsesPicker() && this.isStale());
       if (needsLoad && !this.loading) this.refresh();
+      // Inversión: load baseline + project list once, no global picker dependency
+      if (id === 'calculator') {
+        this.ensureProjPayloadShape();
+        if (!this.proj.baseline) this.loadProjBaseline();
+        if (!this.proj.list) this.loadProjList();
+      }
     },
 
     async refresh() {
@@ -2922,9 +3993,11 @@ function reportApp() {
         else if (this.view === 'comparar') await this.loadCompare();
         else if (this.view === 'pnl') await this.loadPnl();
         else if (this.view === 'cashflow') await this.loadCashflow();
+        else if (this.view === 'balance') await this.loadBalance();
         else if (this.view === 'gastos') await this.loadGastos();
         else if (this.view === 'financiamiento') await this.loadFinanciamiento();
         else if (this.view === 'pivot') await this.loadPivot();
+        else if (this.view === 'configuraciones') await this.loadTaxSettlements();
       } catch (e) {
         console.error(e);
         alert('Error cargando: ' + (e.message || e));
@@ -3295,7 +4368,9 @@ function reportApp() {
               sub.items.forEach((it, i) => {
                 rows.push({
                   id: `cf-item:${subKey}:${i}`,
-                  label: it.property_label || it.label,
+                  // Full descriptor ("Agua, Luz (E) — (001) Usera") so siblings
+                  // sharing the same propiedad don't collapse to the same label.
+                  label: it.label || it.property_label || '',
                   rowClass: 'pnl-item-row',
                   labelClass: '',
                   valueClass: 'text-xs',
@@ -3306,7 +4381,7 @@ function reportApp() {
                   tooltip: it.tooltip || it.desc || '',
                   formatValue: fmtCash,
                   detailCode: hasDetail ? it.code : null,
-                  detailLabel: `${sub.label} — ${it.property_label || it.label}`,
+                  detailLabel: `${sub.label} — ${it.label || it.property_label || ''}`,
                 });
               });
             }
@@ -3353,18 +4428,19 @@ function reportApp() {
         formatValue: fmtCash,
       });
 
-      // Financiamiento placeholder
+      // Financiamiento (real CFF section from financing_events + loan-payment principal)
+      const cff = y.sections.find(s => s.label === 'Financiamiento (CFF)');
+      if (cff) pushSection(cff);
       rows.push({
-        id: 'cff-placeholder',
+        id: 'cff',
         label: 'CASH FLOW DE FINANCIAMIENTO (CFF)',
-        rowClass: 'pnl-section-row',
+        rowClass: 'pnl-computed-row',
         labelClass: '',
-        valueClass: 'text-gray-400 italic',
+        valueClass: 'font-bold',
         by_month: y.cff.by_month,
         ytd: y.cff.ytd,
         chevron: '',
-        formatValue: () => '<span class="text-gray-300">pendiente</span>',
-        tooltip: y.cff.note,
+        formatValue: fmtCash,
       });
 
       // Net change in cash
@@ -3787,6 +4863,82 @@ function reportApp() {
 
     activeLoans() {
       return (this.financiamiento.loans || []).filter(l => l.status === 'active');
+    },
+
+    // ----- Configuración: Cerrar año fiscal -------------------------------
+    async loadTaxSettlements() {
+      this.taxSettlements.loading = true;
+      this.taxSettlements.error = null;
+      try {
+        const r = await fetch('/api/tax-settlements/list', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        this.taxSettlements.list = data.rows || [];
+      } catch (e) {
+        this.taxSettlements.error = e.message || String(e);
+      } finally {
+        this.taxSettlements.loading = false;
+      }
+    },
+    availableYearsToClose() {
+      const closed = new Set((this.taxSettlements.list || []).map(r => Number(r.yyyy)));
+      const currentYear = new Date().getFullYear();
+      const out = [];
+      for (let y = currentYear; y >= 2023; y--) if (!closed.has(y)) out.push(y);
+      return out;
+    },
+    async saveTaxSettlement() {
+      const f = this.taxSettlements.form;
+      if (!f.yyyy || f.actual_is === '' || f.actual_is === null) {
+        alert('Año e IS pagado son requeridos.');
+        return;
+      }
+      this.taxSettlements.saving = true;
+      try {
+        const r = await fetch('/api/tax-settlements/upsert', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            yyyy: parseInt(f.yyyy, 10),
+            actual_is: parseFloat(f.actual_is),
+            notes: f.notes || null,
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        this.taxSettlements.form = { yyyy: '', actual_is: '', notes: '' };
+        await this.loadTaxSettlements();
+      } catch (e) {
+        alert('Error: ' + (e.message || e));
+      } finally {
+        this.taxSettlements.saving = false;
+      }
+    },
+    async recalcTaxSettlement(yyyy) {
+      this.taxSettlements.busy[yyyy] = true;
+      try {
+        const r = await fetch('/api/tax-settlements/recalc', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ yyyy }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        await this.loadTaxSettlements();
+      } catch (e) {
+        alert('Error: ' + (e.message || e));
+      } finally {
+        this.taxSettlements.busy[yyyy] = false;
+      }
+    },
+    async deleteTaxSettlement(yyyy) {
+      if (!confirm(`¿Reabrir año ${yyyy}? El P&L volverá a usar la estimación N8 (20%) en vez del IS real.`)) return;
+      try {
+        const r = await fetch(`/api/tax-settlements/delete?yyyy=${yyyy}`, { method: 'DELETE' });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        await this.loadTaxSettlements();
+      } catch (e) {
+        alert('Error: ' + (e.message || e));
+      }
     },
 
     openLoanModal(row) {
@@ -4485,6 +5637,1091 @@ function reportApp() {
       } finally {
         this.loading = false;
       }
+    },
+
+    // ===== Balance Sheet =====================================================
+
+    async loadBalance() {
+      this.loading = true;
+      try {
+        const yyyy = this.balanceYear;
+        const [tsR, snapsR] = await Promise.all([
+          fetch(`/api/balance-sheet/timeseries?yyyy=${yyyy}`),
+          fetch(`/api/balance-sheet/snapshots/list`),
+        ]);
+        if (!tsR.ok) throw new Error('timeseries HTTP ' + tsR.status);
+        if (!snapsR.ok) throw new Error('snapshots HTTP ' + snapsR.status);
+        this.balance = await tsR.json();
+        this.balanceSnapshots = await snapsR.json();
+        this.loaded.balance = { yyyy };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    bsLinesBySection(section) {
+      if (!this.balance) return [];
+      return this.balance.lines.filter(L => L.section === section);
+    },
+
+    // Three-level hierarchy: section → subsection → subgroup → lines.
+    // Returns [{ subsection, subgroups: [{ subgroup, lines: [] }], sort_order }] per section.
+    bsSubsectionsForSection(section) {
+      const lines = this.bsLinesBySection(section);
+      const groups = {};                                                    // by subsection
+      for (const L of lines) {
+        const subKey = L.subsection || '_default';
+        if (!groups[subKey]) {
+          groups[subKey] = {
+            subsection: L.subsection || null,
+            subgroups: {},                                                  // by subgroup
+            sort_order: L.sort_order,
+          };
+        }
+        if (L.sort_order < groups[subKey].sort_order) groups[subKey].sort_order = L.sort_order;
+        const sgKey = L.subgroup || '_default';
+        if (!groups[subKey].subgroups[sgKey]) {
+          groups[subKey].subgroups[sgKey] = {
+            subgroup: L.subgroup || null,
+            lines: [],
+            sort_order: L.sort_order,
+          };
+        }
+        groups[subKey].subgroups[sgKey].lines.push(L);
+        if (L.sort_order < groups[subKey].subgroups[sgKey].sort_order) {
+          groups[subKey].subgroups[sgKey].sort_order = L.sort_order;
+        }
+      }
+      // Flatten subgroups → ordered array per subsection
+      const out = Object.values(groups)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map(g => ({
+          subsection: g.subsection,
+          sort_order: g.sort_order,
+          subgroups: Object.values(g.subgroups).sort((a, b) => a.sort_order - b.sort_order),
+        }));
+      return out;
+    },
+
+    // Flat row list. Kinds:
+    //   section, subsection_header, subgroup_header, line
+    // Each header row carries `lines` so its month cells render the subtotal
+    // inline (P&L pattern — no separate subtotal rows).
+    bsFlatRows() {
+      if (!this.balance) return [];
+      const out = [];
+      const sections = [
+        { key: 'assets', label: 'Activos' },
+        { key: 'liabilities', label: 'Pasivos' },
+        { key: 'equity', label: 'Patrimonio' },
+      ];
+      for (const sec of sections) {
+        const sectionLines = this.bsLinesBySection(sec.key);
+        out.push({ kind: 'section', section: sec.key, label: sec.label, lines: sectionLines });
+        for (const sub of this.bsSubsectionsForSection(sec.key)) {
+          const subAllLines = [];
+          for (const sg of sub.subgroups) subAllLines.push(...sg.lines);
+          if (sub.subsection) {
+            out.push({ kind: 'subsection_header', section: sec.key, subsection: sub.subsection, lines: subAllLines });
+          }
+          for (const sg of sub.subgroups) {
+            if (sg.subgroup) {
+              out.push({ kind: 'subgroup_header', section: sec.key, subsection: sub.subsection, subgroup: sg.subgroup, lines: sg.lines });
+            }
+            for (const L of sg.lines) {
+              out.push({ kind: 'line', section: sec.key, subsection: sub.subsection, subgroup: sg.subgroup, line: L });
+            }
+          }
+        }
+      }
+      return out;
+    },
+
+    bsSubsectionTotal(lines, mm) {
+      if (!this.balance) return 0;
+      const period = this.balance.periods.find(p => p.mm === mm);
+      if (!period) return 0;
+      let sum = 0;
+      for (const L of lines) {
+        const cell = period.by_code[L.code];
+        if (!cell) continue;
+        sum += L.is_contra ? -cell.amount : cell.amount;
+      }
+      return sum;
+    },
+
+    bsSubsectionOpen(section, subsection) {
+      const key = 'sub:' + section + '|' + (subsection || '_default');
+      if (this.bsClosedSubs[key] === undefined) return true;
+      return !this.bsClosedSubs[key];
+    },
+    bsToggleSubsection(section, subsection) {
+      const key = 'sub:' + section + '|' + (subsection || '_default');
+      this.bsClosedSubs[key] = !this.bsClosedSubs[key];
+    },
+    bsSubgroupOpen(section, subsection, subgroup) {
+      const key = 'sg:' + section + '|' + (subsection || '_d') + '|' + (subgroup || '_d');
+      if (this.bsClosedSubs[key] === undefined) return true;
+      return !this.bsClosedSubs[key];
+    },
+    bsToggleSubgroup(section, subsection, subgroup) {
+      const key = 'sg:' + section + '|' + (subsection || '_d') + '|' + (subgroup || '_d');
+      this.bsClosedSubs[key] = !this.bsClosedSubs[key];
+    },
+
+    bsSectionTotals(section, mm) {
+      if (!this.balance) return 0;
+      const period = this.balance.periods.find(p => p.mm === mm);
+      if (!period) return 0;
+      let sum = 0;
+      for (const L of this.balance.lines) {
+        if (L.section !== section) continue;
+        const cell = period.by_code[L.code];
+        if (!cell) continue;
+        sum += L.is_contra ? -cell.amount : cell.amount;
+      }
+      return sum;
+    },
+
+    bsBalanceCheck(mm) {
+      if (!this.balance) return 0;
+      const period = this.balance.periods.find(p => p.mm === mm);
+      if (!period) return 0;
+      return period.totals.balance_check;
+    },
+
+    bsCellTag(line, mm) {
+      if (!this.balance) return '';
+      const period = this.balance.periods.find(p => p.mm === mm);
+      if (!period) return '';
+      const cell = period.by_code[line.code];
+      if (!cell) return '';
+      return cell.source;                          // 'snapshot' | 'derived' | 'override' | 'opening'
+    },
+
+    bsCellAmount(line, mm) {
+      if (!this.balance) return 0;
+      const period = this.balance.periods.find(p => p.mm === mm);
+      if (!period) return 0;
+      const cell = period.by_code[line.code];
+      if (!cell) return 0;
+      return cell.amount;
+    },
+
+    bsClosedMonths() {
+      if (!this.balance) return new Set();
+      const out = new Set();
+      for (const p of this.balance.periods) {
+        if (p.closed) out.add(p.mm);
+      }
+      return out;
+    },
+
+    bsVisibleMonths() {
+      return this.balanceGranularity === 'quarterly' ? [3, 6, 9, 12] : [1,2,3,4,5,6,7,8,9,10,11,12];
+    },
+    bsMonthHeader(m) {
+      if (this.balanceGranularity === 'quarterly') {
+        return 'Q' + (m / 3) + ' ' + String(this.balanceYear).slice(2);
+      }
+      return this.monthLabels[m-1].slice(0, 3);
+    },
+
+    bsIsClosed(mm) {
+      if (!this.balance) return false;
+      const p = this.balance.periods.find(p => p.mm === mm);
+      return !!(p && p.closed);
+    },
+
+    // ----- Override modal --------------------------------------------------
+
+    openBsModal(line, mm) {
+      if (!this.balance) return;
+      const period = this.balance.periods.find(p => p.mm === mm);
+      const cell = period?.by_code[line.code];
+      if (!cell) return;
+      this.bsModal.open = true;
+      this.bsModal.saving = false;
+      this.bsModal.error = null;
+      this.bsModal.yyyy = this.balanceYear;
+      this.bsModal.mm = mm;
+      this.bsModal.line = { ...line };
+      this.bsModal.currentValue = cell.amount;
+      this.bsModal.derivedValue = cell.derived ?? cell.amount;
+      this.bsModal.mode = cell.source === 'override' ? 'edit_override' : 'override';
+      this.bsModal.amount = String(cell.amount ?? '');
+      this.bsModal.notes = cell.override?.notes || '';
+    },
+    closeBsModal() { this.bsModal.open = false; },
+
+    async saveBsOverride() {
+      this.bsModal.saving = true;
+      this.bsModal.error = null;
+      try {
+        const amount = parseFloat(this.bsModal.amount);
+        if (!isFinite(amount)) throw new Error('Importe inválido');
+        const body = {
+          yyyy: this.bsModal.yyyy, mm: this.bsModal.mm,
+          line_code: this.bsModal.line.code,
+          amount, notes: this.bsModal.notes || null,
+        };
+        const r = await fetch('/api/balance-sheet/override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + r.status);
+        }
+        this.bsModal.open = false;
+        await this.loadBalance();
+      } catch (err) {
+        this.bsModal.error = err.message;
+      } finally {
+        this.bsModal.saving = false;
+      }
+    },
+
+    async clearBsOverride() {
+      if (!confirm('¿Eliminar el override y volver al valor derivado?')) return;
+      this.bsModal.saving = true;
+      this.bsModal.error = null;
+      try {
+        const url = `/api/balance-sheet/override?yyyy=${this.bsModal.yyyy}&mm=${this.bsModal.mm}&line_code=${encodeURIComponent(this.bsModal.line.code)}`;
+        const r = await fetch(url, { method: 'DELETE' });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + r.status);
+        }
+        this.bsModal.open = false;
+        await this.loadBalance();
+      } catch (err) {
+        this.bsModal.error = err.message;
+      } finally {
+        this.bsModal.saving = false;
+      }
+    },
+
+    // ----- Snapshot management ---------------------------------------------
+
+    openSnapshotModal(mode, mm) {
+      const yyyy = this.balanceYear;
+      const targetMm = mm ?? new Date().getMonth();   // default = previous month
+      const lastDay = new Date(Date.UTC(yyyy, targetMm, 0)).getUTCDate();
+      const dt = `${yyyy}-${String(targetMm).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      this.bsSnapshotModal = {
+        open: true, saving: false, error: null,
+        mode,
+        as_of_date: dt,
+        name: mode === 'capture'
+          ? `Cierre ${this.monthLabels[targetMm - 1]} ${yyyy}`
+          : 'Apertura',
+        notes: '',
+        manualLines: this.balance
+          ? this.balance.lines.map(L => ({ line_code: L.code, label: L.label, amount: 0 }))
+          : [],
+      };
+    },
+    closeSnapshotModal() { this.bsSnapshotModal.open = false; },
+
+    async saveSnapshot() {
+      this.bsSnapshotModal.saving = true;
+      this.bsSnapshotModal.error = null;
+      try {
+        const m = this.bsSnapshotModal;
+        const body = {
+          as_of_date: m.as_of_date, mode: m.mode,
+          name: m.name || null, notes: m.notes || null,
+        };
+        if (m.mode === 'manual') {
+          body.lines = m.manualLines
+            .map(L => ({ line_code: L.line_code, amount: parseFloat(L.amount) || 0 }));
+        }
+        const r = await fetch('/api/balance-sheet/snapshots/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + r.status);
+        }
+        this.bsSnapshotModal.open = false;
+        await this.loadBalance();
+      } catch (err) {
+        this.bsSnapshotModal.error = err.message;
+      } finally {
+        this.bsSnapshotModal.saving = false;
+      }
+    },
+
+    async deleteSnapshot(snapshot) {
+      if (!confirm(`¿Reabrir el periodo ${snapshot.as_of_date}? El snapshot "${snapshot.name || ''}" se eliminará.`)) return;
+      try {
+        const r = await fetch(`/api/balance-sheet/snapshots/delete?id=${snapshot.id}`, {
+          method: 'DELETE',
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + r.status);
+        }
+        await this.loadBalance();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    },
+
+    // ===== Projections (Inversión tab v2) ===================================
+
+    async loadProjBaseline() {
+      this.proj.error = null;
+      try {
+        const r = await fetch(`/api/projections/baseline?yyyy_mm=${this.proj.baselineYm}`);
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + r.status);
+        }
+        this.proj.baseline = await r.json();
+      } catch (err) {
+        this.proj.error = err.message;
+      }
+    },
+
+    async loadProjList() {
+      try {
+        const r = await fetch(`/api/projections/list`);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        this.proj.list = j.projections || [];
+      } catch (err) {
+        this.proj.error = err.message;
+      }
+    },
+
+    async loadProjection(id) {
+      if (!id) {
+        this.proj.currentId = null;
+        this.proj.currentName = '';
+        // Don't reset payload — let user keep editing the new scenario.
+        // But do guarantee the shape, in case the previous payload was partial.
+        this.ensureProjPayloadShape();
+        return;
+      }
+      try {
+        const r = await fetch(`/api/projections/get?id=${id}`);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        this.proj.currentId = j.id;
+        this.proj.currentName = j.name;
+        this.proj.baselineYm = j.baseline_yyyy_mm;
+        // Merge loaded payload over defaults so missing fields use sensible defaults
+        const defaults = JSON.parse(JSON.stringify(this.proj.payload));
+        const loaded = j.payload || {};
+        this.proj.payload = {
+          kind: loaded.kind || defaults.kind || 'new_sucursal',
+          investment: { ...defaults.investment, ...(loaded.investment || {}) },
+          new_sucursal: { ...defaults.new_sucursal, ...(loaded.new_sucursal || {}) },
+          existing_adjustments: Array.isArray(loaded.existing_adjustments) ? loaded.existing_adjustments : [],
+          capex_events: Array.isArray(loaded.capex_events) ? loaded.capex_events : [],
+          extra_loans: Array.isArray(loaded.extra_loans) ? loaded.extra_loans : [],
+        };
+        this.ensureProjPayloadShape();
+        await this.loadProjBaseline();
+        this.proj.computed = null;                                    // require fresh compute on load
+        this.proj.computedAt = null;
+      } catch (err) {
+        this.proj.error = err.message;
+      }
+    },
+
+    // Defensive: any loaded payload (possibly saved before a UI feature existed)
+    // gets normalised to the current expected shape. Idempotent.
+    // Also migrates the old single `new_sucursal` object to `new_sucursales[]`.
+    ensureProjPayloadShape() {
+      const p = this.proj.payload = this.proj.payload || {};
+      if (!p.kind) p.kind = 'new_sucursal';
+      if (!p.investment || typeof p.investment !== 'object') p.investment = {};
+
+      // Migrate singular → plural
+      if (!Array.isArray(p.new_sucursales)) {
+        if (p.new_sucursal && typeof p.new_sucursal === 'object') {
+          p.new_sucursales = [p.new_sucursal];
+        } else {
+          p.new_sucursales = [];
+        }
+      }
+      // Also fold any leftover `new_sucursal` (singular) into the list if not already
+      if (p.new_sucursal && p.new_sucursales.indexOf(p.new_sucursal) === -1) {
+        p.new_sucursales.unshift(p.new_sucursal);
+      }
+      delete p.new_sucursal;
+
+      for (const ns of p.new_sucursales) this.normalizeSucursal(ns);
+
+      if (!Array.isArray(p.existing_adjustments)) p.existing_adjustments = [];
+      if (!Array.isArray(p.capex_events)) p.capex_events = [];
+      if (!Array.isArray(p.extra_loans)) p.extra_loans = [];
+
+      // If kind is new_sucursal and the list is empty, seed one entry so the
+      // form has something to show. Template stays Usera; user can change.
+      if (p.kind === 'new_sucursal' && p.new_sucursales.length === 0) {
+        p.new_sucursales.push(this.defaultSucursal());
+      }
+    },
+
+    normalizeSucursal(ns) {
+      if (typeof ns.template !== 'string') ns.template = 'usera';
+      if (typeof ns.name !== 'string') ns.name = '';
+      if (typeof ns.start_month !== 'string') ns.start_month = '';
+      if (typeof ns.annual_sales !== 'number') ns.annual_sales = 50000;
+      if (typeof ns.depreciation_annual !== 'number') ns.depreciation_annual = 3000;
+      if (!Array.isArray(ns.monthly_seasonality) || ns.monthly_seasonality.length !== 12) {
+        ns.monthly_seasonality = Array.from({ length: 12 }, () => Number((100/12).toFixed(2)));
+      } else {
+        for (let i = 0; i < 12; i++) {
+          if (typeof ns.monthly_seasonality[i] !== 'number' || !Number.isFinite(ns.monthly_seasonality[i])) {
+            ns.monthly_seasonality[i] = Number((100/12).toFixed(2));
+          }
+        }
+      }
+      if (!Array.isArray(ns.cost_lines)) ns.cost_lines = [];
+      // Drop legacy `enabled` flag — being in the list means it counts.
+      delete ns.enabled;
+    },
+
+    defaultSucursal() {
+      return {
+        template: 'usera', name: '', start_month: '',
+        annual_sales: 50000,
+        monthly_seasonality: Array.from({ length: 12 }, () => Number((100/12).toFixed(2))),
+        cost_lines: [],
+        depreciation_annual: 3000,
+      };
+    },
+
+    async saveProjection() {
+      this.proj.saveBusy = true;
+      this.proj.error = null;
+      try {
+        const body = {
+          id: this.proj.currentId || undefined,
+          name: this.proj.currentName,
+          baseline_yyyy_mm: this.proj.baselineYm,
+          payload: this.proj.payload,
+        };
+        const r = await fetch(`/api/projections/save`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+        this.proj.currentId = j.id;
+        await this.loadProjList();
+      } catch (err) {
+        this.proj.error = err.message;
+      } finally {
+        this.proj.saveBusy = false;
+      }
+    },
+
+    async saveProjectionAs() {
+      const newName = prompt('Nuevo nombre:', this.proj.currentName + ' (copia)');
+      if (!newName) return;
+      this.proj.currentId = null;                                     // force INSERT
+      this.proj.currentName = newName;
+      await this.saveProjection();
+    },
+
+    async deleteProjection() {
+      if (!this.proj.currentId) return;
+      if (!confirm(`¿Eliminar "${this.proj.currentName}"?`)) return;
+      try {
+        const r = await fetch(`/api/projections/delete?id=${this.proj.currentId}`, { method: 'DELETE' });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + r.status);
+        }
+        this.proj.currentId = null;
+        this.proj.currentName = '';
+        await this.loadProjList();
+      } catch (err) {
+        this.proj.error = err.message;
+      }
+    },
+
+    exportProjectionJson() {
+      const blob = new Blob([JSON.stringify({
+        name: this.proj.currentName,
+        baseline_yyyy_mm: this.proj.baselineYm,
+        payload: this.proj.payload,
+      }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (this.proj.currentName || 'projection').replace(/\s+/g, '_') + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+
+    async computeProjection() {
+      this.proj.computeBusy = true;
+      this.proj.error = null;
+      try {
+        if (!this.proj.baseline) await this.loadProjBaseline();
+        const r = await fetch(`/api/projections/compute`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            baseline_yyyy_mm: this.proj.baselineYm,
+            payload: this.proj.payload,
+          }),
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+        this.proj.computed = j.result;
+        this.proj.computedAt = new Date().toLocaleString('es-ES');
+        if (this.proj.tab === 'config') this.proj.tab = 'estados';
+      } catch (err) {
+        this.proj.error = err.message;
+      } finally {
+        this.proj.computeBusy = false;
+      }
+    },
+
+    // ----- Kind-driven section visibility -----------------------------------
+
+    projShowSection(name) {
+      const k = this.proj.payload.kind || 'new_sucursal';
+      const map = {
+        // Pure new-sucursal: financing in investment block, sucursal config. No capex/loans/adjustments.
+        new_sucursal:     { investment: true,  new_sucursal: true,  adjustments: false, capex: false, loans: false },
+        capex_only:       { investment: false, new_sucursal: false, adjustments: false, capex: true,  loans: true  },
+        existing_changes: { investment: false, new_sucursal: false, adjustments: true,  capex: false, loans: false },
+        mixto:            { investment: true,  new_sucursal: true,  adjustments: true,  capex: true,  loans: true  },
+      };
+      return map[k]?.[name] ?? true;
+    },
+
+    projKindOptions() {
+      return [
+        { value: 'new_sucursal',     label: 'Nueva sucursal',                desc: 'Comprar una sucursal nueva: precio, financiamiento, ventas y costos por cuenta.' },
+        { value: 'capex_only',       label: 'Solo inversión en equipo',      desc: 'Compra de equipo (lavadoras, secadoras…) con depreciación, opcionalmente financiada.' },
+        { value: 'existing_changes', label: 'Cambios en sucursales actuales',desc: 'Ajustes de precios o ventas en Usera u Hortaleza, sin nueva inversión.' },
+        { value: 'mixto',            label: 'Mixto / Avanzado',              desc: 'Muestra todas las secciones — combina cualquier elemento.' },
+      ];
+    },
+
+    // ----- Template + cost-lines helpers ------------------------------------
+
+    applyProjTemplate(si) {
+      const ns = this.proj.payload.new_sucursales[si];
+      if (!ns || !this.proj.baseline) return;
+      const catalog = this.proj.baseline.pnl.catalog;
+      const tplKey = ns.template;
+
+      // The new sucursal owns the (003) Compra TBC cuentas — those are the
+      // chart-of-accounts placeholder for a future location. The template
+      // (Usera / Hortaleza) only provides reasonable starting VALUES; the
+      // codes themselves stay distinct so existing sucursal P&L lines are
+      // never modified by this scenario.
+
+      // Resolve which property the template's values come from.
+      const tplPropMatch = { usera: 'usera', hortaleza: 'hortaleza' }[tplKey];
+
+      // Build desc → tplCuenta lookup so we can match by description.
+      const tplByDesc = {};
+      if (tplPropMatch) {
+        for (const code of Object.keys(catalog)) {
+          const meta = catalog[code];
+          if (String(meta.propiedad || '').toLowerCase().includes(tplPropMatch)) {
+            tplByDesc[meta.desc] = code;
+          }
+        }
+      }
+
+      // Get monthly values from the chosen template's actuals.
+      const tplValues = {};
+      if (tplPropMatch) {
+        const tpl = this.proj.baseline.sucursal_templates[tplKey];
+        if (tpl) {
+          for (const letter of Object.keys(tpl.buckets)) {
+            for (const c of tpl.buckets[letter].by_cuenta) {
+              tplValues[c.cuenta] = Number(c.monthly.toFixed(2));
+            }
+          }
+          if (tpl.monthly_seasonality && tpl.monthly_seasonality.length === 12) {
+            // Template seasonality comes as calendar-aligned multipliers
+            // (avg ≈ 1, sum ≈ 12). Convert to percentages summing to 100.
+            const tplSum = tpl.monthly_seasonality.reduce((s, v) => s + (Number(v) || 0), 0);
+            let pct = tplSum > 0
+              ? tpl.monthly_seasonality.map(v => (Number(v) || 0) / tplSum * 100)
+              : Array.from({ length: 12 }, () => 100/12);
+            // Young sucursales (e.g., Hortaleza acquired Aug 2025) have months
+            // without data — those land as 0%. Fill those slots with the
+            // average of the non-zero ones, then renormalize to 100. The user
+            // can still edit any month manually.
+            const nonzero = pct.filter(v => v > 0.5);
+            if (nonzero.length > 0 && nonzero.length < 12) {
+              const avg = nonzero.reduce((s, v) => s + v, 0) / nonzero.length;
+              pct = pct.map(v => v > 0.5 ? v : avg);
+              const total = pct.reduce((s, v) => s + v, 0);
+              pct = pct.map(v => v / total * 100);
+            }
+            ns.monthly_seasonality = pct.map(v => Number(v.toFixed(2)));
+          }
+          if (!ns.annual_sales) ns.annual_sales = Math.round(tpl.annual_sales);
+        }
+      } else {
+        ns.monthly_seasonality = Array.from({ length: 12 }, () => Number((100/12).toFixed(2)));
+      }
+
+      // Load all Compra TBC operating cuentas, with values copied from the
+      // template by matching desc.
+      const newCuentas = [];
+      for (const code of Object.keys(catalog)) {
+        const letter = code.charAt(0).toUpperCase();
+        if (!'CDEFGHIJ'.includes(letter)) continue;
+        const meta = catalog[code];
+        if (!String(meta.propiedad || '').toLowerCase().includes('compra tbc')) continue;
+        newCuentas.push(code);
+      }
+      newCuentas.sort();
+
+      ns.cost_lines = newCuentas.map(code => {
+        const meta = catalog[code];
+        const tplCode = tplByDesc[meta.desc];
+        const monthly = tplCode ? (tplValues[tplCode] || 0) : 0;
+        return { cuenta: code, monthly };
+      });
+    },
+
+    restoreTemplateMix(si) { this.applyProjTemplate(si); },
+
+    addSucursal() {
+      const ns = this.defaultSucursal();
+      this.proj.payload.new_sucursales.push(ns);
+      const si = this.proj.payload.new_sucursales.length - 1;
+      if (this.proj.baseline) this.applyProjTemplate(si);
+    },
+    removeSucursal(si) {
+      const ns = this.proj.payload.new_sucursales[si];
+      const name = ns?.name || `Sucursal #${si + 1}`;
+      if (!confirm(`¿Eliminar ${name} del escenario?`)) return;
+      this.proj.payload.new_sucursales.splice(si, 1);
+    },
+
+    cuentaLabel(code) {
+      if (!this.proj.baseline) return code;
+      const meta = this.proj.baseline.pnl.catalog[code];
+      return meta ? (meta.desc || code) : code;
+    },
+
+    // 12 forward months of the projection. Window starts at the earliest
+    // sucursal start_month if any sucursal has one; otherwise at anchor + 1.
+    // Mirrors the engine's logic. Seasonality inputs render in this order; the
+    // stored array is calendar-aligned (idx 0 = Jan) regardless of start.
+    projForwardMonths() {
+      let y, m;
+      const start = this.projForwardStart();
+      if (start) {
+        y = start.yyyy; m = start.mm;
+      } else {
+        const am = this.proj.baselineYm && this.proj.baselineYm.match(/^(\d{4})-(\d{2})$/);
+        if (!am) return [];
+        y = Number(am[1]);
+        m = Number(am[2]) + 1;
+        if (m > 12) { m = 1; y++; }
+      }
+      const out = [];
+      for (let i = 0; i < 12; i++) {
+        out.push({ yyyy: y, mm: m });
+        m++; if (m > 12) { m = 1; y++; }
+      }
+      return out;
+    },
+
+    seasonalitySum(si) {
+      const ns = this.proj.payload.new_sucursales[si];
+      if (!ns) return 0;
+      return (ns.monthly_seasonality || []).reduce((s, v) => s + (Number(v) || 0), 0);
+    },
+    seasonalityValid(si) {
+      return Math.abs(this.seasonalitySum(si) - 100) < 0.5;
+    },
+    normalizeSeasonality(si) {
+      const ns = this.proj.payload.new_sucursales[si];
+      if (!ns) return;
+      const total = this.seasonalitySum(si);
+      if (total <= 0) return;
+      ns.monthly_seasonality = ns.monthly_seasonality.map(v => Number((((Number(v) || 0) / total) * 100).toFixed(2)));
+    },
+
+    // Earliest start_month across sucursales (for forward-window display).
+    // Falls back to anchor+1 when no sucursal has a start_month set.
+    projForwardStart() {
+      let best = null;
+      for (const ns of (this.proj.payload.new_sucursales || [])) {
+        if (!ns.start_month || !/^\d{4}-\d{2}$/.test(ns.start_month)) continue;
+        const m = ns.start_month.match(/^(\d{4})-(\d{2})$/);
+        const y = Number(m[1]), mm = Number(m[2]);
+        if (!best || (y * 12 + mm) < (best.yyyy * 12 + best.mm)) best = { yyyy: y, mm };
+      }
+      return best;
+    },
+
+    costLinesTotal(si) {
+      const ns = this.proj.payload.new_sucursales[si];
+      if (!ns) return 0;
+      return (ns.cost_lines || []).reduce((s, L) => s + (Number(L.monthly) || 0), 0);
+    },
+
+    availableCuentasToAdd(si) {
+      if (!this.proj.baseline) return [];
+      const ns = this.proj.payload.new_sucursales[si];
+      if (!ns) return [];
+      const used = new Set((ns.cost_lines || []).map(L => L.cuenta));
+      const out = [];
+      for (const code of Object.keys(this.proj.baseline.pnl.catalog)) {
+        if (used.has(code)) continue;
+        const meta = this.proj.baseline.pnl.catalog[code];
+        const letter = code.charAt(0).toUpperCase();
+        if (!'CDEFGHIJ'.includes(letter)) continue;                   // operating expenses only
+        if (!String(meta.propiedad || '').toLowerCase().includes('compra tbc')) continue;
+        out.push({ cuenta: code, desc: meta.desc || code });
+      }
+      out.sort((a, b) => a.cuenta.localeCompare(b.cuenta));
+      return out;
+    },
+
+    addCostLine(si) {
+      const ns = this.proj.payload.new_sucursales[si];
+      const code = this.proj.addCuentaSelectedBySucursal?.[si];
+      if (!ns || !code) return;
+      ns.cost_lines.push({ cuenta: code, monthly: 0 });
+      if (!this.proj.addCuentaSelectedBySucursal) this.proj.addCuentaSelectedBySucursal = {};
+      this.proj.addCuentaSelectedBySucursal[si] = '';
+    },
+
+    removeCostLine(si, i) {
+      const ns = this.proj.payload.new_sucursales[si];
+      if (ns) ns.cost_lines.splice(i, 1);
+    },
+
+    // ----- Repeaters --------------------------------------------------------
+
+    addSalesAdjustment() {
+      this.proj.payload.existing_adjustments.push({
+        propiedad: 'usera', kind: 'sales_pct', value: 5, start_month: '',
+      });
+    },
+    removeAdjustment(i) { this.proj.payload.existing_adjustments.splice(i, 1); },
+
+    addCapex() {
+      this.proj.payload.capex_events.push({
+        date: '', description: '', amount: 0, depreciation_years: 7,
+      });
+    },
+    removeCapex(i) { this.proj.payload.capex_events.splice(i, 1); },
+
+    addExtraLoan() {
+      this.proj.payload.extra_loans.push({
+        name: '', principal: 0, start_month: '', term_months: 60, interest_rate: 5,
+      });
+    },
+    removeExtraLoan(i) { this.proj.payload.extra_loans.splice(i, 1); },
+
+    // ----- Estados cell rendering ------------------------------------------
+
+    estadosArrSum(row) {
+      const arr = this.proj.estadosShow === 'baseline' ? row.baseline
+                : this.proj.estadosShow === 'delta'    ? row.delta
+                : row.projected;
+      return (arr || []).reduce((s, v) => s + v, 0);
+    },
+
+    // ---- BS projection: quarterly columns + hierarchy --------------------
+    // The 4 quarters are months 3, 6, 9, 12 of the forward window. BS is
+    // point-in-time so each quarter shows the end-of-Q balance. "Q1" is the
+    // first quarter from the anchor (no calendar alignment).
+    projBsQuarters() {
+      if (!this.proj.computed) return [];
+      const m = this.proj.computed.balance_sheet.months || [];
+      const indices = [2, 5, 8, 11];                                          // end of months 3, 6, 9, 12
+      return indices.map((idx, q) => ({
+        idx,
+        label: 'Q' + (q + 1),
+        sublabel: m[idx] ? (this.monthLabels[m[idx].mm - 1].slice(0, 3) + ' ' + String(m[idx].yyyy).slice(2)) : '',
+      }));
+    },
+
+    projBsLinesBySection(section) {
+      if (!this.proj.computed) return [];
+      return this.proj.computed.balance_sheet.lines.filter(L => L.section === section);
+    },
+
+    // section → [{ subsection, subgroups: [{ subgroup, lines: [] }] }]
+    projBsSubsectionsForSection(section) {
+      const lines = this.projBsLinesBySection(section);
+      const groups = {};
+      for (const L of lines) {
+        const subKey = L.subsection || '_default';
+        if (!groups[subKey]) {
+          groups[subKey] = { subsection: L.subsection || null, subgroups: {}, sort_order: L.sort_order };
+        }
+        if (L.sort_order < groups[subKey].sort_order) groups[subKey].sort_order = L.sort_order;
+        const sgKey = L.subgroup || '_default';
+        if (!groups[subKey].subgroups[sgKey]) {
+          groups[subKey].subgroups[sgKey] = { subgroup: L.subgroup || null, lines: [], sort_order: L.sort_order };
+        }
+        groups[subKey].subgroups[sgKey].lines.push(L);
+        if (L.sort_order < groups[subKey].subgroups[sgKey].sort_order) {
+          groups[subKey].subgroups[sgKey].sort_order = L.sort_order;
+        }
+      }
+      return Object.values(groups).sort((a, b) => a.sort_order - b.sort_order).map(g => ({
+        subsection: g.subsection,
+        sort_order: g.sort_order,
+        subgroups: Object.values(g.subgroups).sort((a, b) => a.sort_order - b.sort_order),
+      }));
+    },
+
+    // Flat row list — same kind set as the real Balance tab
+    projBsFlatRows() {
+      if (!this.proj.computed) return [];
+      const out = [];
+      const sections = [
+        { key: 'assets', label: 'Activos' },
+        { key: 'liabilities', label: 'Pasivos' },
+        { key: 'equity', label: 'Patrimonio' },
+      ];
+      for (const sec of sections) {
+        const sectionLines = this.projBsLinesBySection(sec.key);
+        out.push({ kind: 'section', section: sec.key, label: sec.label, lines: sectionLines });
+        for (const sub of this.projBsSubsectionsForSection(sec.key)) {
+          const subAllLines = [];
+          for (const sg of sub.subgroups) subAllLines.push(...sg.lines);
+          if (sub.subsection) {
+            out.push({ kind: 'subsection_header', section: sec.key, subsection: sub.subsection, lines: subAllLines });
+          }
+          for (const sg of sub.subgroups) {
+            if (sg.subgroup) {
+              out.push({ kind: 'subgroup_header', section: sec.key, subsection: sub.subsection, subgroup: sg.subgroup, lines: sg.lines });
+            }
+            for (const L of sg.lines) {
+              out.push({ kind: 'line', section: sec.key, subsection: sub.subsection, subgroup: sg.subgroup, line: L });
+            }
+          }
+        }
+      }
+      return out;
+    },
+
+    // Sum projected/baseline/delta at month idx for a set of lines.
+    projBsSum(lines, idx, arrName) {
+      let s = 0;
+      for (const L of (lines || [])) {
+        const arr = L[arrName] || [];
+        s += (L.is_contra ? -1 : 1) * (arr[idx] || 0);
+      }
+      return s;
+    },
+    projBsCellHtml(lines, idx, isAsset) {
+      const proj = this.projBsSum(lines, idx, 'projected');
+      const base = this.projBsSum(lines, idx, 'baseline');
+      const delta = proj - base;
+      const view = this.proj.estadosShow;
+      const show = view === 'baseline' ? base : view === 'delta' ? delta : proj;
+      let html = `<span class="font-mono">${this.fmtEUR(show)}</span>`;
+      if (view === 'projected' && Math.abs(delta) >= 0.5) {
+        // Assets / Equity: positive delta = good (green). Liabilities: positive = bad (red).
+        const goodPositive = isAsset !== false;
+        const cls = (delta > 0 ? goodPositive : !goodPositive) ? 'text-emerald-700' : 'text-red-600';
+        const sign = delta > 0 ? '+' : '';
+        html += `<div class="text-[9px] ${cls}">${sign}${this.fmtEUR(delta)}</div>`;
+      }
+      return html;
+    },
+    projBsBalanceCheckAtIdx(idx) {
+      if (!this.proj.computed) return 0;
+      const asset = this.projBsSum(this.projBsLinesBySection('assets'), idx, 'projected');
+      const liab = this.projBsSum(this.projBsLinesBySection('liabilities'), idx, 'projected');
+      const eq = this.projBsSum(this.projBsLinesBySection('equity'), idx, 'projected');
+      return asset - liab - eq;
+    },
+
+    projBsSectionOpen(section) {
+      return this.proj.bsOpenSections[section] !== false;
+    },
+    projBsToggleSection(section) {
+      this.proj.bsOpenSections[section] = this.proj.bsOpenSections[section] === false ? true : false;
+    },
+    projBsSubOpen(section, subsection) {
+      const key = section + '|' + (subsection || '_default');
+      return this.proj.bsClosedSubs[key] !== true;
+    },
+    projBsToggleSub(section, subsection) {
+      const key = section + '|' + (subsection || '_default');
+      this.proj.bsClosedSubs[key] = !this.proj.bsClosedSubs[key];
+    },
+    projBsSubgroupOpen(section, subsection, subgroup) {
+      const key = 'sg:' + section + '|' + (subsection || '_d') + '|' + (subgroup || '_d');
+      return this.proj.bsClosedSubs[key] !== true;
+    },
+    projBsToggleSubgroup(section, subsection, subgroup) {
+      const key = 'sg:' + section + '|' + (subsection || '_d') + '|' + (subgroup || '_d');
+      this.proj.bsClosedSubs[key] = !this.proj.bsClosedSubs[key];
+    },
+
+    // Net-income margin % for column i ('ytd' for the year-total column).
+    // Returns null when revenue is zero (avoid div-by-zero) or when delta view
+    // is active (delta margin isn't a meaningful figure).
+    niMarginPct(i) {
+      if (!this.proj.computed) return null;
+      if (this.proj.estadosShow === 'delta') return null;
+      const useBaseline = this.proj.estadosShow === 'baseline';
+      const rev = useBaseline
+        ? this.proj.computed.pnl.totals.revenue.baseline
+        : this.proj.computed.pnl.totals.revenue.projected;
+      const ni = useBaseline
+        ? this.proj.computed.pnl.totals.net_income.baseline
+        : this.proj.computed.pnl.totals.net_income.projected;
+      if (i === 'ytd') {
+        const r = (rev || []).reduce((s, v) => s + v, 0);
+        const n = (ni || []).reduce((s, v) => s + v, 0);
+        return r > 0 ? (n / r * 100) : null;
+      }
+      const r = (rev || [])[i] || 0;
+      const n = (ni || [])[i] || 0;
+      return r > 0 ? (n / r * 100) : null;
+    },
+
+    // Render order in NI cell: amount, margin % (black), then delta badge.
+    niCellHtml(i) {
+      if (!this.proj.computed) return '';
+      const ni = this.proj.computed.pnl.totals.net_income;
+      const proj = (ni.projected || [])[i] || 0;
+      const base = (ni.baseline || [])[i] || 0;
+      const delta = (ni.delta || [])[i] || (proj - base);
+      const show = this.proj.estadosShow === 'baseline' ? base
+                 : this.proj.estadosShow === 'delta'    ? delta
+                 : proj;
+      let html = `<span class="font-mono">${this.fmtEUR(show)}</span>`;
+      const m = this.niMarginPct(i);
+      if (m != null) {
+        html += `<div class="text-[10px] text-gray-700">${m.toFixed(1)}%</div>`;
+      }
+      if (this.proj.estadosShow === 'projected' && Math.abs(delta) >= 0.5) {
+        const cls = delta > 0 ? 'text-emerald-700' : 'text-red-600';
+        const sign = delta > 0 ? '+' : '';
+        html += `<div class="text-[9px] ${cls}">${sign}${this.fmtEUR(delta)}</div>`;
+      }
+      return html;
+    },
+
+    niTotalHtml() {
+      if (!this.proj.computed) return '';
+      const ni = this.proj.computed.pnl.totals.net_income;
+      const sum = this.estadosArrSum(ni);
+      let html = `<span class="font-mono">${this.fmtEUR(sum)}</span>`;
+      const m = this.niMarginPct('ytd');
+      if (m != null) {
+        html += `<div class="text-[10px] text-gray-700">${m.toFixed(1)}%</div>`;
+      }
+      return html;
+    },
+
+    pnlSectionLabels() {
+      return {
+        A: 'Ingresos · Core (Lavado y secado)',
+        B: 'Ingresos · Non-Core (Café / Vending)',
+        C: 'Alquiler',
+        D: 'Financiamiento (interés)',
+        E: 'Consumibles · Core',
+        F: 'Consumibles · Non-Core',
+        G: 'Fijos otros',
+        H: 'Clientes',
+        I: 'Mantenimiento',
+        J: 'Corporate',
+        N: 'Impuestos',
+        O: 'Depreciación',
+      };
+    },
+
+    pnlGroupedByLetter() {
+      if (!this.proj.computed) return [];
+      const order = ['C','D','E','F','G','H','I','J','N','O'];
+      const labels = this.pnlSectionLabels();
+      const groups = {};
+      for (const row of this.proj.computed.pnl.by_cuenta) {
+        const letter = row.letter || 'X';
+        if (!groups[letter]) {
+          groups[letter] = {
+            letter, label: labels[letter] || letter,
+            rows: [],
+            baseline: Array(12).fill(0),
+            projected: Array(12).fill(0),
+            delta: Array(12).fill(0),
+          };
+        }
+        groups[letter].rows.push(row);
+        for (let i = 0; i < 12; i++) {
+          groups[letter].baseline[i] += row.baseline[i] || 0;
+          groups[letter].projected[i] += row.projected[i] || 0;
+          groups[letter].delta[i] += row.delta[i] || 0;
+        }
+      }
+      const ordered = order.filter(l => groups[l]).map(l => groups[l]);
+      const extra = Object.keys(groups).filter(l => !order.includes(l)).map(l => groups[l]);
+      return [...ordered, ...extra];
+    },
+
+    isPnlSectionOpen(letter) {
+      return !!(this.proj.pnlExpanded && this.proj.pnlExpanded[letter]);
+    },
+    togglePnlSection(letter) {
+      if (!this.proj.pnlExpanded) this.proj.pnlExpanded = {};
+      this.proj.pnlExpanded[letter] = !this.proj.pnlExpanded[letter];
+    },
+
+    // Flatten groups → [header, detail, detail, header, detail...] so a single
+    // <template x-for> can render the whole table (Alpine requires one root
+    // element per iteration; we can't nest tbody inside tbody).
+    pnlFlatRows() {
+      const out = [];
+      for (const g of this.pnlGroupedByLetter()) {
+        out.push({ kind: 'header', letter: g.letter, label: g.label, count: g.rows.length, data: g });
+        for (const row of g.rows) {
+          out.push({ kind: 'detail', letter: g.letter, label: row.label, code: row.cuenta, data: row });
+        }
+      }
+      return out;
+    },
+
+    fmtEstadosCell(row, i, alwaysShowDelta) {
+      const proj = (row.projected || [])[i] || 0;
+      const base = (row.baseline || [])[i] || 0;
+      const delta = (row.delta || [])[i] || (proj - base);
+      const show = this.proj.estadosShow === 'baseline' ? base
+                 : this.proj.estadosShow === 'delta'    ? delta
+                 : proj;
+      // Fallback marker: row.baseline_fallback[i] = true when the baseline
+      // value for this month came from a prior year (no current-window data).
+      // Show "*" only in the baseline view (or with the baseline-derived
+      // value in projected, since the *delta* depends on baseline too).
+      const isFallback = Array.isArray(row.baseline_fallback) && row.baseline_fallback[i];
+      const star = isFallback && this.proj.estadosShow !== 'delta'
+        ? `<span class="text-amber-600 font-semibold" title="Valor de baseline tomado de un año anterior (no había dato T12M para este mes)">*</span>`
+        : '';
+      const main = `<span class="font-mono">${this.fmtEUR(show)}${star}</span>`;
+      // Show delta badge on projected view if non-zero
+      if (this.proj.estadosShow === 'projected' && Math.abs(delta) >= 0.5) {
+        const cls = delta > 0
+          ? (alwaysShowDelta ? 'text-emerald-700' : 'text-red-600')
+          : (alwaysShowDelta ? 'text-red-600' : 'text-emerald-700');
+        const sign = delta > 0 ? '+' : '';
+        return `${main} <span class="block text-[9px] ${cls}">${sign}${this.fmtEUR(delta)}</span>`;
+      }
+      return main;
     },
 
     async loadCompare() {

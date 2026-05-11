@@ -1,0 +1,16 @@
+code,section,subsection,label,sort_order,is_contra,is_derivable,derivation_note,description
+A.10.cash,assets,Activo corriente,Efectivo en caja,10,0,1,opening + cumulative cash movements,Cash on hand at the locations
+A.11.bank,assets,Activo corriente,Bancos,11,0,1,opening + cumulative bank movements,Bank account balances
+A.20.ar,assets,Activo corriente,Cuentas por cobrar,20,0,0,override only,Accounts receivable (mostly N/A for laundromat)
+A.30.inventory,assets,Activo corriente,Inventario,30,0,0,override only,Consumables on site (jabón / suavizante / oxígeno)
+A.40.fixed_assets_gross,assets,Activo no corriente,Inmovilizado material (bruto),40,0,1,opening + cumulative gastos.es_inversion = "Si",Gross book value of equipment
+A.41.accumulated_depreciation,assets,Activo no corriente,Amortización acumulada,41,1,1,opening + cumulative O-letter expenses,Accumulated depreciation (contra)
+A.50.other_assets,assets,Activo no corriente,Otros activos,50,0,0,override only,Deposits and prepaid expenses
+L.10.ap,liabilities,Pasivo corriente,Cuentas por pagar,10,0,0,override only,Accounts payable to suppliers
+L.20.taxes_payable,liabilities,Pasivo corriente,Impuestos por pagar,20,0,1,Cumulative N8 estimate − N2/N4/N5 paid,IS accrued plus IVA/IRPF capacity
+L.30.loans_current,liabilities,Pasivo corriente,Préstamos a corto plazo,30,0,1,sum of next-12-months scheduled principal,Loan principal due within 12 months
+L.31.loans_noncurrent,liabilities,Pasivo no corriente,Préstamos a largo plazo,31,0,1,outstanding balance − loans_current,Loan principal due beyond 12 months
+L.40.other_liabilities,liabilities,Pasivo no corriente,Otros pasivos,40,0,0,override only,Deposits received and accrued expenses
+E.10.capital,equity,Capital,Capital social,10,0,1,opening + cumulative equity_in − equity_out,Owner contributions / paid-in capital
+E.20.retained_earnings,equity,Resultados,Resultados acumulados,20,0,1,opening + sum of net_income for prior years,Cumulative net income from prior years
+E.30.current_earnings,equity,Resultados,Resultado del ejercicio,30,0,1,sum of net_income for the current YTD,Net income YTD for current fiscal year

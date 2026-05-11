@@ -80,7 +80,14 @@ async function handleApi(pathname, req, res) {
   const mod = await import(pathToFileURL(file).href + '?t=' + Date.now());
   const handler = mod.default;
   const body = await readBody(req);
-  const fakeReq = { method: req.method, body, headers: req.headers, url: req.url };
+  const parsed = url.parse(req.url, true);
+  const fakeReq = {
+    method: req.method,
+    body,
+    headers: req.headers,
+    url: req.url,
+    query: parsed.query || {},
+  };
   await handler(fakeReq, makeRes(res));
 }
 

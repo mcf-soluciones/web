@@ -123,6 +123,7 @@ mcf-web/
 |-------|---------|------|-------------|
 | `products` | Product catalog (machines, prices, capacities) | 180 | product, precio, price_list, property, product_mission, product_size, product_mins |
 | `sales_detail` | Individual transactions since 2024 | ~90K | movid, date, yyyy, mm, payment, product, euro, price_list, property |
+| `tax_settlements` | Closed fiscal years (real IS paid, snapshot of profit base) | low | yyyy (PK), actual_is, year_profit_base, notes, filed_at |
 
 **Join between sales_detail and products**: `sales_detail.product = products.product AND sales_detail.euro = products.precio AND sales_detail.price_list = products.price_list AND sales_detail.property = products.property`
 
@@ -174,6 +175,20 @@ All gastos writes flow through Turso; the Google Sheet is a frozen archive.
 - **`POST /api/gastos`** — split into `create` (new gasto + optional factura) and `factura` (attach to existing).
 - **`POST /api/gastos-sheets`** — the Sheet is retired.
 - **`POST /api/movimientos` `type=gasto`** — returns 410; use `create` which writes the `movements` row too. Other types (`deposito`, `incidencia`, `encuesta`, denomination movements) still work.
+
+### Tax settlements (Cerrar año fiscal)
+
+Spanish IS (Impuesto Sociedades) is paid as quarterly *pagos a cuenta* + an annual settlement, all under cuenta `N2`. Those payments are **passthrough** in the P&L (cash out, but they don't reduce net income — like `N4` IVA Neto and `N5` IRPF retención). The P&L instead carries IS as a synthetic monthly accrual:
+- **`N8`** (default) — `20% × max(0, EBITDA − Depreciación)` per month. An estimate so the P&L isn't lumpy.
+- **`N8a`** — when a fiscal year is closed via the endpoints below, `N8a` replaces `N8` for that year. The actual IS owed is allocated across months proportionally to each month's `(EBITDA − Depreciación)`. Year-total then matches reality.
+
+Endpoints under `/api/tax-settlements/*`:
+- **`GET /list`** — all closed years, newest first.
+- **`POST /upsert`** — `{ yyyy, actual_is, notes? }`. Snapshots `year_profit_base = Σ max(0, ebitda[m] − dep[m])` for the year.
+- **`POST /recalc`** — `{ yyyy }`. Re-snapshots `year_profit_base` for an existing closed year (use after editing prior-year gastos).
+- **`DELETE /delete?yyyy=`** — reopens the year; P&L falls back to the `N8` estimate.
+
+UI lives at `/reporte` → Configuración tab (admin-only). Schema in `scripts/schema-tax-settlements.sql`, applied by `node scripts/run-schema-tax-settlements.js`.
 
 ## Sales Pipeline (AWS)
 

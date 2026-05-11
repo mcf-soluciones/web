@@ -79,7 +79,8 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
       sql: `SELECT COALESCE(SUM(sd.euro), 0) AS total
             FROM sales_detail sd
             LEFT JOIN property_activation pa ON sd.property = pa.property
-            WHERE sd.yyyy = ? AND sd.mm = ?
+            WHERE sd.company = 'mcf'
+              AND sd.yyyy = ? AND sd.mm = ?
               AND sd.payment <> 'TARJETA CLIENTE'
               AND (pa.start_date IS NULL OR sd.date >= pa.start_date)
               ${propFilter}`,
@@ -89,7 +90,8 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
       sql: `SELECT COALESCE(SUM(sd.euro), 0) AS total
             FROM sales_detail sd
             LEFT JOIN property_activation pa ON sd.property = pa.property
-            WHERE sd.yyyy = ? AND sd.mm = ?
+            WHERE sd.company = 'mcf'
+              AND sd.yyyy = ? AND sd.mm = ?
               AND (pa.start_date IS NULL OR sd.date >= pa.start_date)
               ${propFilter}`,
       args: [yyyy, mm, ...propArgs],
@@ -141,13 +143,17 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
   let corporateGastos = 0;       // letter J
   let ivaPagadoPerProperty = 0;  // sum importe_iva on C-I rows
   let ivaPagadoCorporate = 0;    // sum importe_iva on J rows
-  let impuestosDeducible = 0;    // N1 + N2 + N3 only (N4, N5 are IVA/IRPF pass-throughs)
-  let impuestosPassthrough = 0;  // N4 + N5 — paid this month, but represent prior-month spend
+  // Net-income deductible: N1 (autónomo RETA) + N3 (Seg. Social empleados).
+  // N2 (IS pagado) is PASSTHROUGH — IS expense is captured in P&L via the
+  // synthetic N8 (estimate) or N8a (actual, allocated, when the year is closed).
+  // N4 (IVA Neto) and N5 (IRPF retenido alquiler) are also pass-throughs.
+  let impuestosDeducible = 0;
+  let impuestosPassthrough = 0;
   let depreciacion = 0;          // letter O
   const impuestosByCode = {};    // { N1: x, N2: y, ... } for tooltip breakdown
 
-  const DEDUCTIBLE_TAX_CODES = new Set(['N1', 'N2', 'N3']);
-  const PASSTHROUGH_TAX_CODES = new Set(['N4', 'N5']);
+  const DEDUCTIBLE_TAX_CODES = new Set(['N1', 'N3']);
+  const PASSTHROUGH_TAX_CODES = new Set(['N2', 'N4', 'N5']);
 
   for (const r of gastosRows.rows) {
     const code = String(r.cuenta || '').trim().toUpperCase();
@@ -192,16 +198,27 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
     - (perPropertyGastos - ivaPagadoPerProperty)
     - (corporateGastos - ivaPagadoCorporate);
 
-  // Synthetic O2 (depreciation add-back) and N8 (Impuesto Sociedades estimate).
+  // Synthetic O2 (depreciation add-back) and N8/N8a (Impuesto Sociedades).
   // MCF-scope only — both are corporate-level adjustments, hidden in store views.
+  // If the year is closed (tax_settlements row exists), we use N8a = actual_is
+  // allocated by this month's share of the year's profit base. Otherwise we
+  // fall back to the N8 estimate (20% × monthly profit).
   let depreciacionO2 = 0;
   let impuestosN8 = 0;
+  let n8Code = 'N8';
   if (scope === 'mcf') {
     depreciacionO2 = o2ForMonth(yyyy, mm);
     depreciacion += depreciacionO2;
-    impuestosN8 = Math.max(0, ebitda - depreciacion) * N8_RATE;
+    const monthBase = Math.max(0, ebitda - depreciacion);
+    const settled = await getTaxSettlement(yyyy);
+    if (settled && settled.year_profit_base > 0) {
+      impuestosN8 = settled.actual_is * (monthBase / settled.year_profit_base);
+      n8Code = 'N8a';
+    } else {
+      impuestosN8 = monthBase * N8_RATE;
+    }
     impuestosDeducible += impuestosN8;
-    if (impuestosN8 > 0) impuestosByCode['N8'] = impuestosN8;
+    if (impuestosN8 > 0) impuestosByCode[n8Code] = impuestosN8;
   }
 
   // Depreciation is non-cash and tax-deductible: it lowers N8 (tax base) but
@@ -236,7 +253,7 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
       impuestos_n8: impuestosN8,
       operating: ebitda,        // alias for UI backwards compat
       net_income: netIncome,
-      passthrough_tax_codes: ['N4', 'N5'],
+      passthrough_tax_codes: ['N2', 'N4', 'N5'],
     },
   };
 }
@@ -272,7 +289,27 @@ const O2_TOOLTIP = 'Depreciación lineal: 1.800 €/año entre ago 2025 y ago 20
 
 // N8 — Impuesto sobre Sociedades estimado: 20% × max(0, EBITDA − Depreciación).
 const N8_RATE = 0.20;
-const N8_TOOLTIP = 'Estimación: 20% × (EBITDA − Depreciación) por mes (mínimo 0).';
+const N8_TOOLTIP = 'Estimación: 20% × (EBITDA − Depreciación) por mes (mínimo 0). Se reemplaza por N8a (IS real asignado) cuando se cierra el año fiscal en Configuración.';
+const N8A_TOOLTIP = 'IS real ya filed para este año, asignado a cada mes proporcionalmente a (EBITDA − Depreciación). Reemplaza la estimación N8 porque el año fiscal ya está cerrado.';
+
+// Lookup helper for closed fiscal years. Returns { actual_is, year_profit_base }
+// or null if the year hasn't been closed in tax_settlements.
+async function getTaxSettlement(yyyy) {
+  try {
+    const r = await turso.execute({
+      sql: `SELECT actual_is, year_profit_base FROM tax_settlements WHERE yyyy = ?`,
+      args: [yyyy],
+    });
+    const row = r.rows[0];
+    if (!row) return null;
+    return {
+      actual_is: Number(row.actual_is) || 0,
+      year_profit_base: Number(row.year_profit_base) || 0,
+    };
+  } catch {
+    return null;     // table may not exist in old envs
+  }
+}
 
 function o2ForMonth(yyyy, mm) {
   const t = yyyy * 12 + mm;
@@ -322,7 +359,8 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
     sql: `SELECT sd.property, sd.mm, COALESCE(SUM(sd.euro), 0) AS euros
           FROM sales_detail sd
           LEFT JOIN property_activation pa ON sd.property = pa.property
-          WHERE sd.yyyy = ?
+          WHERE sd.company = 'mcf'
+            AND sd.yyyy = ?
             AND sd.payment <> 'TARJETA CLIENTE'
             AND (pa.start_date IS NULL OR sd.date >= pa.start_date)
             ${propFilterSd}
@@ -386,8 +424,8 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
   const ivaPagadoCorporateByMonth = zeroMonths();
   const perPropertyGastosByMonth = zeroMonths();
   const corporateGastosByMonth = zeroMonths();
-  const impuestosDeducibleByMonth = zeroMonths();     // N1 + N2 + N3
-  const DEDUCTIBLE_TAX_CODES = new Set(['N1', 'N2', 'N3']);
+  const impuestosDeducibleByMonth = zeroMonths();     // N1 + N3 (N2 is passthrough)
+  const DEDUCTIBLE_TAX_CODES = new Set(['N1', 'N3']);
 
   for (const r of gastos.rows) {
     const code = String(r.cuenta || '').trim();
@@ -491,12 +529,32 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
     for (let m = 1; m <= 12; m++) addMonth(incurridosByMonth, m, ivaPropByMonth[m]);
   }
 
+  let n8Code = 'N8';
+  let n8Label = 'Impuesto Sociedades estimado';
+  let n8Tooltip = N8_TOOLTIP;
   if (scope === 'mcf') {
     const realDepByMonth = letterAgg.O ? { ...letterAgg.O.by_month } : zeroMonths();
+    // Per-month tax base (capped at 0). Used by both N8 estimate and N8a allocation.
+    const monthBase = zeroMonths();
     for (let m = 1; m <= 12; m++) {
       o2ByMonth[m] = o2ForMonth(yyyy, m);
       const totalDep = (realDepByMonth[m] || 0) + o2ByMonth[m];
-      n8ByMonth[m] = Math.max(0, ebitdaPreSynth[m] - totalDep) * N8_RATE;
+      monthBase[m] = Math.max(0, ebitdaPreSynth[m] - totalDep);
+    }
+    // If the year is closed, allocate the actual IS by month-share of profit base.
+    // Otherwise fall back to the 20% estimate.
+    const settled = await getTaxSettlement(yyyy);
+    if (settled && settled.year_profit_base > 0) {
+      n8Code = 'N8a';
+      n8Label = 'Impuesto Sociedades real (asignado)';
+      n8Tooltip = N8A_TOOLTIP;
+      for (let m = 1; m <= 12; m++) {
+        n8ByMonth[m] = settled.actual_is * (monthBase[m] / settled.year_profit_base);
+      }
+    } else {
+      for (let m = 1; m <= 12; m++) {
+        n8ByMonth[m] = monthBase[m] * N8_RATE;
+      }
     }
 
     if (Object.values(o2ByMonth).some(v => v > 0)) {
@@ -528,19 +586,19 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
     }
 
     if (Object.values(n8ByMonth).some(v => v > 0)) {
-      // N8 lives in "Impuestos Incurridos" (NOT the existing "Impuestos" section
-      // which represents taxes actually paid — N1..N5 from gastos).
+      // N8 / N8a lives in "Impuestos Incurridos" (NOT the existing "Impuestos
+      // Pagados" section, which represents taxes actually paid — N1..N5 from gastos).
       incurridosItems.push({
-        code: 'N8',
-        label: 'Impuesto Sociedades estimado — Corporate',
-        desc: 'Impuesto Sociedades estimado',
+        code: n8Code,
+        label: `${n8Label} — Corporate`,
+        desc: n8Label,
         property_label: 'Corporate',
         by_month: { ...n8ByMonth },
         synthetic: true,
-        tooltip: N8_TOOLTIP,
+        tooltip: n8Tooltip,
       });
       for (let m = 1; m <= 12; m++) addMonth(incurridosByMonth, m, n8ByMonth[m]);
-      // N8 reduces neto, so include it in the deductible per-month rollup.
+      // N8 / N8a reduces neto, so include it in the deductible per-month rollup.
       for (let m = 1; m <= 12; m++) addMonth(impuestosDeducibleByMonth, m, n8ByMonth[m]);
     }
   }
@@ -660,6 +718,27 @@ function sumYtd(monthObj, throughMm) {
   let s = 0;
   for (let m = 1; m <= throughMm; m++) s += monthObj[m] || 0;
   return s;
+}
+
+/**
+ * Computes the year's IS taxable profit base used to allocate actual IS across
+ * months when a year is closed:
+ *   year_profit_base = Σ max(0, ebitda[m] − depreciacion[m])  for m = 1..12
+ *
+ * Reuses computeYearPnl's MCF-scope output. Independent of whether
+ * tax_settlements has a row for this year yet (N8 vs N8a only affects
+ * downstream presentation; the base is a function of EBITDA and depreciation).
+ */
+export async function computeYearProfitBase(yyyy) {
+  const year = await computeYearPnl(yyyy, 12, 'mcf');
+  const ebitda = year.ebitda.by_month || {};
+  const depSection = year.sections.find(s => s.key === 'Depreciación');
+  const dep = depSection ? depSection.by_month : zeroMonths();
+  let total = 0;
+  for (let m = 1; m <= 12; m++) {
+    total += Math.max(0, (ebitda[m] || 0) - (dep[m] || 0));
+  }
+  return total;
 }
 
 function toInt(v) { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; }
