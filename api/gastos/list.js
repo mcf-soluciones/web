@@ -12,9 +12,14 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const mm = toInt(req.query.mm);
+    // mm = 0 (or absent) → fetch the entire year. Otherwise fetch a single month.
+    const mmRaw = toInt(req.query.mm);
+    const mm = mmRaw == null ? 0 : mmRaw;
     const yyyy = toInt(req.query.yyyy);
-    if (!mm || !yyyy) return res.status(400).json({ error: 'mm and yyyy are required' });
+    if (!yyyy) return res.status(400).json({ error: 'yyyy is required' });
+
+    const monthClause = mm > 0 ? 'AND g.mm = ?' : '';
+    const args = mm > 0 ? [yyyy, mm] : [yyyy];
 
     const rs = await turso.execute({
       sql: `SELECT g.id, g.fecha, g.mm, g.yyyy,
@@ -34,9 +39,9 @@ export default async function handler(req, res) {
             FROM gastos g
             LEFT JOIN catalogo_cuentas c ON g.cuenta = c.cuenta_mcf
             LEFT JOIN loans l ON g.loan_id = l.id
-            WHERE g.yyyy = ? AND g.mm = ?
+            WHERE g.yyyy = ? ${monthClause}
             ORDER BY g.fecha DESC, g.id DESC`,
-      args: [yyyy, mm],
+      args,
     });
 
     const rows = rs.rows.map(r => ({

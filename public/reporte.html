@@ -85,6 +85,9 @@
         <select x-model.number="mm" @change="onPickerChange()"
           x-init="$nextTick(() => $el.value = mm)"
           class="rounded-md border-gray-300 text-sm py-1.5 focus:ring-brand-500 focus:border-brand-500">
+          <template x-if="view === 'gastos'">
+            <option :value="0">Año entero (Gastos)</option>
+          </template>
           <template x-for="(m, i) in monthLabels" :key="i">
             <option :value="i + 1" x-text="m"></option>
           </template>
@@ -1351,7 +1354,7 @@
               <div class="pnl-card">
                 <div class="pnl-label">Total operativo</div>
                 <div class="pnl-total text-gray-900" x-text="fmtEUR(gastosList.total_operativo)"></div>
-                <div class="text-xs text-gray-500 mt-1" x-text="gastosList.count + ' filas en el mes'"></div>
+                <div class="text-xs text-gray-500 mt-1" x-text="gastosList.count + (gastosList.period && gastosList.period.mm === 0 ? ' filas en el año' : ' filas en el mes')"></div>
               </div>
               <div class="pnl-card">
                 <div class="pnl-label">Inversión (capex)</div>
@@ -1398,18 +1401,42 @@
                   <thead>
                     <tr>
                       <th style="width: 30px;"><input type="checkbox" @change="gastosToggleAll($event.target.checked)"></th>
-                      <th>Fecha</th>
-                      <th x-show="gastosShowConceptoBanco" style="min-width: 220px;">Concepto banco</th>
-                      <th>Propiedad</th>
-                      <th>Concepto</th>
-                      <th>Cuenta</th>
-                      <th>Razón social</th>
-                      <th>NIF</th>
-                      <th>Nº factura</th>
-                      <th class="num">Importe</th>
-                      <th class="num">IVA</th>
-                      <th>Fiscal</th>
-                      <th>Inv.</th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('fecha')">
+                        Fecha <span class="ml-0.5" :class="gastosSortColor('fecha')" x-text="gastosSortIcon('fecha')"></span>
+                      </th>
+                      <th x-show="gastosShowConceptoBanco" style="min-width: 220px;" class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('concepto_banco')">
+                        Concepto banco <span class="ml-0.5" :class="gastosSortColor('concepto_banco')" x-text="gastosSortIcon('concepto_banco')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('propiedad')">
+                        Propiedad <span class="ml-0.5" :class="gastosSortColor('propiedad')" x-text="gastosSortIcon('propiedad')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('concepto_mcf')">
+                        Concepto <span class="ml-0.5" :class="gastosSortColor('concepto_mcf')" x-text="gastosSortIcon('concepto_mcf')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('cuenta')">
+                        Cuenta <span class="ml-0.5" :class="gastosSortColor('cuenta')" x-text="gastosSortIcon('cuenta')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('razon_social')">
+                        Razón social <span class="ml-0.5" :class="gastosSortColor('razon_social')" x-text="gastosSortIcon('razon_social')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('nif_proveedor')">
+                        NIF <span class="ml-0.5" :class="gastosSortColor('nif_proveedor')" x-text="gastosSortIcon('nif_proveedor')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('num_factura')">
+                        Nº factura <span class="ml-0.5" :class="gastosSortColor('num_factura')" x-text="gastosSortIcon('num_factura')"></span>
+                      </th>
+                      <th class="num cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('importe_total')">
+                        Importe <span class="ml-0.5" :class="gastosSortColor('importe_total')" x-text="gastosSortIcon('importe_total')"></span>
+                      </th>
+                      <th class="num cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('importe_iva')">
+                        IVA <span class="ml-0.5" :class="gastosSortColor('importe_iva')" x-text="gastosSortIcon('importe_iva')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('is_fiscal')">
+                        Fiscal <span class="ml-0.5" :class="gastosSortColor('is_fiscal')" x-text="gastosSortIcon('is_fiscal')"></span>
+                      </th>
+                      <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('es_inversion')">
+                        Inv. <span class="ml-0.5" :class="gastosSortColor('es_inversion')" x-text="gastosSortIcon('es_inversion')"></span>
+                      </th>
                       <th style="width: 40px;">📎</th>
                       <th style="width: 60px;"></th>
                     </tr>
@@ -1540,7 +1567,7 @@
                       </tr>
                     </template>
                     <template x-if="gastosFilteredRows().length === 0">
-                      <tr><td :colspan="gastosShowConceptoBanco ? 15 : 14" class="text-center text-gray-400 py-6" x-text="gastosList.rows.length === 0 ? 'Sin gastos en este mes.' : 'Ningún gasto coincide con el filtro.'"></td></tr>
+                      <tr><td :colspan="gastosShowConceptoBanco ? 15 : 14" class="text-center text-gray-400 py-6" x-text="gastosList.rows.length === 0 ? (gastosList.period && gastosList.period.mm === 0 ? 'Sin gastos en este año.' : 'Sin gastos en este mes.') : 'Ningún gasto coincide con el filtro.'"></td></tr>
                     </template>
                   </tbody>
                 </table>
@@ -3634,6 +3661,7 @@ function reportApp() {
     pnl: null,
     cashflow: null,
     gastosList: null,            // { rows, count, total_operativo, total_inversion, period }
+    gastosSort: { field: null, dir: 'asc' },   // header-click sort: cycles asc → desc → off
     gastosSelected: {},          // { [id]: true }
     gastosEditing: null,         // { id, field, value }
     gastosBulk: { field: '', value: '' },
@@ -3941,6 +3969,9 @@ function reportApp() {
       if (!loaded) {
         return `${item?.label || 'Reportes'} · Sin datos`;
       }
+      if (loaded.mm === 0) {
+        return `${item?.label || 'Reportes'} · Año ${loaded.yyyy}`;
+      }
       const monthName = this.monthLabels[loaded.mm - 1];
       return `${item?.label || 'Reportes'} · ${monthName} ${loaded.yyyy}`;
     },
@@ -3965,6 +3996,11 @@ function reportApp() {
       // Non-admins can't navigate to admin-only tabs (e.g. via #financiamiento URL).
       const target = this.nav.find(n => n.id === id);
       if (target && target.adminOnly && !this.adminMode) return;
+      // mm = 0 is the "Año entero" sentinel — only valid in gastos. Clamp to
+      // current month so other views don't query an invalid period.
+      if (id !== 'gastos' && this.mm === 0) {
+        this.mm = (new Date()).getMonth() + 1;
+      }
       this.view = id;
       location.hash = id;
       if (id === 'pivot' && this.pivotRows) this.renderPivot();
@@ -5560,8 +5596,41 @@ function reportApp() {
     },
     gastosFilteredRows() {
       if (!this.gastosList) return [];
-      if (this.gastosFilter === 'all') return this.gastosList.rows;
-      return this.gastosList.rows.filter(r => this._gastosMatches(r, this.gastosFilter));
+      const rows = this.gastosFilter === 'all'
+        ? this.gastosList.rows.slice()
+        : this.gastosList.rows.filter(r => this._gastosMatches(r, this.gastosFilter));
+      const { field, dir } = this.gastosSort;
+      if (!field) return rows;
+      const sign = dir === 'desc' ? -1 : 1;
+      rows.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        // Booleans → numbers
+        if (typeof va === 'boolean') va = va ? 1 : 0;
+        if (typeof vb === 'boolean') vb = vb ? 1 : 0;
+        // Treat null/undefined as smaller than anything (sort to the bottom on asc)
+        const aEmpty = va === null || va === undefined || va === '';
+        const bEmpty = vb === null || vb === undefined || vb === '';
+        if (aEmpty && bEmpty) return 0;
+        if (aEmpty) return 1;                                                 // empties last regardless of dir
+        if (bEmpty) return -1;
+        if (typeof va === 'number' && typeof vb === 'number') return sign * (va - vb);
+        return sign * String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: 'base' });
+      });
+      return rows;
+    },
+
+    gastosToggleSort(field) {
+      const s = this.gastosSort;
+      if (s.field !== field) { s.field = field; s.dir = 'asc'; return; }
+      if (s.dir === 'asc') { s.dir = 'desc'; return; }
+      s.field = null; s.dir = 'asc';                                          // third click = no sort
+    },
+    gastosSortIcon(field) {
+      if (this.gastosSort.field !== field) return '↕';
+      return this.gastosSort.dir === 'asc' ? '▲' : '▼';
+    },
+    gastosSortColor(field) {
+      return this.gastosSort.field === field ? 'text-brand-600' : 'text-gray-300';
     },
     gastosFilterCount(key) {
       if (!this.gastosList) return 0;
