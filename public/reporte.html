@@ -16,6 +16,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
 
+  <!-- SheetJS (xlsx) for client-side Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <link rel="stylesheet" href="/css/reporte.css">
 
   <script>
@@ -710,6 +713,12 @@
             <svg x-show="loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
             Actualizar
           </button>
+          <button @click="exportPnlXlsx()" :disabled="!pnl?.year"
+            title="Descargar P&L anual (todos los meses + YTD) en Excel"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 text-xs font-medium">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
           </div>
         </div>
 
@@ -869,6 +878,13 @@
                       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
                       <span x-text="pnlShowAllMonths ? 'Ocultar meses' : 'Mostrar todos los meses'"></span>
                     </button>
+                    <button @click="pnlExcludePassthrough = !pnlExcludePassthrough"
+                      :class="pnlExcludePassthrough ? 'bg-brand-50 border-brand-300 text-brand-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium"
+                      title="Oculta IVA Cobrado (K1/K2) y los impuestos passthrough (N2/N4/N5) y resta el IVA de Ingresos. Útil para que los totales YTD cuadren con la utilidad neta.">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                      <span x-text="pnlExcludePassthrough ? 'Vista completa' : 'Cuadrar con NETO'"></span>
+                    </button>
                     <button @click="pnlExpandAll()" class="text-xs text-brand-600 hover:text-brand-700 font-medium" x-text="pnlAllOpen ? 'Colapsar todo' : 'Expandir todo'"></button>
                   </div>
                 </div>
@@ -997,10 +1013,10 @@
                 <div :class="cashflow.year.cfi.ytd <= 0 ? 'text-gray-900' : 'text-green-700'" class="pnl-total" x-text="fmtEUR(cashflow.year.cfi.ytd)"></div>
                 <div class="text-xs text-gray-500 mt-1">Capex (es_inversion = Sí)</div>
               </div>
-              <div class="pnl-card">
-                <div class="pnl-label">Cambio neto en caja</div>
-                <div :class="cashflow.year.net_change.ytd >= 0 ? 'text-gray-900' : 'text-red-600'" class="pnl-total" x-text="fmtEUR(cashflow.year.net_change.ytd)"></div>
-                <div class="text-xs text-gray-500 mt-1">CFO + CFI + CFF</div>
+              <div class="pnl-card" x-show="cashflow.year.fcff">
+                <div class="pnl-label">FCFF</div>
+                <div :class="cashflow.year.fcff?.ytd >= 0 ? 'text-brand-600' : 'text-red-600'" class="pnl-total" x-text="fmtEUR(cashflow.year.fcff?.ytd)"></div>
+                <div class="text-xs text-gray-500 mt-1">CFO + CFI · antes de financiamiento</div>
               </div>
             </div>
 
@@ -1068,12 +1084,6 @@
       <!-- Balance Sheet                                                -->
       <!-- ============================================================ -->
       <section x-show="view === 'balance'" x-cloak class="space-y-5">
-        <!-- Work-in-progress banner -->
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2 text-sm text-amber-900">
-          <svg class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><strong>El balance está inconcluso</strong> — estamos revisando.</span>
-        </div>
-
         <!-- Header: year selector + actions -->
         <div class="flex items-center justify-between flex-wrap gap-3">
           <div>
@@ -2518,8 +2528,15 @@
                  class="flex-1 min-w-[160px] rounded-md border border-gray-300 text-sm px-2 py-1.5"
                  placeholder="Nombre del escenario (ej. Vallecas — base)">
           <button @click="saveProjection()" :disabled="proj.saveBusy || !proj.currentName"
+            :title="pnlOverrideCount() > 0
+              ? 'Guarda inputs + ' + pnlOverrideCount() + ' ajustes manuales del P&L'
+              : 'Guarda inputs del escenario'"
             class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-xs font-semibold">
             <span x-text="proj.currentId ? 'Guardar' : 'Crear'"></span>
+            <template x-if="pnlOverrideCount() > 0">
+              <span class="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-300 text-amber-900 text-[10px] font-bold align-middle"
+                    x-text="pnlOverrideCount()"></span>
+            </template>
           </button>
           <button x-show="proj.currentId" @click="saveProjectionAs()" :disabled="proj.saveBusy"
             title="Guardar como…"
@@ -2537,6 +2554,54 @@
           </button>
         </div>
         <p x-show="proj.error" x-text="proj.error" class="text-xs text-red-600"></p>
+        <p x-show="proj.flash" x-cloak x-transition.opacity
+           :class="proj.flashKind === 'info' ? 'text-blue-700 bg-blue-50 border-blue-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200'"
+           class="text-xs border rounded px-2 py-1 inline-flex items-center gap-1.5 self-start">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span x-text="proj.flash"></span>
+        </p>
+
+        <!-- Tax treatment explainer (collapsible). Applies to both Inversión
+             and Estados tabs because the engine is shared. -->
+        <details class="bg-blue-50/40 border border-blue-200 rounded-md">
+          <summary class="cursor-pointer text-xs font-medium text-blue-900 hover:text-blue-700 select-none px-3 py-2 list-none flex items-center gap-1.5">
+            <span class="text-blue-600 transition-transform inline-block" style="transition: transform 0.15s;">▸</span>
+            Tratamiento de impuestos en este modelo
+          </summary>
+          <div class="px-4 pb-3 pt-1 text-xs text-gray-700 space-y-2 leading-relaxed">
+            <p>El motor de proyecciones replica el modelo fiscal del P&amp;L principal (<span class="font-mono text-[10px] bg-white border border-gray-200 rounded px-1">reporte#pnl</span>) para que las cifras del calculador reflejen flujo de caja <em>real, post-impuestos</em>.</p>
+
+            <p><strong>IVA Cobrado (21%):</strong> Se descuenta automáticamente de los ingresos. Los ingresos mostrados en P&amp;L son <strong>netos de IVA</strong>.</p>
+
+            <p><strong>IVA Deducible (21%):</strong> Se descuenta automáticamente de los gastos operativos en cuentas <span class="font-mono">C, E, F, G, H, I, J</span> (alquiler, consumibles, fijos, clientes, mantenimiento, corporate). La cuenta <span class="font-mono">D</span> (intereses financieros) está <strong>exenta</strong> de IVA. La diferencia neta (IVA cobrado − IVA deducible) ya queda incorporada al usar valores netos en ambos lados.</p>
+
+            <p><strong>Impuesto Sociedades (N8, ~20%):</strong> Aparece como una línea sintética en la sección <span class="font-mono">N · Impuestos</span> del P&amp;L:<br>
+              <span class="font-mono text-[11px] bg-white border border-gray-200 rounded px-1.5 py-0.5 inline-block mt-1">N8 = 20% × max(0, EBITDA − Depreciación)</span><br>
+              Se calcula mes a mes y luego se consolida. Los intereses <strong>no</strong> se deducen de la base imponible en este modelo (criterio conservador, alineado con el P&amp;L principal).</p>
+
+            <p><strong>Depreciación:</strong> Reduce la base imponible (escudo fiscal) pero <strong>no es flujo de caja</strong>. Por eso aparece en P&amp;L pero se excluye del cálculo de cash flow operativo del Inversión.</p>
+
+            <p><strong>Intereses (cuenta D):</strong> Sí son flujo de caja real. Aparecen como gasto deducible en P&amp;L y como salida en el servicio de deuda (NPV/IRR). No reciben escudo fiscal en este modelo.</p>
+
+            <p><strong>Métricas de inversión (NPV / IRR / Payback):</strong> Se calculan sobre el cash flow <strong>después de impuestos</strong>:<br>
+              <span class="font-mono text-[11px] bg-white border border-gray-200 rounded px-1.5 py-0.5 inline-block mt-1">Cash<sub>annual</sub> = (Ingresos − Gastos opex)<sub>netos IVA</sub> − N8<sub>marginal</sub> − (Principal + Interés)</span><br>
+              El N8 marginal = N8 proyectado − N8 baseline; es el aumento de IS que las nuevas sucursales aportan al consolidado MCF.</p>
+
+            <p><strong>Free Cash Flow (FCFF, antes de financiamiento):</strong> Métrica unlevered para reportar el impacto sobre el estado de flujos de caja independiente de cómo se financia la operación:<br>
+              <span class="font-mono text-[11px] bg-white border border-gray-200 rounded px-1.5 py-0.5 inline-block mt-1">FCFF = EBITDA − N8 − Capex</span><br>
+              Excluye intereses y principal (decisiones de financiamiento). Se reporta como marginal (Δ vs. MCF as-is) en la tarjeta de inversión y como serie mensual en la pestaña Cash Flow.</p>
+
+            <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-2"><strong>Limitaciones conocidas:</strong> El modelo no incluye retención IRPF en alquileres (cuenta <span class="font-mono">N5</span>, ya pass-through), bonificaciones de IS para empresas de reducida dimensión, ni casos de IS cerrado (<span class="font-mono">N8a</span> aplica solo en el P&amp;L principal para años ya liquidados). Asume que MCF está en posición fiscal positiva: si el baseline EBITDA−Dep es negativo, el N8 marginal absorbe primero esa pérdida antes de tributar.</p>
+
+            <p><strong>Ajustes manuales del P&amp;L:</strong> En la pestaña Estados (vista Proyectado), las celdas de ingresos y gastos detallados son editables. Clic para abrir el editor, Enter guarda, clic-derecho limpia. Los ajustes quedan marcados en ámbar. El botón <strong>Aplicar ajustes</strong> recalcula los totales (Ingresos, Gastos, Depreciación, Net Income).</p>
+
+            <p><strong>Persistencia de los ajustes:</strong> Los ajustes manuales se almacenan dentro del escenario (campo <span class="font-mono">pnl_overrides</span> del payload) — se guardan automáticamente al hacer clic en <strong>Guardar</strong> y se reaplican cada vez que vuelves a <strong>Calcular</strong>, por lo que no se pierden al recalcular. El contador junto al botón Guardar muestra cuántos ajustes están persistidos.</p>
+
+            <p class="bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5 mt-2"><strong>Alcance del override:</strong> El botón <strong>Aplicar ajustes</strong> recalcula tanto los totales del P&amp;L como las <strong>métricas de inversión</strong> (NPV / IRR / FCFF / Payback / ROI). La lógica es: tomar el cash operativo del motor y sumarle el delta neto de los overrides (los gastos por impuestos, IVA-aware, ya se respetan).</p>
+
+            <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1"><strong>Lo que NO se actualiza:</strong> El <strong>Cash Flow</strong> y el <strong>Balance</strong> siguen reflejando el cómputo del motor sin overrides. El servicio de deuda y el capex de la inversión también permanecen como inputs del motor (no se pueden editar vía celdas del P&amp;L) — si necesitas cambiar esos, modifica los campos correspondientes (tasa, plazo, precio de compra, eventos de capex) y vuelve a Calcular.</p>
+          </div>
+        </details>
 
         <!-- ============================================================ -->
         <!-- Configuración tab                                            -->
@@ -2940,6 +3005,11 @@
                             x-text="proj.computed.investment_metrics.roi.toFixed(2) + '%'"></td></tr>
                     <tr><td class="py-2 text-gray-600">Cash flow operativo anual</td>
                         <td class="py-2 text-right font-mono font-semibold" x-text="fmtEUR(proj.computed.investment_metrics.annual_operating_cash)"></td></tr>
+                    <tr><td class="py-2 text-gray-600">
+                          <span>Free Cash Flow anual (FCFF)</span>
+                          <span class="ml-1 text-[10px] text-gray-400 font-normal">EBITDA − N8 − Capex</span>
+                        </td>
+                        <td class="py-2 text-right font-mono font-semibold text-brand-600" x-text="fmtEUR(proj.computed.investment_metrics.annual_fcff)"></td></tr>
                     <tr><td class="py-2 text-gray-600">Servicio de deuda anual</td>
                         <td class="py-2 text-right font-mono font-semibold" x-text="fmtEUR(proj.computed.investment_metrics.annual_loan_service)"></td></tr>
                     <tr><td class="py-2 text-gray-600">Cash flow neto anual</td>
@@ -2989,16 +3059,24 @@
                     :class="proj.estadosView === 'balance_sheet' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
                     class="px-3 py-1 rounded-md text-xs font-medium">Balance</button>
                 </div>
-                <div class="flex gap-1 p-1 rounded-lg bg-gray-100">
-                  <button @click="proj.estadosShow = 'projected'"
-                    :class="proj.estadosShow === 'projected' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
-                    class="px-3 py-1 rounded-md text-xs font-medium">Proyectado</button>
-                  <button @click="proj.estadosShow = 'baseline'"
-                    :class="proj.estadosShow === 'baseline' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
-                    class="px-3 py-1 rounded-md text-xs font-medium">Baseline</button>
-                  <button @click="proj.estadosShow = 'delta'"
-                    :class="proj.estadosShow === 'delta' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
-                    class="px-3 py-1 rounded-md text-xs font-medium">Δ</button>
+                <div class="flex items-center gap-2">
+                  <div class="flex gap-1 p-1 rounded-lg bg-gray-100">
+                    <button @click="proj.estadosShow = 'projected'"
+                      :class="proj.estadosShow === 'projected' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                      class="px-3 py-1 rounded-md text-xs font-medium">Proyectado</button>
+                    <button @click="proj.estadosShow = 'baseline'"
+                      :class="proj.estadosShow === 'baseline' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                      class="px-3 py-1 rounded-md text-xs font-medium">Baseline</button>
+                    <button @click="proj.estadosShow = 'delta'"
+                      :class="proj.estadosShow === 'delta' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-600'"
+                      class="px-3 py-1 rounded-md text-xs font-medium">Δ</button>
+                  </div>
+                  <button @click="exportProjectionEstadosXlsx()"
+                    title="Descargar P&L y Cash Flow (Proyectado, Baseline, Δ) en Excel"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Excel
+                  </button>
                 </div>
               </div>
 
@@ -3016,9 +3094,9 @@
                     <tbody>
                       <!-- Ingresos (top-level total, expandable into per-source rows) -->
                       <tr class="bg-emerald-50 font-semibold cursor-pointer hover:bg-emerald-100"
-                          @click="togglePnlSection('__INGRESOS__')">
+                          @click="projTogglePnlSection('__INGRESOS__')">
                         <td class="pnl-col-concepto">
-                          <span class="inline-block w-4 text-center text-gray-500" x-text="isPnlSectionOpen('__INGRESOS__') ? '▾' : '▸'"></span>
+                          <span class="inline-block w-4 text-center text-gray-500" x-text="projIsPnlSectionOpen('__INGRESOS__') ? '▾' : '▸'"></span>
                           Ingresos
                           <template x-if="(proj.computed.pnl.revenue_rows || []).length">
                             <span class="ml-2 text-[10px] font-normal text-gray-500" x-text="'(' + proj.computed.pnl.revenue_rows.length + ')'"></span>
@@ -3030,7 +3108,7 @@
                         <td class="num pnl-ytd-col" x-text="fmtEUR(estadosArrSum(proj.computed.pnl.totals.revenue))"></td>
                       </tr>
                       <template x-for="row in (proj.computed.pnl.revenue_rows || [])" :key="row.key">
-                        <tr x-show="isPnlSectionOpen('__INGRESOS__')" class="text-gray-700">
+                        <tr x-show="projIsPnlSectionOpen('__INGRESOS__')" class="text-gray-700">
                           <td class="pnl-col-concepto pl-10">
                             <span class="text-xs" x-text="row.label"></span>
                             <template x-if="row.kind === 'new'">
@@ -3038,7 +3116,23 @@
                             </template>
                           </td>
                           <template x-for="(_, i) in proj.computed.pnl.forward_months" :key="i">
-                            <td class="num text-xs" x-html="fmtEstadosCell(row, i, true)"></td>
+                            <td class="num text-xs"
+                              :class="hasPnlOverride(row.key, i) ? 'bg-amber-50 border-amber-200' : (proj.estadosShow === 'projected' ? 'cursor-pointer hover:bg-amber-50/50' : '')"
+                              :title="hasPnlOverride(row.key, i) ? 'Ajuste manual (clic-derecho para limpiar)' : ''"
+                              @click="!isPnlCellEditing(row.key, i) && pnlStartCellEdit(row.key, i, (row.projected || [])[i])"
+                              @contextmenu.prevent="hasPnlOverride(row.key, i) && pnlClearOverride(row.key, i)">
+                              <template x-if="isPnlCellEditing(row.key, i)">
+                                <input type="number" step="1" data-pnl-cell-editor
+                                  x-model.number="proj.pnlEditing.value"
+                                  @keydown.enter.stop.prevent="pnlCommitCellEdit()"
+                                  @keydown.escape.stop.prevent="pnlCancelCellEdit()"
+                                  @blur="pnlCommitCellEdit()" @click.stop
+                                  class="w-20 px-1 py-0.5 border border-brand-400 rounded text-xs font-mono text-right">
+                              </template>
+                              <template x-if="!isPnlCellEditing(row.key, i)">
+                                <span x-html="fmtEstadosCell(row, i, true)"></span>
+                              </template>
+                            </td>
                           </template>
                           <td class="num pnl-ytd-col text-xs" x-text="fmtEUR(estadosArrSum(row))"></td>
                         </tr>
@@ -3047,16 +3141,16 @@
                       <!-- Gastos / Depreciación / Impuestos — grouped by letter, collapsible -->
                       <template x-for="entry in pnlFlatRows()" :key="entry.kind + ':' + (entry.code || entry.letter)">
                         <tr
-                          x-show="entry.kind === 'header' || isPnlSectionOpen(entry.letter)"
+                          x-show="entry.kind === 'header' || projIsPnlSectionOpen(entry.letter)"
                           :class="entry.kind === 'header'
                             ? 'bg-gray-50 font-semibold cursor-pointer hover:bg-gray-100'
                             : 'text-gray-700'"
-                          @click="entry.kind === 'header' && togglePnlSection(entry.letter)">
+                          @click="entry.kind === 'header' && projTogglePnlSection(entry.letter)">
                           <td class="pnl-col-concepto" :class="entry.kind === 'detail' ? 'pl-10' : ''">
                             <template x-if="entry.kind === 'header'">
                               <span>
                                 <span class="inline-block w-4 text-center text-gray-500"
-                                      x-text="isPnlSectionOpen(entry.letter) ? '▾' : '▸'"></span>
+                                      x-text="projIsPnlSectionOpen(entry.letter) ? '▾' : '▸'"></span>
                                 <span class="font-mono text-[10px] text-gray-400 mr-1" x-text="entry.letter"></span>
                                 <span x-text="entry.label"></span>
                                 <span class="ml-2 text-[10px] font-normal text-gray-500" x-text="'(' + entry.count + ')'"></span>
@@ -3070,7 +3164,27 @@
                             </template>
                           </td>
                           <template x-for="(_, i) in proj.computed.pnl.forward_months" :key="i">
-                            <td class="num" :class="entry.kind === 'detail' ? 'text-xs' : ''" x-html="fmtEstadosCell(entry.data, i, false)"></td>
+                            <td class="num"
+                              :class="[
+                                entry.kind === 'detail' ? 'text-xs' : '',
+                                (entry.kind === 'detail' && hasPnlOverride(entry.code, i)) ? 'bg-amber-50 border-amber-200' : '',
+                                (entry.kind === 'detail' && !hasPnlOverride(entry.code, i) && proj.estadosShow === 'projected') ? 'cursor-pointer hover:bg-amber-50/50' : ''
+                              ]"
+                              :title="entry.kind === 'detail' && hasPnlOverride(entry.code, i) ? 'Ajuste manual (clic-derecho para limpiar)' : ''"
+                              @click="entry.kind === 'detail' && !isPnlCellEditing(entry.code, i) && pnlStartCellEdit(entry.code, i, (entry.data.projected || [])[i])"
+                              @contextmenu.prevent="entry.kind === 'detail' && hasPnlOverride(entry.code, i) && pnlClearOverride(entry.code, i)">
+                              <template x-if="entry.kind === 'detail' && isPnlCellEditing(entry.code, i)">
+                                <input type="number" step="1" data-pnl-cell-editor
+                                  x-model.number="proj.pnlEditing.value"
+                                  @keydown.enter.stop.prevent="pnlCommitCellEdit()"
+                                  @keydown.escape.stop.prevent="pnlCancelCellEdit()"
+                                  @blur="pnlCommitCellEdit()" @click.stop
+                                  class="w-20 px-1 py-0.5 border border-brand-400 rounded text-xs font-mono text-right">
+                              </template>
+                              <template x-if="!(entry.kind === 'detail' && isPnlCellEditing(entry.code, i))">
+                                <span x-html="fmtEstadosCell(entry.data, i, false)"></span>
+                              </template>
+                            </td>
                           </template>
                           <td class="num pnl-ytd-col" :class="entry.kind === 'detail' ? 'text-xs' : ''" x-text="fmtEUR(estadosArrSum(entry.data))"></td>
                         </tr>
@@ -3087,11 +3201,33 @@
                     </tbody>
                   </table>
                 </div>
-                <div class="px-4 py-2 border-t border-gray-100 flex items-center justify-end gap-3">
-                  <button @click="proj.pnlExpanded = Object.fromEntries(pnlGroupedByLetter().map(g => [g.letter, true]))"
-                          class="text-[11px] text-brand-600 hover:text-brand-700">Expandir todo</button>
-                  <button @click="proj.pnlExpanded = {}"
-                          class="text-[11px] text-brand-600 hover:text-brand-700">Colapsar todo</button>
+                <div class="px-4 py-2 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                  <div class="text-[11px] text-gray-500 flex items-center gap-3">
+                    <template x-if="proj.estadosShow === 'projected'">
+                      <span>
+                        <span class="hidden sm:inline">Clic en una celda para editar · Enter guarda · Esc cancela · Clic-derecho limpia.</span>
+                        <span class="sm:hidden">Toca celda para editar.</span>
+                      </span>
+                    </template>
+                    <template x-if="pnlOverrideCount() > 0">
+                      <span class="inline-flex items-center gap-1.5">
+                        <span class="inline-block w-2 h-2 bg-amber-400 rounded-sm"></span>
+                        <span x-text="pnlOverrideCount() + ' ajuste(s) manual(es)'"></span>
+                      </span>
+                    </template>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <button x-show="pnlOverrideCount() > 0" @click="applyPnlOverrides()"
+                            class="px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-semibold">
+                      Aplicar ajustes
+                    </button>
+                    <button x-show="pnlOverrideCount() > 0" @click="pnlClearAllOverrides()"
+                            class="text-[11px] text-gray-500 hover:text-red-600">Limpiar todo</button>
+                    <button @click="proj.pnlExpanded = Object.fromEntries(pnlGroupedByLetter().map(g => [g.letter, true]))"
+                            class="text-[11px] text-brand-600 hover:text-brand-700">Expandir todo</button>
+                    <button @click="proj.pnlExpanded = {}"
+                            class="text-[11px] text-brand-600 hover:text-brand-700">Colapsar todo</button>
+                  </div>
                 </div>
               </div>
 
@@ -3787,6 +3923,10 @@ function reportApp() {
       computedAt: null,
       list: null,
       pnlExpanded: {},                              // { [letter]: true } — collapsible state for P&L sections
+      pnlEditing: null,                             // transient: { rowKey, monthIdx, value } — active cell editor
+      flash: '',                                    // brief status message ("Guardado", "Reaplicados N ajustes", …)
+      flashKind: 'ok',                              // 'ok' | 'info'
+      flashTimer: null,
       bsOpenSections: { assets: true, liabilities: true, equity: true },
       bsClosedSubs: {},                             // { 'assets|Activo corriente': true, 'sg:...': true }
       saveBusy: false,
@@ -3807,6 +3947,11 @@ function reportApp() {
         capex_events: [],
         extra_loans: [],
         kind: 'new_sucursal',                     // 'new_sucursal' | 'capex_only' | 'existing_changes' | 'mixto'
+        // Manual P&L overrides applied after the engine compute. Shape:
+        //   { [rowKey]: { [monthIdx]: number } }
+        // rowKey = revenue row key ('prop:usera', 'new:0', …) OR cuenta code.
+        // Saved with the scenario; applied client-side after each compute.
+        pnl_overrides: {},
       },
     },
 
@@ -3821,6 +3966,10 @@ function reportApp() {
     pnlAllOpen: false,
     pnlShowAllMonths: false,
     pnlScope: 'mcf',  // 'mcf' | 'usera' | 'hortaleza' — sucursal toggle
+    // When true: drop K1/K2 (IVA Cobrado) and N2/N4/N5 (passthrough taxes)
+    // from sums and subtract IVA Cobrado from Ingresos. Lets YTD totals
+    // reconcile with the NETO line. Default false = current behaviour.
+    pnlExcludePassthrough: false,
 
     // Shared info popover (single instance at Alpine root)
     infoTip: { open: false, text: '', x: 0, y: 0 },
@@ -4464,6 +4613,22 @@ function reportApp() {
         formatValue: fmtCash,
       });
 
+      // Free Cash Flow (FCFF, unlevered) = CFO + CFI — cash from the business
+      // before any financing decisions.
+      if (y.fcff) {
+        rows.push({
+          id: 'fcff',
+          label: 'FREE CASH FLOW (FCFF, antes de financiamiento)',
+          rowClass: 'pnl-computed-row',
+          labelClass: '',
+          valueClass: y.fcff.ytd < 0 ? 'font-bold text-red-600' : 'font-bold text-brand-600',
+          by_month: y.fcff.by_month,
+          ytd: y.fcff.ytd,
+          chevron: '',
+          formatValue: fmtCash,
+        });
+      }
+
       // Financiamiento (real CFF section from financing_events + loan-payment principal)
       const cff = y.sections.find(s => s.label === 'Financiamiento (CFF)');
       if (cff) pushSection(cff);
@@ -4521,10 +4686,10 @@ function reportApp() {
     pnlRows() {
       if (!this.pnl?.year) return [];
       const rows = [];
-      const ingresosYtd = this.pnl.year.sections.find(s => s.key === 'Ingresos')?.ytd || 0;
+      let pctDenominator = this.pnl.year.sections.find(s => s.key === 'Ingresos')?.ytd || 0;
       const pctOfSales = (v) => {
-        if (!ingresosYtd || !Number.isFinite(v)) return '';
-        const pct = v / ingresosYtd * 100;
+        if (!pctDenominator || !Number.isFinite(v)) return '';
+        const pct = v / pctDenominator * 100;
         const sign = pct < 0 ? '-' : '';
         return ` <span class="text-gray-400 text-[11px] font-normal">(${sign}${Math.abs(pct).toFixed(1)}%)</span>`;
       };
@@ -4630,8 +4795,76 @@ function reportApp() {
       };
 
       const y = this.pnl.year;
-      const sections = y.sections;
+
+      // When "Cuadrar con NETO" toggle is on, derive a filtered copy of the
+      // sections:
+      //   - drop K1/K2 (IVA Cobrado — already netted into EBITDA),
+      //     N2/N4/N5 (passthrough taxes — already accrued via N8/EBITDA),
+      //   - subtract K1/K2 from A1/A2 in Ingresos so topline is net-of-IVA,
+      //   - subtract IVA pagado from every Gastos row using iva_by_month from
+      //     the backend, so Gastos shows the deducible base used in EBITDA,
+      //   - recompute sub & section totals from the surviving / adjusted items.
+      // EBITDA and NETO come from y.ebitda / y.neto (backend) so those rows
+      // are correct regardless of this view.
+      const EXCLUDED_CODES = new Set(['K1', 'K2', 'N2', 'N4', 'N5']);
+      let sections = y.sections;
+      if (this.pnlExcludePassthrough) {
+        const ivaByCodeSrc = {}; // map A1 -> K1's by_month/ytd, A2 -> K2's
+        const impSec = y.sections.find(s => s.key === 'Impuestos');
+        const incSub = impSec?.subsections?.find(s => s.key === 'II');
+        if (incSub) {
+          for (const it of (incSub.items || [])) {
+            const c = String(it.code || '').toUpperCase();
+            if (c === 'K1') ivaByCodeSrc.A1 = { by_month: it.by_month, ytd: it.ytd };
+            if (c === 'K2') ivaByCodeSrc.A2 = { by_month: it.by_month, ytd: it.ytd };
+          }
+        }
+        const sumItems = (items) => {
+          const bm = {};
+          for (let m = 1; m <= 12; m++) bm[m] = items.reduce((s, it) => s + (it.by_month?.[m] || 0), 0);
+          const yt = items.reduce((s, it) => s + (it.ytd || 0), 0);
+          return { by_month: bm, ytd: yt };
+        };
+        const subtractIva = (it) => {
+          // Use the per-item iva_by_month surfaced by the backend.
+          const ivaBm = it.iva_by_month || {};
+          const ivaYtd = it.iva_ytd || 0;
+          const bm = {};
+          for (let m = 1; m <= 12; m++) bm[m] = (it.by_month?.[m] || 0) - (ivaBm[m] || 0);
+          return { ...it, by_month: bm, ytd: (it.ytd || 0) - ivaYtd };
+        };
+        sections = y.sections.map(section => {
+          const isIngresos = section.key === 'Ingresos';
+          const isGastos = section.key === 'Gastos';
+          const newSubs = (section.subsections || []).map(sub => {
+            let items = (sub.items || []).filter(it => !EXCLUDED_CODES.has(String(it.code || '').toUpperCase()));
+            if (isIngresos) {
+              items = items.map(it => {
+                const k = ivaByCodeSrc[String(it.code || '').toUpperCase()];
+                if (!k) return it;
+                const bm = {};
+                for (let m = 1; m <= 12; m++) bm[m] = (it.by_month?.[m] || 0) - (k.by_month?.[m] || 0);
+                return { ...it, by_month: bm, ytd: (it.ytd || 0) - (k.ytd || 0) };
+              });
+            } else if (isGastos) {
+              items = items.map(subtractIva);
+            }
+            const totals = sumItems(items);
+            return { ...sub, items, by_month: totals.by_month, ytd: totals.ytd };
+          });
+          // Subs with no surviving items collapse to 0 but stay visible so
+          // section structure (e.g. "Impuestos Pagados") is preserved.
+          const bm = {};
+          for (let m = 1; m <= 12; m++) bm[m] = newSubs.reduce((s, sub) => s + (sub.by_month?.[m] || 0), 0);
+          const yt = newSubs.reduce((s, sub) => s + (sub.ytd || 0), 0);
+          return { ...section, subsections: newSubs, by_month: bm, ytd: yt };
+        });
+      }
+
       const findSection = (key) => sections.find(s => s.key === key);
+      // Recalculate the % of sales denominator against the (possibly filtered)
+      // Ingresos so the percentages match the visible totals.
+      pctDenominator = findSection('Ingresos')?.ytd || 0;
 
       // Ingresos
       const ing = findSection('Ingresos');
@@ -4702,6 +4935,82 @@ function reportApp() {
       });
 
       return rows;
+    },
+
+    // Export the year P&L table to Excel. Single sheet, fully expanded
+    // (sections + subsections + line items), with Ene..Dic + YTD columns.
+    // EBITDA and Net margin % rows included with values as fractions for
+    // proper percent formatting.
+    exportPnlXlsx() {
+      if (!this.pnl?.year) return;
+      if (typeof XLSX === 'undefined') return;
+
+      const y = this.pnl.year;
+      const months = [1,2,3,4,5,6,7,8,9,10,11,12];
+      const monthHdrs = months.map(m => this.monthLabels[m-1].slice(0,3));
+      const header = ['Concepto', 'Código', ...monthHdrs, 'YTD'];
+
+      // Round currency to 0 decimals; pct rows store fractions (0..1) for Excel %.
+      const monthCells = (byMonth, isPct = false) => months.map(m => {
+        const v = byMonth?.[m];
+        if (v == null || !Number.isFinite(v)) return null;
+        return isPct ? v : Math.round(v);
+      });
+      const ytdCell = (v, isPct = false) => {
+        if (v == null || !Number.isFinite(v)) return null;
+        return isPct ? v : Math.round(v);
+      };
+
+      const aoa = [header];
+
+      for (const section of y.sections) {
+        if (section.ytd === 0 && section.key !== 'Ingresos' && section.key !== 'Gastos') continue;
+        aoa.push([section.label.toUpperCase(), '', ...monthCells(section.by_month), ytdCell(section.ytd)]);
+
+        for (const sub of section.subsections) {
+          if (sub.ytd === 0 && (sub.items || []).every(it => (it.ytd || 0) === 0)) continue;
+          aoa.push(['  ' + sub.label, sub.key, ...monthCells(sub.by_month), ytdCell(sub.ytd)]);
+          for (const it of (sub.items || [])) {
+            const label = '    ' + (it.label || it.property_label || '');
+            aoa.push([label, it.code || '', ...monthCells(it.by_month), ytdCell(it.ytd)]);
+          }
+        }
+
+        // Insert EBITDA + margin right after the Gastos section
+        if (section.key === 'Gastos' && y.ebitda) {
+          aoa.push(['EBITDA', '', ...monthCells(y.ebitda.by_month), ytdCell(y.ebitda.ytd)]);
+          aoa.push(['  % margen EBITDA', '', ...monthCells(y.ebitda.margin_pct_by_month, true), ytdCell(y.ebitda.margin_pct_ytd, true)]);
+        }
+      }
+
+      // Final Net Income block
+      if (y.neto) {
+        aoa.push(['NETO', '', ...monthCells(y.neto.by_month), ytdCell(y.neto.ytd)]);
+        aoa.push(['  % margen neto', '', ...monthCells(y.neto.margin_pct_by_month, true), ytdCell(y.neto.margin_pct_ytd, true)]);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      // Column widths
+      ws['!cols'] = [{ wch: 42 }, { wch: 8 }, ...months.map(() => ({ wch: 11 })), { wch: 13 }];
+
+      // Apply % format to margin rows (find them by label prefix)
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let r = 1; r <= range.e.r; r++) {
+        const labelCell = ws[XLSX.utils.encode_cell({ r, c: 0 })];
+        if (!labelCell) continue;
+        const isPctRow = String(labelCell.v || '').trim().startsWith('% margen');
+        for (let c = 2; c <= range.e.c; c++) {
+          const cell = ws[XLSX.utils.encode_cell({ r, c })];
+          if (!cell || cell.v == null) continue;
+          if (isPctRow) cell.z = '0.0%';
+          else cell.z = '#,##0';
+        }
+      }
+
+      const wb = XLSX.utils.book_new();
+      const scopeLabel = this.pnlScope === 'mcf' ? 'MCF' : (this.pnlScope === 'usera' ? 'Usera' : 'Hortaleza');
+      XLSX.utils.book_append_sheet(wb, ws, ('P&L ' + scopeLabel + ' ' + y.yyyy).slice(0, 31));
+      XLSX.writeFile(wb, `pnl-${this.pnlScope}-${y.yyyy}.xlsx`);
     },
 
     async loadPivot() {
@@ -6087,13 +6396,25 @@ function reportApp() {
         // Merge loaded payload over defaults so missing fields use sensible defaults
         const defaults = JSON.parse(JSON.stringify(this.proj.payload));
         const loaded = j.payload || {};
+        // new_sucursales is the canonical (plural) shape; legacy payloads stored
+        // a single `new_sucursal` object — keep it as a fallback so old
+        // scenarios still load. ensureProjPayloadShape() does the final cleanup.
+        let sucursales;
+        if (Array.isArray(loaded.new_sucursales)) {
+          sucursales = loaded.new_sucursales;
+        } else if (loaded.new_sucursal && typeof loaded.new_sucursal === 'object') {
+          sucursales = [loaded.new_sucursal];
+        } else {
+          sucursales = [];
+        }
         this.proj.payload = {
           kind: loaded.kind || defaults.kind || 'new_sucursal',
           investment: { ...defaults.investment, ...(loaded.investment || {}) },
-          new_sucursal: { ...defaults.new_sucursal, ...(loaded.new_sucursal || {}) },
+          new_sucursales: sucursales,
           existing_adjustments: Array.isArray(loaded.existing_adjustments) ? loaded.existing_adjustments : [],
           capex_events: Array.isArray(loaded.capex_events) ? loaded.capex_events : [],
           extra_loans: Array.isArray(loaded.extra_loans) ? loaded.extra_loans : [],
+          pnl_overrides: (loaded.pnl_overrides && typeof loaded.pnl_overrides === 'object') ? loaded.pnl_overrides : {},
         };
         this.ensureProjPayloadShape();
         await this.loadProjBaseline();
@@ -6131,6 +6452,7 @@ function reportApp() {
       if (!Array.isArray(p.existing_adjustments)) p.existing_adjustments = [];
       if (!Array.isArray(p.capex_events)) p.capex_events = [];
       if (!Array.isArray(p.extra_loans)) p.extra_loans = [];
+      if (!p.pnl_overrides || typeof p.pnl_overrides !== 'object') p.pnl_overrides = {};
 
       // If kind is new_sucursal and the list is empty, seed one entry so the
       // form has something to show. Template stays Usera; user can change.
@@ -6187,11 +6509,21 @@ function reportApp() {
         if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
         this.proj.currentId = j.id;
         await this.loadProjList();
+        const n = this.pnlOverrideCount();
+        this.projFlash(n > 0 ? `Guardado · incluye ${n} ajuste(s) manual(es)` : 'Guardado');
       } catch (err) {
         this.proj.error = err.message;
       } finally {
         this.proj.saveBusy = false;
       }
+    },
+
+    // Brief inline status message that auto-clears. Used after save/compute.
+    projFlash(message, kind = 'ok', ms = 3500) {
+      this.proj.flash = message;
+      this.proj.flashKind = kind;
+      if (this.proj.flashTimer) clearTimeout(this.proj.flashTimer);
+      this.proj.flashTimer = setTimeout(() => { this.proj.flash = ''; }, ms);
     },
 
     async saveProjectionAs() {
@@ -6233,6 +6565,79 @@ function reportApp() {
       URL.revokeObjectURL(url);
     },
 
+    // === Estados → Excel export ================================================
+    // Builds an .xlsx with 6 sheets: P&L and Cash Flow for each of Proyectado,
+    // Baseline, and Δ. Uses SheetJS loaded from CDN.
+    buildEstadosPnlRows(variant) {
+      const c = this.proj.computed;
+      if (!c) return [];
+      const months = c.pnl.forward_months || [];
+      const monthHdrs = months.map(m => this.monthLabels[m.mm - 1].slice(0, 3) + ' ' + String(m.yyyy).slice(2));
+      const rows = [['Línea', ...monthHdrs, 'Total']];
+
+      const vals = (data) => {
+        const arr = (data && data[variant]) || [];
+        return months.map((_, i) => Math.round(arr[i] || 0));
+      };
+      const total = (data) => {
+        const arr = (data && data[variant]) || [];
+        return Math.round(arr.reduce((s, v) => s + (v || 0), 0));
+      };
+
+      rows.push(['Ingresos', ...vals(c.pnl.totals.revenue), total(c.pnl.totals.revenue)]);
+      for (const r of (c.pnl.revenue_rows || [])) {
+        const label = '  ' + (r.label || r.key || '');
+        rows.push([label, ...vals(r), total(r)]);
+      }
+
+      for (const g of this.pnlGroupedByLetter()) {
+        rows.push([g.letter + ' · ' + g.label, ...vals(g), total(g)]);
+        for (const r of g.rows) {
+          rows.push(['  ' + (r.cuenta || '') + ' ' + (r.label || ''), ...vals(r), total(r)]);
+        }
+      }
+
+      rows.push(['Net Income', ...vals(c.pnl.totals.net_income), total(c.pnl.totals.net_income)]);
+      return rows;
+    },
+
+    buildEstadosCashflowRows(variant) {
+      const c = this.proj.computed;
+      if (!c) return [];
+      const months = c.cashflow.months || [];
+      const monthHdrs = months.map(m => this.monthLabels[m.mm - 1].slice(0, 3) + ' ' + String(m.yyyy).slice(2));
+      const rows = [['Sección', ...monthHdrs, 'Total']];
+      for (const r of (c.cashflow.rows || [])) {
+        const arr = r[variant] || [];
+        const monthly = months.map((_, i) => Math.round(arr[i] || 0));
+        const total = Math.round(arr.reduce((s, v) => s + (v || 0), 0));
+        rows.push([r.label || r.key || '', ...monthly, total]);
+      }
+      return rows;
+    },
+
+    exportProjectionEstadosXlsx() {
+      if (!this.proj.computed) { this.proj.error = 'Primero calcula el escenario.'; return; }
+      if (typeof XLSX === 'undefined') { this.proj.error = 'Librería XLSX no cargada.'; return; }
+
+      const wb = XLSX.utils.book_new();
+      const variants = [
+        { key: 'projected', label: 'Proyectado' },
+        { key: 'baseline',  label: 'Baseline' },
+        { key: 'delta',     label: 'Delta' },
+      ];
+      for (const v of variants) {
+        const pnlWs = XLSX.utils.aoa_to_sheet(this.buildEstadosPnlRows(v.key));
+        XLSX.utils.book_append_sheet(wb, pnlWs, ('P&L ' + v.label).slice(0, 31));
+        const cfWs = XLSX.utils.aoa_to_sheet(this.buildEstadosCashflowRows(v.key));
+        XLSX.utils.book_append_sheet(wb, cfWs, ('Cash Flow ' + v.label).slice(0, 31));
+      }
+
+      const safeName = (this.proj.currentName || 'proyeccion').replace(/[^a-zA-Z0-9_\-]+/g, '_').slice(0, 40);
+      const ym = this.proj.baselineYm || '';
+      XLSX.writeFile(wb, `mcf-estados-${safeName}-${ym}.xlsx`);
+    },
+
     async computeProjection() {
       this.proj.computeBusy = true;
       this.proj.error = null;
@@ -6248,8 +6653,11 @@ function reportApp() {
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
         this.proj.computed = j.result;
+        this.applyPnlOverrides();
         this.proj.computedAt = new Date().toLocaleString('es-ES');
         if (this.proj.tab === 'config') this.proj.tab = 'estados';
+        const n = this.pnlOverrideCount();
+        if (n > 0) this.projFlash(`Cálculo listo · ${n} ajuste(s) manual(es) reaplicados`, 'info');
       } catch (err) {
         this.proj.error = err.message;
       } finally {
@@ -6744,10 +7152,10 @@ function reportApp() {
       return [...ordered, ...extra];
     },
 
-    isPnlSectionOpen(letter) {
+    projIsPnlSectionOpen(letter) {
       return !!(this.proj.pnlExpanded && this.proj.pnlExpanded[letter]);
     },
-    togglePnlSection(letter) {
+    projTogglePnlSection(letter) {
       if (!this.proj.pnlExpanded) this.proj.pnlExpanded = {};
       this.proj.pnlExpanded[letter] = !this.proj.pnlExpanded[letter];
     },
@@ -6791,6 +7199,271 @@ function reportApp() {
         return `${main} <span class="block text-[9px] ${cls}">${sign}${this.fmtEUR(delta)}</span>`;
       }
       return main;
+    },
+
+    // === Manual P&L cell overrides (calculator) ================================
+    // Editable cells live on revenue_rows (row.key) and by_cuenta detail rows
+    // (entry.code). After editing, click "Aplicar ajustes" to recompute totals.
+    // Overrides persist in proj.payload.pnl_overrides and survive save/load.
+    // NOTE: only affects the calculator's P&L view. Cash Flow, Balance Sheet,
+    // and investment metrics (NPV/IRR/FCFF) still reflect the engine compute.
+    hasPnlOverride(rowKey, monthIdx) {
+      const ov = this.proj?.payload?.pnl_overrides;
+      return ov && ov[rowKey] && ov[rowKey][monthIdx] !== undefined;
+    },
+    isPnlCellEditing(rowKey, monthIdx) {
+      const e = this.proj.pnlEditing;
+      return e && e.rowKey === rowKey && e.monthIdx === monthIdx;
+    },
+    pnlStartCellEdit(rowKey, monthIdx, currentValue) {
+      // Only edit in projected view — overrides are projection adjustments.
+      if (this.proj.estadosShow !== 'projected') return;
+      this.proj.pnlEditing = { rowKey, monthIdx, value: Math.round(Number(currentValue) || 0) };
+      this.$nextTick(() => {
+        const el = document.querySelector('[data-pnl-cell-editor]');
+        if (el) { el.focus(); el.select(); }
+      });
+    },
+    pnlCommitCellEdit() {
+      const e = this.proj.pnlEditing;
+      if (!e) return;
+      const num = Number(e.value);
+      const ov = this.proj.payload.pnl_overrides = this.proj.payload.pnl_overrides || {};
+
+      // Locate the row in proj.computed so we can update the cell immediately
+      // (totals stay stale until "Aplicar ajustes" is clicked).
+      const c = this.proj.computed;
+      let row = null, origKey = null;
+      if (c && c.pnl) {
+        row = (c.pnl.revenue_rows || []).find(r => r.key === e.rowKey);
+        if (row) origKey = 'rev:' + row.key;
+        else {
+          row = (c.pnl.by_cuenta || []).find(r => r.cuenta === e.rowKey);
+          if (row) origKey = 'exp:' + row.cuenta;
+        }
+      }
+
+      if (!Number.isFinite(num)) {
+        // Treat blank/invalid as clear → revert to engine's original value
+        if (ov[e.rowKey]) {
+          delete ov[e.rowKey][e.monthIdx];
+          if (Object.keys(ov[e.rowKey]).length === 0) delete ov[e.rowKey];
+        }
+        if (row && c.pnl._origProjected && c.pnl._origProjected[origKey]) {
+          row.projected[e.monthIdx] = c.pnl._origProjected[origKey][e.monthIdx];
+        }
+      } else {
+        if (!ov[e.rowKey]) ov[e.rowKey] = {};
+        ov[e.rowKey][e.monthIdx] = num;
+        if (row) row.projected[e.monthIdx] = num;
+      }
+      // Refresh this row's delta so the per-cell delta badge stays correct.
+      // Totals are NOT recomputed here — that's what "Aplicar ajustes" does.
+      if (row && row.baseline) {
+        row.delta = row.projected.map((v, i) => v - (row.baseline[i] || 0));
+      }
+      this.proj.pnlEditing = null;
+    },
+    pnlCancelCellEdit() { this.proj.pnlEditing = null; },
+    pnlClearOverride(rowKey, monthIdx) {
+      const ov = this.proj?.payload?.pnl_overrides;
+      if (!ov?.[rowKey]) return;
+      delete ov[rowKey][monthIdx];
+      if (Object.keys(ov[rowKey]).length === 0) delete ov[rowKey];
+      this.applyPnlOverrides();
+    },
+    pnlClearAllOverrides() {
+      if (!confirm('¿Eliminar todos los ajustes manuales del P&L?')) return;
+      this.proj.payload.pnl_overrides = {};
+      this.applyPnlOverrides();
+    },
+    pnlOverrideCount() {
+      const ov = this.proj?.payload?.pnl_overrides || {};
+      let n = 0;
+      for (const k of Object.keys(ov)) n += Object.keys(ov[k] || {}).length;
+      return n;
+    },
+    // Mutates proj.computed in place: applies pnl_overrides to revenue_rows
+    // and by_cuenta rows, then recomputes the totals (revenue, expenses,
+    // depreciation, net_income) from the updated row arrays. Idempotent —
+    // safe to call after every compute, and after clearing overrides.
+    applyPnlOverrides() {
+      const c = this.proj.computed;
+      if (!c || !c.pnl) return;
+      const ov = this.proj?.payload?.pnl_overrides || {};
+      const n = (c.pnl.forward_months || []).length || 12;
+
+      // Capture engine originals on first run; on subsequent runs restore from
+      // them so clearing an override reverts to the engine's computed value.
+      if (!c.pnl._origProjected) {
+        c.pnl._origProjected = {};
+        for (const row of (c.pnl.revenue_rows || [])) c.pnl._origProjected['rev:' + row.key] = row.projected.slice();
+        for (const row of (c.pnl.by_cuenta || [])) c.pnl._origProjected['exp:' + row.cuenta] = row.projected.slice();
+      } else {
+        for (const row of (c.pnl.revenue_rows || [])) {
+          const o = c.pnl._origProjected['rev:' + row.key];
+          if (o) row.projected = o.slice();
+        }
+        for (const row of (c.pnl.by_cuenta || [])) {
+          const o = c.pnl._origProjected['exp:' + row.cuenta];
+          if (o) row.projected = o.slice();
+        }
+      }
+
+      const applyToRow = (row, key) => {
+        const rowOv = ov[key];
+        if (!rowOv) return;
+        for (const [mi, val] of Object.entries(rowOv)) {
+          const idx = Number(mi);
+          if (idx >= 0 && idx < n && Number.isFinite(Number(val))) {
+            row.projected[idx] = Number(val);
+          }
+        }
+        row.delta = row.projected.map((v, i) => v - (row.baseline?.[i] || 0));
+      };
+
+      for (const row of (c.pnl.revenue_rows || [])) applyToRow(row, row.key);
+      for (const row of (c.pnl.by_cuenta || [])) applyToRow(row, row.cuenta);
+
+      // Recompute revenue total
+      const revArr = Array(n).fill(0);
+      for (const row of (c.pnl.revenue_rows || [])) {
+        for (let i = 0; i < n; i++) revArr[i] += row.projected[i] || 0;
+      }
+      c.pnl.totals.revenue.projected = revArr;
+      c.pnl.totals.revenue.delta = revArr.map((v, i) => v - (c.pnl.totals.revenue.baseline?.[i] || 0));
+
+      // Recompute expenses + depreciation (O letter = depreciation)
+      const expArr = Array(n).fill(0);
+      const depArr = Array(n).fill(0);
+      for (const row of (c.pnl.by_cuenta || [])) {
+        if (row.letter === 'O') {
+          for (let i = 0; i < n; i++) depArr[i] += row.projected[i] || 0;
+        } else {
+          for (let i = 0; i < n; i++) expArr[i] += row.projected[i] || 0;
+        }
+      }
+      c.pnl.totals.expenses.projected = expArr;
+      c.pnl.totals.expenses.delta = expArr.map((v, i) => v - (c.pnl.totals.expenses.baseline?.[i] || 0));
+      c.pnl.totals.depreciation.projected = depArr;
+      c.pnl.totals.depreciation.delta = depArr.map((v, i) => v - (c.pnl.totals.depreciation.baseline?.[i] || 0));
+
+      // Net Income: revenue − expenses − depreciation
+      const niArr = revArr.map((r, i) => r - expArr[i] - depArr[i]);
+      c.pnl.totals.net_income.projected = niArr;
+      c.pnl.totals.net_income.delta = niArr.map((v, i) => v - (c.pnl.totals.net_income.baseline?.[i] || 0));
+
+      // Propagate to investment metrics (NPV / IRR / FCFF / Payback / ROI).
+      // Cash Flow and Balance Sheet are intentionally NOT updated — overrides
+      // are P&L-only by design.
+      this.recomputeInvestmentMetrics();
+    },
+
+    // Marginal annual operating cash, derived from the P&L row arrays. When
+    // `useOriginal=true`, reads from the cached engine values (pre-override).
+    // FORMULA:  Σ marginal revenue − Σ marginal IVA-eligible opex − Σ marginal N8
+    // Excludes D (interest, separately in debt service) and O (depreciation,
+    // non-cash) — matches the engine's annual_operating_cash definition.
+    _marginalAnnualOpCash(useOriginal) {
+      const c = this.proj.computed;
+      if (!c?.pnl) return 0;
+      const n = (c.pnl.forward_months || []).length || 12;
+      const IVA_ELIGIBLE = new Set(['C', 'E', 'F', 'G', 'H', 'I', 'J']);
+      let total = 0;
+      const orig = c.pnl._origProjected || {};
+
+      for (const row of (c.pnl.revenue_rows || [])) {
+        const projected = useOriginal && orig['rev:' + row.key] ? orig['rev:' + row.key] : row.projected;
+        for (let i = 0; i < n; i++) total += (projected[i] || 0) - (row.baseline?.[i] || 0);
+      }
+      for (const row of (c.pnl.by_cuenta || [])) {
+        if (!IVA_ELIGIBLE.has(row.letter) && row.letter !== 'N') continue;
+        const projected = useOriginal && orig['exp:' + row.cuenta] ? orig['exp:' + row.cuenta] : row.projected;
+        for (let i = 0; i < n; i++) total -= (projected[i] || 0) - (row.baseline?.[i] || 0);
+      }
+      return total;
+    },
+
+    // Rebuilds investment_metrics (annual_*, npv, irr, payback, roi, cashflows)
+    // from the engine's cached "non-P&L" inputs (capex, debt service, down
+    // payment, terminal value) plus the override-aware annual op cash.
+    // Idempotent — when there are no overrides, the result exactly matches
+    // the engine's original metrics.
+    recomputeInvestmentMetrics() {
+      const c = this.proj.computed;
+      if (!c?.investment_metrics) return;
+      const im = c.investment_metrics;
+
+      // Cache engine values on first call (overrides not yet applied)
+      if (!im._engineMetrics) {
+        im._engineMetrics = {
+          annual_operating_cash: im.annual_operating_cash,
+          annual_fcff: im.annual_fcff,
+          annual_loan_service: im.annual_loan_service,
+          down_payment: im.down_payment,
+        };
+      }
+      const eng = im._engineMetrics;
+
+      // Override delta on operating cash; capex & debt service unchanged.
+      const overrideDelta = this._marginalAnnualOpCash(false) - this._marginalAnnualOpCash(true);
+      const annualOpCash = eng.annual_operating_cash + overrideDelta;
+      const annualFcff = eng.annual_fcff + overrideDelta;
+      const annualNetCash = annualOpCash - eng.annual_loan_service;
+
+      // Rebuild cashflow array & metrics — same formulas as the engine
+      const inv = this.proj.payload?.investment || {};
+      const analysisYears = Math.max(1, Number(inv.analysis_period) || 5);
+      const discountRate = (Number(inv.discount_rate) || 5) / 100;
+      const terminalValue = Number(inv.terminal_value) || 0;
+      const downPayment = eng.down_payment;
+
+      const cashflows = [-downPayment];
+      for (let y = 1; y <= analysisYears; y++) {
+        cashflows.push(annualNetCash + (y === analysisYears ? terminalValue : 0));
+      }
+
+      const npvVal = cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1 + discountRate, t), 0);
+
+      // IRR via bisection over [-0.99, 5] — same interval as engine
+      const npvAt = (rate) => cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1 + rate, t), 0);
+      let irrVal = null;
+      let lo = -0.99, hi = 5;
+      let flo = npvAt(lo), fhi = npvAt(hi);
+      if (isFinite(flo) && isFinite(fhi) && flo * fhi <= 0) {
+        for (let i = 0; i < 100; i++) {
+          const mid = (lo + hi) / 2;
+          const fmid = npvAt(mid);
+          if (Math.abs(fmid) < 1e-7 || (hi - lo) < 1e-9) { irrVal = mid; break; }
+          if (flo * fmid < 0) { hi = mid; fhi = fmid; } else { lo = mid; flo = fmid; }
+        }
+        if (irrVal === null) irrVal = (lo + hi) / 2;
+      }
+
+      const cashOnCash = downPayment > 0 ? annualNetCash / downPayment : 0;
+      const roi = downPayment > 0 ? (cashflows.reduce((s, v) => s + v, 0) / downPayment) * 100 : 0;
+
+      let cum = -downPayment;
+      let payback = NaN;
+      for (let y = 1; y <= analysisYears; y++) {
+        const yearCash = annualNetCash + (y === analysisYears ? terminalValue : 0);
+        cum += yearCash;
+        if (cum >= 0 && isNaN(payback)) {
+          payback = y - (cum - yearCash) / yearCash;
+          break;
+        }
+      }
+
+      im.annual_operating_cash = annualOpCash;
+      im.annual_fcff = annualFcff;
+      im.annual_cash_flow = annualNetCash;
+      im.annual_net_income = annualNetCash;
+      im.npv = npvVal;
+      im.irr = irrVal;
+      im.cash_on_cash = cashOnCash;
+      im.roi = roi;
+      im.payback_period = payback;
+      im.cashflows = cashflows;
     },
 
     async loadCompare() {

@@ -463,11 +463,13 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
         sub: LETTER_LABELS[letter].sub,
         order: LETTER_LABELS[letter].order,
         by_month: zeroMonths(),
+        iva_by_month: zeroMonths(),
         items: new Map(),
       };
     }
     const bucket = letterAgg[letter];
     addMonth(bucket.by_month, mm, v);
+    addMonth(bucket.iva_by_month, mm, iva);
 
     // item key: prefer cuenta_desc + propiedad, fall back to cuenta code
     const desc = r.cuenta_desc || r.concepto_mcf || `Cuenta ${code}`;
@@ -479,9 +481,11 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
         desc, property_label: propLabel,
         tooltip: r.cuenta_tooltip,
         by_month: zeroMonths(),
+        iva_by_month: zeroMonths(),
       });
     }
     addMonth(bucket.items.get(itemKey).by_month, mm, v);
+    addMonth(bucket.items.get(itemKey).iva_by_month, mm, iva);
   }
 
   // -------------------------------------------------------------------------
@@ -635,8 +639,14 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
       order: b.order,
       by_month: b.by_month,
       ytd: sumYtd(b.by_month, currentMm),
+      iva_by_month: b.iva_by_month || zeroMonths(),
+      iva_ytd: sumYtd(b.iva_by_month || zeroMonths(), currentMm),
       items: Array.from(b.items.values())
-        .map(it => ({ ...it, ytd: sumYtd(it.by_month, currentMm) }))
+        .map(it => ({
+          ...it,
+          ytd: sumYtd(it.by_month, currentMm),
+          iva_ytd: sumYtd(it.iva_by_month || zeroMonths(), currentMm),
+        }))
         .sort((a, b) => a.code.localeCompare(b.code)),
     });
   }
@@ -659,11 +669,17 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
   const sections = Object.entries(sectionBuckets).map(([key, subs]) => {
     subs.sort((a, b) => a.order - b.order);
     const section_by_month = zeroMonths();
-    for (const s of subs) for (let m = 1; m <= 12; m++) section_by_month[m] += s.by_month[m] || 0;
+    const section_iva_by_month = zeroMonths();
+    for (const s of subs) for (let m = 1; m <= 12; m++) {
+      section_by_month[m] += s.by_month[m] || 0;
+      section_iva_by_month[m] += s.iva_by_month?.[m] || 0;
+    }
     return {
       key, label: key,
       by_month: section_by_month,
       ytd: sumYtd(section_by_month, currentMm),
+      iva_by_month: section_iva_by_month,
+      iva_ytd: sumYtd(section_iva_by_month, currentMm),
       subsections: subs,
     };
   });

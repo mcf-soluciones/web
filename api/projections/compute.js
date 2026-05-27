@@ -1,4 +1,5 @@
 import { computeProjection } from '../_lib/projections.js';
+import baselineHandler from './baseline.js';
 
 /**
  * POST /api/projections/compute
@@ -21,9 +22,9 @@ export default async function handler(req, res) {
     }
     const payload = body.payload || {};
 
-    // Re-use baseline.js by importing it. Note: must inline the call so we
-    // don't hit the network locally.
-    const { default: baselineHandler } = await import('./baseline.js');
+    // Re-use baseline.js by calling its handler in-process (no self-fetch).
+    // Static import so Vercel bundles the dependency reliably — dynamic
+    // import() of a sibling api function returned undefined on deploy.
     const baselineRes = await captureHandler(baselineHandler, { method: 'GET', query: { yyyy_mm: ym }, body: null });
     if (baselineRes.status !== 200) return res.status(baselineRes.status).json(baselineRes.body);
     const baseline = baselineRes.body;

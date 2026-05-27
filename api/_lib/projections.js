@@ -172,11 +172,32 @@ export function computeProjection(baseline, payload) {
     return avg;
   }
 
+  // Sales-only seasonality vector for tier-3 fallback. Taken from the first new
+  // sucursal's `monthly_seasonality` (12 calendar-aligned percentages). The
+  // user owns this vector via the form, and it's the most realistic shape we
+  // have for months without history (e.g. pre-opening months of Hortaleza).
+  // Falls back to null when there's no new sucursal (existing_changes kind),
+  // in which case the flat monthly-average path is used.
+  const salesSeasonalityPct = (() => {
+    const ns0 = sucursales[0];
+    const v = ns0 && ns0.monthly_seasonality;
+    if (!Array.isArray(v) || v.length !== 12) return null;
+    const nums = v.map(x => Number(x) || 0);
+    const total = nums.reduce((s, x) => s + x, 0);
+    return total > 0 ? nums : null;
+  })();
+
   // Fallback chain for the calendar lookup, applied per-line:
   //   1. Primary: T12M's match for this calendar month.
   //   2. Same calendar month in any prior year within the wider window.
-  //   3. Monthly average across all non-zero data for this line.
-  function pickByCalendar(byMonthMap, calMonth) {
+  //   3. Sales-only (when seasonalityPct given): project from known months by
+  //      seasonality ratio — for each known month, compute its implied annual
+  //      total (value / weight), average across known months, then scale to
+  //      the target month's weight. This respects the user-set seasonality
+  //      instead of a flat average.
+  //   4. Last resort: line-level monthly average across all non-zero data.
+  function pickByCalendar(byMonthMap, calMonth, opts) {
+    opts = opts || {};
     const primaryKey = t12KeyByMonth[calMonth];
     const primaryYear = primaryKey ? Number(primaryKey.split('-')[0]) : null;
     const primaryVal = primaryKey ? (byMonthMap[primaryKey] || 0) : 0;
@@ -187,7 +208,26 @@ export function computeProjection(baseline, payload) {
       const v = byMonthMap[k] || 0;
       if (v > 0) return { value: v, fallback: true };
     }
-    // Tier 3: line-level monthly average (covers short-history lines like
+    // Tier 3 (sales only): seasonality-aware projection
+    const seasonality = opts.seasonalityPct;
+    if (seasonality) {
+      const targetWeight = Number(seasonality[calMonth - 1]) || 0;
+      if (targetWeight > 0) {
+        const impliedAnnuals = [];
+        for (const k of Object.keys(byMonthMap)) {
+          const v = byMonthMap[k] || 0;
+          if (v <= 0) continue;
+          const mm = Number(String(k).split('-')[1]);
+          const w = Number(seasonality[mm - 1]) || 0;
+          if (w > 0) impliedAnnuals.push(v / w);                                 // value per 1% of annual
+        }
+        if (impliedAnnuals.length > 0) {
+          const avgImplied = impliedAnnuals.reduce((s, x) => s + x, 0) / impliedAnnuals.length;
+          return { value: avgImplied * targetWeight, fallback: true };
+        }
+      }
+    }
+    // Tier 4: line-level monthly average (covers short-history lines like
     // Hortaleza, whose pre-Aug-2025 months simply don't exist in any year).
     const avg = monthlyAverage(byMonthMap);
     if (avg > 0) return { value: avg, fallback: true };
@@ -196,9 +236,12 @@ export function computeProjection(baseline, payload) {
 
   for (let i = 0; i < 12; i++) {
     const calMonth = forwardMonths[i].mm;
-    // Revenue total + per propiedad
+    // Revenue total + per propiedad — sales-specific seasonality fallback
     for (const prop of Object.keys(baseline.pnl.revenue_by_propiedad)) {
-      const { value, fallback } = pickByCalendar(baseline.pnl.revenue_by_propiedad[prop], calMonth);
+      const { value, fallback } = pickByCalendar(
+        baseline.pnl.revenue_by_propiedad[prop], calMonth,
+        { seasonalityPct: salesSeasonalityPct },
+      );
       baselineRevByMonth[i] += value;
       if (!baselineRevByPropiedadByMonth[prop]) baselineRevByPropiedadByMonth[prop] = ZERO12();
       baselineRevByPropiedadByMonth[prop][i] += value;
@@ -477,6 +520,82 @@ export function computeProjection(baseline, payload) {
   // Sort by cuenta code
   pnlByCuenta.sort((a, b) => a.cuenta.localeCompare(b.cuenta));
 
+  // ===========================================================================
+  // Tax model: mirrors reporte#pnl so the calculator's P&L and the investment
+  // metrics reflect real after-tax cash flow.
+  //
+  //   • IVA cobrado 21% → subtracted from revenue (per propiedad + per sucursal)
+  //   • IVA deducible 21% → subtracted from IVA-eligible operating gastos
+  //     (letters C, E, F, G, H, I, J). D (interés financiero) is IVA-exempt.
+  //   • N8 Imp. Sociedades, monthly estimate = 20% × max(0, EBITDA − Depreciación)
+  //     Added as a synthetic 'N' row in pnlByCuenta.
+  //   • Depreciation is non-cash: stays as a P&L deduction (shields tax) but is
+  //     excluded from cash-flow metrics.
+  //   • Marginal N8 from new sucursales (projectedN8 − baselineN8) is what we
+  //     charge against the investment metrics.
+  // ===========================================================================
+  const IVA_RATE = 0.21;
+  const IS_RATE = 0.20;
+  const IVA_ELIGIBLE_LETTERS = new Set(['C', 'E', 'F', 'G', 'H', 'I', 'J']);
+  const scaleArr = (arr, f) => { for (let i = 0; i < arr.length; i++) arr[i] *= f; };
+
+  // 1) Revenue → net of IVA cobrado (in place; downstream code re-sums from these)
+  scaleArr(baselineRevByMonth, 1 - IVA_RATE);
+  for (const p of Object.keys(baselineRevByPropiedadByMonth)) scaleArr(baselineRevByPropiedadByMonth[p], 1 - IVA_RATE);
+  for (const p of Object.keys(projectedRevByPropiedad)) scaleArr(projectedRevByPropiedad[p], 1 - IVA_RATE);
+  scaleArr(newSucursalRevByMonth, 1 - IVA_RATE);
+  for (const arr of sucursalRevByIdx) scaleArr(arr, 1 - IVA_RATE);
+
+  // 2) Expense rows in pnlByCuenta → net of IVA deducible for IVA-eligible cuentas
+  for (const row of pnlByCuenta) {
+    if (IVA_ELIGIBLE_LETTERS.has(row.letter)) {
+      scaleArr(row.baseline, 1 - IVA_RATE);
+      scaleArr(row.projected, 1 - IVA_RATE);
+      scaleArr(row.delta, 1 - IVA_RATE);
+    }
+  }
+
+  // 3) Compute EBITDA monthly (revenue net − IVA-eligible opex net; excludes D and O)
+  const projectedRevTotalForEbitda = ZERO12();
+  for (const p of Object.keys(projectedRevByPropiedad)) {
+    for (let i = 0; i < 12; i++) projectedRevTotalForEbitda[i] += projectedRevByPropiedad[p][i];
+  }
+  for (let i = 0; i < 12; i++) projectedRevTotalForEbitda[i] += newSucursalRevByMonth[i];
+
+  const baselineEbitdaMonthly = baselineRevByMonth.slice();
+  const projectedEbitdaMonthly = projectedRevTotalForEbitda.slice();
+  const baselineDepMonthly = ZERO12();
+  const projectedDepMonthly = ZERO12();
+  for (const row of pnlByCuenta) {
+    if (IVA_ELIGIBLE_LETTERS.has(row.letter)) {
+      for (let i = 0; i < 12; i++) {
+        baselineEbitdaMonthly[i] -= row.baseline[i];
+        projectedEbitdaMonthly[i] -= row.projected[i];
+      }
+    } else if (row.letter === 'O') {
+      for (let i = 0; i < 12; i++) {
+        baselineDepMonthly[i] += row.baseline[i];
+        projectedDepMonthly[i] += row.projected[i];
+      }
+    }
+  }
+
+  // 4) N8 synthetic row: 20% × max(0, EBITDA − Depreciación) per month
+  const baselineN8Arr = baselineEbitdaMonthly.map((e, i) => Math.max(0, e - baselineDepMonthly[i]) * IS_RATE);
+  const projectedN8Arr = projectedEbitdaMonthly.map((e, i) => Math.max(0, e - projectedDepMonthly[i]) * IS_RATE);
+  pnlByCuenta.push({
+    cuenta: 'N.PROJ.N8',
+    letter: 'N',
+    label: 'Imp. Sociedades (N8, est. 20% × EBITDA − Dep)',
+    baseline: baselineN8Arr,
+    projected: projectedN8Arr,
+    delta: projectedN8Arr.map((v, i) => v - baselineN8Arr[i]),
+    synthetic: 'n8_estimate',
+    baseline_fallback: Array(12).fill(false),
+  });
+  // Re-sort so N row lands with other N cuentas
+  pnlByCuenta.sort((a, b) => a.cuenta.localeCompare(b.cuenta));
+
   // ---- P&L totals ---------------------------------------------------------
   const baselineRevenueArr = ZERO12();
   for (const prop of Object.keys(baselineRevByPropiedadByMonth)) {
@@ -592,6 +711,14 @@ export function computeProjection(baseline, payload) {
   }
   const projectedNetCash = projectedCfo.map((v, i) => v + projectedCfi[i] + projectedCff[i]);
 
+  // Free Cash Flow (FCFF — unlevered, antes de financiamiento)
+  //   FCFF = EBITDA − N8 − Capex   (depreciation is non-cash; interest is excluded)
+  // This is the cash the business generates from operations, independent of
+  // how it's financed. Use it to size the impact of new sucursales on cash
+  // before debt service.
+  const baselineFcff = baselineEbitdaMonthly.map((e, i) => e - baselineN8Arr[i]);
+  const projectedFcff = projectedEbitdaMonthly.map((e, i) => e - projectedN8Arr[i] - capexByMonth[i]);
+
   const cashflow = {
     months: forwardMonths,
     rows: [
@@ -599,6 +726,7 @@ export function computeProjection(baseline, payload) {
       { key: 'cfi', label: 'Inversión (CFI)', baseline: baselineCfi, projected: projectedCfi, delta: projectedCfi.map((v,i)=>v-baselineCfi[i]) },
       { key: 'cff', label: 'Financiamiento (CFF)', baseline: baselineCff, projected: projectedCff, delta: projectedCff.map((v,i)=>v-baselineCff[i]) },
       { key: 'net', label: 'Cambio neto en caja', baseline: baselineNetCash, projected: projectedNetCash, delta: projectedNetCash.map((v,i)=>v-baselineNetCash[i]) },
+      { key: 'fcff', label: 'Free Cash Flow (FCFF, antes de financiamiento)', baseline: baselineFcff, projected: projectedFcff, delta: projectedFcff.map((v,i)=>v-baselineFcff[i]) },
     ],
   };
 
@@ -713,18 +841,30 @@ export function computeProjection(baseline, payload) {
   // Build cash flows specific to the new sucursales group: -down_payment at
   // t=0, then monthly net cash from operations − loan service. Sums all
   // sucursales' contributions for combined NPV/IRR/payback.
+  //
+  // Tax treatment (matches the P&L view above):
+  //   • Revenue uses sucursalRevByIdx, already net of IVA cobrado.
+  //   • cost_lines are scaled by 0.79 when the cuenta letter is IVA-eligible
+  //     (C/E/F/G/H/I/J). D (interés) and any other non-IVA cuentas stay gross.
+  //   • Depreciation is excluded (non-cash; it shields tax via N8 only).
+  //   • Marginal N8 (projectedN8 − baselineN8) is subtracted as the incremental
+  //     IS bill the new sucursales bring into MCF's consolidated tax base.
   const sucursalAnnualCash = ZERO12();
   for (let si = 0; si < sucursales.length; si++) {
     const ns = sucursales[si];
     const startIdx = ns.start_month ? monthIndex(forwardMonths, ns.start_month) : 0;
     let costsMonthly = 0;
-    for (const line of (ns.cost_lines || [])) costsMonthly += Number(line.monthly) || 0;
-    const depMonthly = (Number(ns.depreciation_annual) || 0) / 12;
+    for (const line of (ns.cost_lines || [])) {
+      const lineLetter = String(line.cuenta || '').charAt(0).toUpperCase();
+      const factor = IVA_ELIGIBLE_LETTERS.has(lineLetter) ? (1 - IVA_RATE) : 1;
+      costsMonthly += (Number(line.monthly) || 0) * factor;
+    }
     for (let i = startIdx; i < 12; i++) {
-      sucursalAnnualCash[i] += sucursalRevByIdx[si][i] - costsMonthly - depMonthly;
+      sucursalAnnualCash[i] += sucursalRevByIdx[si][i] - costsMonthly;
     }
   }
-  const annualOperatingCash = sum(sucursalAnnualCash);
+  const marginalN8 = projectedN8Arr.reduce((s, v, i) => s + v - baselineN8Arr[i], 0);
+  const annualOperatingCash = sum(sucursalAnnualCash) - marginalN8;
   const initialOutflow = -((purchasePrice * (downPaymentPct / 100)));
   const analysisYears = Math.max(1, Number(inv.analysis_period) || 5);
   const discountRate = (Number(inv.discount_rate) || 5) / 100;
@@ -750,6 +890,10 @@ export function computeProjection(baseline, payload) {
     }
   }
 
+  // Marginal annual FCFF (impact of new sucursales on the cash flow statement,
+  // before any financing): Δ in unlevered free cash flow vs. the as-is MCF.
+  const annualFcff = projectedFcff.reduce((s, v, i) => s + (v - baselineFcff[i]), 0);
+
   const investmentMetrics = {
     purchase_price: purchasePrice,
     down_payment: Math.abs(initialOutflow),
@@ -758,6 +902,7 @@ export function computeProjection(baseline, payload) {
     annual_loan_service: annualLoanService,
     annual_net_income: annualNetCash,
     annual_cash_flow: annualNetCash,
+    annual_fcff: annualFcff,
     debt_service: annualLoanService,
     npv: npvVal,
     irr: irrVal,
