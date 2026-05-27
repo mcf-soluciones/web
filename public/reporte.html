@@ -16,6 +16,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
 
+  <!-- Leaflet (only the `mapa` view uses it, but the CSS is tiny and cached) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <link rel="stylesheet" href="/css/reporte.css">
 
   <script>
@@ -2358,6 +2362,35 @@
         </div>
       </section>
 
+      <!-- ============================================================ -->
+      <!-- Mapa (laundromat explorer)                                   -->
+      <!-- ============================================================ -->
+      <section x-show="view === 'mapa'" x-cloak class="space-y-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="font-semibold text-gray-900">Mapa de lavanderías</h3>
+            <p class="text-xs text-gray-500">
+              <span x-text="(mapa.rows || []).filter(r => r.propiedad_mcf).length"></span> MCF ·
+              <span x-text="(mapa.rows || []).filter(r => !r.propiedad_mcf).length"></span> otras
+            </p>
+          </div>
+          <button @click="loadMapa()" :disabled="mapa.loading"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+            <svg x-show="!mapa.loading" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <svg x-show="mapa.loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div id="mapa-host" style="height: 70vh; min-height: 480px;"></div>
+        </div>
+
+        <template x-if="mapa.error">
+          <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700" x-text="mapa.error"></div>
+        </template>
+      </section>
+
     </div>
 
     <!-- Mobile bottom nav: 4 primary buttons + overflow "Más" sheet -->
@@ -2646,6 +2679,11 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function reportApp() {
   const now = new Date();
@@ -2659,6 +2697,7 @@ function reportApp() {
     pivot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
     financiamiento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/><circle cx="8" cy="14" r="1"/></svg>',
     calculator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>',
+    mapa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
   };
 
   return {
@@ -2669,7 +2708,10 @@ function reportApp() {
 
     // Track what is currently loaded per view, so the header can show the
     // LOADED period (not the picker) and we can flag a "Pendiente" state.
-    loaded: { hub: false, resumen: null, pnl: null, pivot: null, cashflow: null, gastos: null },
+    loaded: { hub: false, resumen: null, pnl: null, pivot: null, cashflow: null, gastos: null, mapa: false },
+
+    // Mapa state. `_map` / `_markers` are non-reactive (Leaflet manages them).
+    mapa: { loading: false, error: null, rows: [], _map: null, _markers: null },
 
     hub: null,
     hubCharts: { weekly: null, monthly: null },
@@ -2785,6 +2827,7 @@ function reportApp() {
       { id: 'financiamiento', label: 'Financiamiento', icon: icons.financiamiento, adminOnly: true },
       { id: 'pivot', label: 'Pivot Libre', icon: icons.pivot },
       { id: 'calculator', label: 'Inversión', icon: icons.calculator },
+      { id: 'mapa', label: 'Mapa', icon: icons.mapa, adminOnly: true },
     ],
 
     // Accountant mode (set by /cuentas after password): UI is locked to gastos.
@@ -2830,9 +2873,10 @@ function reportApp() {
 
       // Seed default view from hash
       const h = (location.hash || '').replace('#', '');
-      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'gastos', 'financiamiento', 'pivot', 'calculator'].includes(h)) this.view = h;
-      // Block admin-only tab on first load if no session.
+      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'gastos', 'financiamiento', 'pivot', 'calculator', 'mapa'].includes(h)) this.view = h;
+      // Block admin-only tabs on first load if no session.
       if (this.view === 'financiamiento' && !this.adminMode) this.view = 'hub';
+      if (this.view === 'mapa' && !this.adminMode) this.view = 'hub';
       // Auto-load initial data (skip Comparar — it's range-driven, user builds series first;
       // skip calculator — it's a self-contained tool with no fetched data)
       if (this.view !== 'comparar' && this.view !== 'calculator') this.refresh();
@@ -2874,6 +2918,9 @@ function reportApp() {
       if (this.view === 'comparar') {
         return `${item?.label} · hasta ${this.monthLabels[this.mm - 1]} ${this.yyyy}`;
       }
+      if (this.view === 'mapa' || this.view === 'calculator' || this.view === 'financiamiento') {
+        return item?.label || 'Reportes';
+      }
       const loaded = this.loaded[this.view];
       if (!loaded) {
         return `${item?.label || 'Reportes'} · Sin datos`;
@@ -2908,9 +2955,11 @@ function reportApp() {
       if (id === 'comparar' && this.compareData.length) this.renderCompareChart();
       if (id === 'hub' && this.hub) this.$nextTick(() => this.renderHubCharts());
       if (id === 'calculator') this.$nextTick(() => this.renderCalcCharts());
+      if (id === 'mapa') this.$nextTick(() => this.initMapa());
       // Auto-load when entering a view whose data hasn't been fetched
       const needsLoad = (id === 'hub' && !this.loaded.hub)
-        || (this.viewUsesPicker() && this.isStale());
+        || (this.viewUsesPicker() && this.isStale())
+        || (id === 'mapa' && !this.loaded.mapa);
       if (needsLoad && !this.loading) this.refresh();
     },
 
@@ -2925,6 +2974,7 @@ function reportApp() {
         else if (this.view === 'gastos') await this.loadGastos();
         else if (this.view === 'financiamiento') await this.loadFinanciamiento();
         else if (this.view === 'pivot') await this.loadPivot();
+        else if (this.view === 'mapa') await this.loadMapa();
       } catch (e) {
         console.error(e);
         alert('Error cargando: ' + (e.message || e));
@@ -3605,6 +3655,90 @@ function reportApp() {
         this.$nextTick(() => this.renderPivot());
       } finally {
         this.loading = false;
+      }
+    },
+
+    // =========================================================================
+    // Mapa tab — laundromat explorer. Phase 1: pins only (MCF + competitors).
+    // Future phases add: drawer, add-by-click, photos, census, buildings, rings.
+    // =========================================================================
+    async loadMapa() {
+      this.mapa.loading = true;
+      this.mapa.error = null;
+      try {
+        const r = await fetch('/api/laundries/list', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        this.mapa.rows = data.rows || [];
+        this.loaded.mapa = true;
+        this.$nextTick(() => this.renderMapaMarkers());
+      } catch (e) {
+        this.mapa.error = e.message || String(e);
+      } finally {
+        this.mapa.loading = false;
+      }
+    },
+
+    initMapa() {
+      // Leaflet is loaded with `defer`, so on first nav into the view it may not
+      // be ready yet. Poll briefly until window.L exists, then init once.
+      if (this.mapa._map) {
+        // Map already exists — just nudge it (Leaflet needs invalidateSize
+        // after the container becomes visible).
+        this.mapa._map.invalidateSize();
+        return;
+      }
+      const tryInit = (attempts) => {
+        if (typeof window.L === 'undefined') {
+          if (attempts <= 0) {
+            this.mapa.error = 'No se pudo cargar Leaflet';
+            return;
+          }
+          setTimeout(() => tryInit(attempts - 1), 100);
+          return;
+        }
+        const host = document.getElementById('mapa-host');
+        if (!host) return;
+        const map = window.L.map(host, { zoomControl: true })
+          .setView([40.4168, -3.7038], 11); // Madrid center
+        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
+          maxZoom: 19,
+        }).addTo(map);
+        this.mapa._map = map;
+        this.mapa._markers = window.L.layerGroup().addTo(map);
+        if (this.mapa.rows.length) this.renderMapaMarkers();
+      };
+      tryInit(50);
+    },
+
+    renderMapaMarkers() {
+      if (!this.mapa._map || !this.mapa._markers) return;
+      this.mapa._markers.clearLayers();
+      const bounds = [];
+      for (const row of this.mapa.rows) {
+        if (!Number.isFinite(row.lat) || !Number.isFinite(row.lng)) continue;
+        const isMcf = !!row.propiedad_mcf;
+        const marker = window.L.circleMarker([row.lat, row.lng], {
+          radius: isMcf ? 9 : 6,
+          color: isMcf ? '#27486b' : '#ab5070',
+          fillColor: isMcf ? '#2d6695' : '#ab5070',
+          fillOpacity: 0.85,
+          weight: 2,
+        });
+        const label = `<div style="font-family:Saira,sans-serif;font-size:12px;line-height:1.4">
+          <div style="font-weight:600">${escapeHtml(row.name || '')}</div>
+          ${row.brand ? `<div style="color:#666">${escapeHtml(row.brand)}</div>` : ''}
+          ${row.address ? `<div style="color:#666">${escapeHtml(row.address)}</div>` : ''}
+          ${isMcf ? '<div style="color:#2d6695;font-weight:600;margin-top:4px">MCF</div>' : ''}
+        </div>`;
+        marker.bindPopup(label);
+        marker.bindTooltip(row.name || '', { direction: 'top' });
+        marker.addTo(this.mapa._markers);
+        bounds.push([row.lat, row.lng]);
+      }
+      if (bounds.length > 0) {
+        this.mapa._map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
       }
     },
 
