@@ -19,6 +19,10 @@
   <!-- SheetJS (xlsx) for client-side Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+  <!-- Leaflet (only the `mapa` view uses it; CSS is small and cached) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <link rel="stylesheet" href="/css/reporte.css">
 
   <script>
@@ -3476,6 +3480,212 @@
         </div>
       </section>
 
+      <!-- ============================================================ -->
+      <!-- Mapa (laundromat explorer)                                   -->
+      <!-- ============================================================ -->
+      <section x-show="view === 'mapa'" x-cloak class="space-y-3">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 class="font-semibold text-gray-900">Mapa de lavanderías</h3>
+            <p class="text-xs text-gray-500">
+              <span x-text="(mapa.rows || []).filter(r => r.propiedad_mcf).length"></span> MCF ·
+              <span x-text="(mapa.rows || []).filter(r => !r.propiedad_mcf).length"></span> otras
+              <template x-if="mapa.addMode">
+                <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold">
+                  Modo agregar — haz click en el mapa
+                </span>
+              </template>
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="toggleAddMode()"
+              :class="mapa.addMode ? 'bg-amber-500 hover:bg-amber-600' : 'bg-accent-500 hover:bg-accent-600'"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span x-text="mapa.addMode ? 'Cancelar' : 'Añadir lavandería'"></span>
+            </button>
+            <button @click="loadMapa()" :disabled="mapa.loading"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+              <svg x-show="!mapa.loading" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <svg x-show="mapa.loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div id="mapa-host" style="height: 72vh; min-height: 480px;"
+               :class="mapa.addMode ? 'cursor-crosshair' : ''"></div>
+        </div>
+
+        <template x-if="mapa.error">
+          <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700" x-text="mapa.error"></div>
+        </template>
+      </section>
+
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Mapa drawer — pin details with inline edit                       -->
+    <!-- ================================================================ -->
+    <div x-show="mapa.drawer.open" x-cloak
+         @keydown.escape.window="closeMapaDrawer()"
+         class="fixed inset-0 z-40">
+      <div class="absolute inset-0 bg-gray-900/40" @click="closeMapaDrawer()"></div>
+      <div class="absolute top-0 right-0 h-full w-full sm:w-[420px] bg-white shadow-xl overflow-y-auto"
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0">
+        <template x-if="mapa.drawer.row">
+          <div class="p-5 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h4 class="font-semibold text-gray-900 truncate" x-text="mapa.drawer.row.name"></h4>
+                <p class="text-xs text-gray-500 truncate" x-text="mapa.drawer.row.brand || '(sin marca)'"></p>
+              </div>
+              <button @click="closeMapaDrawer()" class="text-gray-400 hover:text-gray-700 shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div class="text-[11px] text-gray-400">
+              ID <span x-text="mapa.drawer.row.id"></span> · creada
+              <span x-text="(mapa.drawer.row.created_at || '').slice(0, 10)"></span>
+            </div>
+
+            <template x-if="mapa.drawer.error">
+              <div class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700" x-text="mapa.drawer.error"></div>
+            </template>
+
+            <div class="grid grid-cols-1 gap-2">
+              <template x-for="f in mapaDrawerFields" :key="f.key">
+                <div class="flex flex-col gap-1">
+                  <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold" x-text="f.label"></label>
+
+                  <template x-if="f.type === 'bool'">
+                    <button @click="patchLaundry(f.key, !mapa.drawer.row[f.key])"
+                      :class="mapa.drawer.row[f.key] ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700'"
+                      class="self-start text-xs px-3 py-1.5 rounded-md font-medium">
+                      <span x-text="mapa.drawer.row[f.key] ? 'Sí' : 'No'"></span>
+                    </button>
+                  </template>
+
+                  <template x-if="f.type === 'textarea'">
+                    <textarea
+                      :value="mapa.drawer.row[f.key] || ''"
+                      @blur="patchLaundry(f.key, $event.target.value)"
+                      rows="3"
+                      class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+                      :placeholder="f.placeholder || ''"></textarea>
+                  </template>
+
+                  <template x-if="f.type !== 'bool' && f.type !== 'textarea'">
+                    <input
+                      :type="f.type === 'number' ? 'number' : 'text'"
+                      :step="f.type === 'number' ? (f.step || 'any') : null"
+                      :value="mapa.drawer.row[f.key] ?? ''"
+                      @blur="patchLaundry(f.key, $event.target.value)"
+                      @keydown.enter.prevent="$event.target.blur()"
+                      class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+                      :placeholder="f.placeholder || ''" />
+                  </template>
+                </div>
+              </template>
+            </div>
+
+            <div class="pt-3 border-t border-gray-200 flex items-center justify-between gap-2">
+              <span class="text-[11px] text-gray-400" x-show="mapa.drawer.saving">Guardando…</span>
+              <button @click="deleteLaundry()"
+                class="text-xs px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-700 font-medium">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Mapa modal — add new laundry from a clicked point                -->
+    <!-- ================================================================ -->
+    <div x-show="mapa.modal.open" x-cloak
+         @keydown.escape.window="closeMapaModal()"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-gray-900/50" @click="closeMapaModal()"></div>
+      <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-5 space-y-3">
+        <div class="flex items-start justify-between">
+          <h4 class="font-semibold text-gray-900">Nueva lavandería</h4>
+          <button @click="closeMapaModal()" class="text-gray-400 hover:text-gray-700">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="text-[11px] text-gray-500">
+          Coords: <span x-text="mapa.modal.lat?.toFixed?.(5)"></span>, <span x-text="mapa.modal.lng?.toFixed?.(5)"></span>
+        </div>
+
+        <div class="space-y-2">
+          <div>
+            <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Nombre <span class="text-red-500">*</span></label>
+            <input type="text" x-model="mapa.modal.name"
+              class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+              placeholder="Ej. Lavandería Atocha" />
+          </div>
+          <div>
+            <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Dirección</label>
+            <input type="text" x-model="mapa.modal.address"
+              class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+              placeholder="Auto-geocodificada" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Marca</label>
+              <input type="text" x-model="mapa.modal.brand"
+                class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
+            </div>
+            <div>
+              <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Teléfono</label>
+              <input type="text" x-model="mapa.modal.tel"
+                class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold"># Lavadoras</label>
+              <input type="number" x-model="mapa.modal.num_lavadoras"
+                class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
+            </div>
+            <div>
+              <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold"># Secadoras</label>
+              <input type="number" x-model="mapa.modal.num_secadoras"
+                class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Notas</label>
+            <textarea x-model="mapa.modal.call_notes" rows="2"
+              class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"></textarea>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" x-model="mapa.modal.propiedad_mcf" class="rounded" />
+            Es lavandería MCF
+          </label>
+        </div>
+
+        <template x-if="mapa.modal.error">
+          <div class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700" x-text="mapa.modal.error"></div>
+        </template>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button @click="closeMapaModal()" :disabled="mapa.modal.saving"
+            class="px-3 py-1.5 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium">Cancelar</button>
+          <button @click="submitMapaModal()" :disabled="mapa.modal.saving || !mapa.modal.name.trim()"
+            class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold">
+            <span x-show="!mapa.modal.saving">Crear</span>
+            <span x-show="mapa.modal.saving">Guardando…</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Mobile bottom nav: 4 primary buttons + overflow "Más" sheet -->
@@ -3779,6 +3989,7 @@ function reportApp() {
     financiamiento: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/><circle cx="8" cy="14" r="1"/></svg>',
     calculator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>',
     configuraciones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    mapa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
   };
 
   return {
@@ -3789,7 +4000,21 @@ function reportApp() {
 
     // Track what is currently loaded per view, so the header can show the
     // LOADED period (not the picker) and we can flag a "Pendiente" state.
-    loaded: { hub: false, resumen: null, pnl: null, pivot: null, cashflow: null, gastos: null, balance: null },
+    loaded: { hub: false, resumen: null, pnl: null, pivot: null, cashflow: null, gastos: null, balance: null, mapa: false },
+
+    // Mapa state. _map / _markers / _markersById are non-reactive Leaflet handles.
+    mapa: {
+      loading: false, error: null, rows: [],
+      addMode: false,                  // when true, next map click opens the add modal
+      drawer: { open: false, id: null, row: null, editing: null, saving: false, error: null },
+      modal: {
+        open: false, saving: false, error: null,
+        name: '', brand: '', address: '', lat: null, lng: null,
+        propiedad_mcf: false, num_lavadoras: '', num_secadoras: '',
+        tel: '', call_notes: '',
+      },
+      _map: null, _markers: null, _markersById: {}, _addCursor: null,
+    },
 
     hub: null,
     hubCharts: { weekly: null, monthly: null },
@@ -3989,6 +4214,7 @@ function reportApp() {
       { id: 'financiamiento', label: 'Financiamiento', icon: icons.financiamiento, adminOnly: true },
       { id: 'pivot', label: 'Pivot Libre', icon: icons.pivot },
       { id: 'calculator', label: 'Inversión', icon: icons.calculator },
+      { id: 'mapa', label: 'Mapa', icon: icons.mapa, adminOnly: true },
       { id: 'configuraciones', label: 'Configuración', icon: icons.configuraciones, adminOnly: true },
     ],
 
@@ -4058,9 +4284,9 @@ function reportApp() {
 
       // Seed default view from hash
       const h = (location.hash || '').replace('#', '');
-      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'balance', 'gastos', 'financiamiento', 'pivot', 'calculator', 'configuraciones'].includes(h)) this.view = h;
-      // Block admin-only tab on first load if no session.
-      if (this.view === 'financiamiento' && !this.adminMode) this.view = 'hub';
+      if (['hub', 'resumen', 'comparar', 'pnl', 'cashflow', 'balance', 'gastos', 'financiamiento', 'pivot', 'calculator', 'configuraciones', 'mapa'].includes(h)) this.view = h;
+      // Block admin-only tabs on first load if no session.
+      if ((this.view === 'financiamiento' || this.view === 'mapa') && !this.adminMode) this.view = 'hub';
       // Auto-load initial data (skip Comparar — it's range-driven, user builds series first)
       if (this.view !== 'comparar' && this.view !== 'calculator') this.refresh();
       // Calculator: load baseline + project list so templates dropdown isn't empty
@@ -4111,7 +4337,7 @@ function reportApp() {
         const loaded = this.loaded.balance;
         return loaded ? `${item?.label} · ${loaded.yyyy}` : `${item?.label} · Sin datos`;
       }
-      if (this.view === 'configuraciones' || this.view === 'calculator') {
+      if (this.view === 'configuraciones' || this.view === 'calculator' || this.view === 'mapa') {
         return item?.label || 'Reportes';
       }
       const loaded = this.loaded[this.view];
@@ -4156,10 +4382,12 @@ function reportApp() {
       if (id === 'comparar' && this.compareData.length) this.renderCompareChart();
       if (id === 'hub' && this.hub) this.$nextTick(() => this.renderHubCharts());
       if (id === 'calculator') this.$nextTick(() => this.renderCalcCharts());
+      if (id === 'mapa') this.$nextTick(() => this.initMapa());
       // Auto-load when entering a view whose data hasn't been fetched
       const needsLoad = (id === 'hub' && !this.loaded.hub)
         || (id === 'balance' && !this.loaded.balance)
         || (id === 'configuraciones' && !this.taxSettlements.list)
+        || (id === 'mapa' && !this.loaded.mapa)
         || (this.viewUsesPicker() && this.isStale());
       if (needsLoad && !this.loading) this.refresh();
       // Inversión: load baseline + project list once, no global picker dependency
@@ -4183,6 +4411,7 @@ function reportApp() {
         else if (this.view === 'financiamiento') await this.loadFinanciamiento();
         else if (this.view === 'pivot') await this.loadPivot();
         else if (this.view === 'configuraciones') await this.loadTaxSettlements();
+        else if (this.view === 'mapa') await this.loadMapa();
       } catch (e) {
         console.error(e);
         alert('Error cargando: ' + (e.message || e));
@@ -5026,6 +5255,281 @@ function reportApp() {
         this.$nextTick(() => this.renderPivot());
       } finally {
         this.loading = false;
+      }
+    },
+
+    // =========================================================================
+    // Mapa tab — laundromat explorer.
+    //   Phase 1: pins (MCF + competitors) from /api/laundries/list
+    //   Phase 2: side drawer with inline edit, add-by-click + Nominatim reverse-geocode
+    // Future: photos, census choropleth, buildings, catchment rings.
+    // =========================================================================
+
+    // Drawer field config. Drives the form layout AND the editable whitelist on the client.
+    // The server enforces the same whitelist via api/_lib/laundries-editable.js.
+    mapaDrawerFields: [
+      { key: 'name', label: 'Nombre', type: 'text' },
+      { key: 'brand', label: 'Marca', type: 'text' },
+      { key: 'address', label: 'Dirección', type: 'text' },
+      { key: 'tel', label: 'Teléfono', type: 'text' },
+      { key: 'propiedad_mcf', label: 'Es MCF', type: 'bool' },
+      { key: 'num_lavadoras', label: '# Lavadoras', type: 'number' },
+      { key: 'num_secadoras', label: '# Secadoras', type: 'number' },
+      { key: 'precio_lavado_15kg', label: 'Precio lavado 15kg', type: 'text' },
+      { key: 'precio_secado_15kg', label: 'Precio secado 15kg', type: 'text' },
+      { key: 'google_rating', label: 'Google rating', type: 'number', step: '0.1' },
+      { key: 'google_review_count', label: '# Reviews Google', type: 'number' },
+      { key: 'clientes_estim', label: 'Clientes/día (estim.)', type: 'number' },
+      { key: 'estado_limpieza', label: 'Estado limpieza', type: 'text' },
+      { key: 'marca_maquinas', label: 'Marca máquinas', type: 'text' },
+      { key: 'years_aprox', label: 'Antigüedad (años)', type: 'text' },
+      { key: 'interes_venta', label: 'Interés venta', type: 'text' },
+      { key: 'prioridad', label: 'Prioridad', type: 'text' },
+      { key: 'status2025', label: 'Status 2026', type: 'text' },
+      { key: 'sq_link', label: 'Speed Queen link', type: 'text' },
+      { key: 'call_notes', label: 'Notas / llamadas', type: 'textarea' },
+    ],
+
+    async loadMapa() {
+      this.mapa.loading = true;
+      this.mapa.error = null;
+      try {
+        const r = await fetch('/api/laundries/list', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        this.mapa.rows = data.rows || [];
+        this.loaded.mapa = true;
+        this.$nextTick(() => this.renderMapaMarkers());
+      } catch (e) {
+        this.mapa.error = e.message || String(e);
+      } finally {
+        this.mapa.loading = false;
+      }
+    },
+
+    initMapa() {
+      // Leaflet has `defer`, so the script may not have run yet on first visit.
+      if (this.mapa._map) {
+        // Map already built — Leaflet needs invalidateSize after the container
+        // becomes visible (Alpine x-show flips display:none).
+        this.mapa._map.invalidateSize();
+        return;
+      }
+      const tryInit = (attempts) => {
+        if (typeof window.L === 'undefined') {
+          if (attempts <= 0) { this.mapa.error = 'No se pudo cargar Leaflet'; return; }
+          setTimeout(() => tryInit(attempts - 1), 100);
+          return;
+        }
+        const host = document.getElementById('mapa-host');
+        if (!host) return;
+        const map = window.L.map(host, { zoomControl: true })
+          .setView([40.4168, -3.7038], 11); // Madrid centro
+        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
+          maxZoom: 19,
+        }).addTo(map);
+        this.mapa._map = map;
+        this.mapa._markers = window.L.layerGroup().addTo(map);
+        // Wire up generic map click for add-by-click mode.
+        map.on('click', (e) => this.onMapaClick(e));
+        if (this.mapa.rows.length) this.renderMapaMarkers();
+      };
+      tryInit(50);
+    },
+
+    renderMapaMarkers() {
+      if (!this.mapa._map || !this.mapa._markers) return;
+      this.mapa._markers.clearLayers();
+      this.mapa._markersById = {};
+      const bounds = [];
+      for (const row of this.mapa.rows) {
+        if (!Number.isFinite(row.lat) || !Number.isFinite(row.lng)) continue;
+        const isMcf = !!row.propiedad_mcf;
+        const marker = window.L.circleMarker([row.lat, row.lng], {
+          radius: isMcf ? 9 : 6,
+          color: isMcf ? '#27486b' : '#ab5070',
+          fillColor: isMcf ? '#2d6695' : '#ab5070',
+          fillOpacity: 0.85,
+          weight: 2,
+        });
+        marker.bindTooltip(row.name || '', { direction: 'top' });
+        marker.on('click', () => this.openMapaDrawer(row.id));
+        marker.addTo(this.mapa._markers);
+        this.mapa._markersById[row.id] = marker;
+        bounds.push([row.lat, row.lng]);
+      }
+      if (bounds.length > 0 && !this.mapa.drawer.open) {
+        this.mapa._map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+      }
+    },
+
+    // ----- Add-by-click flow ----------------------------------------------------
+    toggleAddMode() {
+      this.mapa.addMode = !this.mapa.addMode;
+    },
+
+    async onMapaClick(e) {
+      if (!this.mapa.addMode) return;
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      this.mapa.addMode = false;       // single-shot
+      this.mapa.modal.lat = lat;
+      this.mapa.modal.lng = lng;
+      this.mapa.modal.name = '';
+      this.mapa.modal.brand = '';
+      this.mapa.modal.address = '';
+      this.mapa.modal.tel = '';
+      this.mapa.modal.num_lavadoras = '';
+      this.mapa.modal.num_secadoras = '';
+      this.mapa.modal.call_notes = '';
+      this.mapa.modal.propiedad_mcf = false;
+      this.mapa.modal.error = null;
+      this.mapa.modal.open = true;
+      // Best-effort reverse geocode. Failure is silent — user can still type an address.
+      this.reverseGeocode(lat, lng).then(addr => {
+        if (addr && this.mapa.modal.open && !this.mapa.modal.address) {
+          this.mapa.modal.address = addr;
+        }
+      }).catch(() => {});
+    },
+
+    async reverseGeocode(lat, lng) {
+      // Nominatim usage policy: 1 req/s, descriptive User-Agent. Browsers don't
+      // let us set UA but our origin (mcfsoluciones.com) is descriptive enough,
+      // and traffic here is very low (manual pin creation).
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      const r = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+      if (!r.ok) return null;
+      const data = await r.json();
+      return data.display_name || null;
+    },
+
+    closeMapaModal() {
+      if (this.mapa.modal.saving) return;
+      this.mapa.modal.open = false;
+    },
+
+    async submitMapaModal() {
+      const m = this.mapa.modal;
+      const name = (m.name || '').trim();
+      if (!name) { m.error = 'El nombre es obligatorio'; return; }
+      m.saving = true; m.error = null;
+      try {
+        const body = {
+          name,
+          lat: m.lat, lng: m.lng,
+          brand: (m.brand || '').trim() || null,
+          address: (m.address || '').trim() || null,
+          tel: (m.tel || '').trim() || null,
+          propiedad_mcf: m.propiedad_mcf ? 1 : 0,
+          num_lavadoras: m.num_lavadoras === '' ? null : Number(m.num_lavadoras),
+          num_secadoras: m.num_secadoras === '' ? null : Number(m.num_secadoras),
+          call_notes: (m.call_notes || '').trim() || null,
+        };
+        const r = await fetch('/api/laundries/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        m.open = false;
+        await this.loadMapa();        // refresh pins
+      } catch (e) {
+        m.error = e.message || String(e);
+      } finally {
+        m.saving = false;
+      }
+    },
+
+    // ----- Drawer: inline edit --------------------------------------------------
+    openMapaDrawer(id) {
+      const row = (this.mapa.rows || []).find(r => r.id === id);
+      if (!row) return;
+      // Clone so edits don't mutate the array until /update confirms.
+      this.mapa.drawer.row = { ...row };
+      this.mapa.drawer.id = id;
+      this.mapa.drawer.error = null;
+      this.mapa.drawer.open = true;
+    },
+
+    closeMapaDrawer() {
+      if (this.mapa.drawer.saving) return;
+      this.mapa.drawer.open = false;
+      this.mapa.drawer.row = null;
+      this.mapa.drawer.id = null;
+    },
+
+    async patchLaundry(field, rawValue) {
+      const d = this.mapa.drawer;
+      if (!d.id) return;
+      const current = d.row[field];
+      // Normalize values for comparison (form returns strings even for numbers).
+      const normalized = (() => {
+        if (field === 'propiedad_mcf') return rawValue ? 1 : 0;
+        if (typeof rawValue === 'string' && rawValue.trim() === '') return null;
+        return rawValue;
+      })();
+      const normalizedCurrent = (() => {
+        if (field === 'propiedad_mcf') return current ? 1 : 0;
+        if (current === '' || current === undefined) return null;
+        return current;
+      })();
+      if (String(normalized ?? '') === String(normalizedCurrent ?? '')) return;
+
+      d.saving = true; d.error = null;
+      try {
+        const patch = { [field]: normalized };
+        const r = await fetch('/api/laundries/update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: d.id, patch }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        // Update local row + the array (so the marker recolors if propiedad_mcf changed).
+        const coerced = field === 'propiedad_mcf' ? !!normalized
+                      : (field === 'num_lavadoras' || field === 'num_secadoras'
+                         || field === 'google_review_count' || field === 'clientes_estim') ? (normalized == null ? null : Number(normalized))
+                      : (field === 'google_rating') ? (normalized == null ? null : Number(normalized))
+                      : normalized;
+        d.row[field] = coerced;
+        const idx = this.mapa.rows.findIndex(r => r.id === d.id);
+        if (idx >= 0) this.mapa.rows[idx] = { ...this.mapa.rows[idx], [field]: coerced };
+        // Re-render markers if visual fields changed.
+        if (field === 'propiedad_mcf' || field === 'lat' || field === 'lng' || field === 'name') {
+          this.renderMapaMarkers();
+        }
+      } catch (e) {
+        d.error = e.message || String(e);
+      } finally {
+        d.saving = false;
+      }
+    },
+
+    async deleteLaundry() {
+      const d = this.mapa.drawer;
+      if (!d.id) return;
+      if (!confirm(`¿Eliminar "${d.row?.name || 'esta lavandería'}"? No se puede deshacer.`)) return;
+      d.saving = true; d.error = null;
+      try {
+        const r = await fetch(`/api/laundries/delete?id=${d.id}`, { method: 'DELETE' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        this.mapa.rows = this.mapa.rows.filter(r => r.id !== d.id);
+        this.closeMapaDrawer();
+        this.renderMapaMarkers();
+      } catch (e) {
+        d.error = e.message || String(e);
+      } finally {
+        d.saving = false;
       }
     },
 
