@@ -137,5 +137,11 @@ if (-not (Test-Path $built)) { throw "tippecanoe did not produce madrid.pmtiles"
 Move-Item $built (Join-Path $outDir 'madrid.pmtiles') -Force
 $finalMb = [math]::Round((Get-Item (Join-Path $outDir 'madrid.pmtiles')).Length/1MB,1)
 
-Write-Host "`nDONE  public/geo/buildings/madrid.pmtiles = $finalMb MB ($($inputs.Count) municipios, pop >= $MinPopulation)"
-Write-Host "Update public/geo/buildings/index.json to point at madrid.pmtiles."
+Write-Host "`nTiled: public/geo/buildings/madrid.pmtiles = $finalMb MB ($($inputs.Count) municipios, pop >= $MinPopulation)"
+
+# Regenerate the building-centroid binary used by the catchment-ring panel,
+# so the tiles and the ring aggregates always describe the same building set.
+Write-Host "Building centroids.bin ..."
+& node (Join-Path $PSScriptRoot 'build-centroids.mjs')
+
+Write-Host "`nDONE. Remember to update public/geo/buildings/index.json (min_population / included_codes) if the threshold changed."
