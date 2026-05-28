@@ -1,0 +1,37 @@
+import turso from '../_lib/turso.js';
+
+/**
+ * GET /api/laundries/photos?id=<laundry_id>
+ *
+ * Returns every photo row for one laundry, ordered newest first.
+ */
+export default async function handler(req, res) {
+  setCors(res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  try {
+    const id = toInt(req.query.id);
+    if (!id) return res.status(400).json({ error: 'id is required' });
+
+    const rs = await turso.execute({
+      sql: `SELECT id, laundry_id, drive_url, caption, uploaded_by, uploaded_at
+            FROM laundry_photos
+            WHERE laundry_id = ?
+            ORDER BY uploaded_at DESC, id DESC`,
+      args: [id],
+    });
+
+    return res.status(200).json({ count: rs.rows.length, rows: rs.rows });
+  } catch (err) {
+    console.error('laundries/photos error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+function toInt(v) { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; }
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}

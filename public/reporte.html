@@ -3538,67 +3538,238 @@
            x-transition:enter-start="translate-x-full"
            x-transition:enter-end="translate-x-0">
         <template x-if="mapa.drawer.row">
-          <div class="p-5 space-y-4">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <h4 class="font-semibold text-gray-900 truncate" x-text="mapa.drawer.row.name"></h4>
-                <p class="text-xs text-gray-500 truncate" x-text="mapa.drawer.row.brand || '(sin marca)'"></p>
+          <div class="flex flex-col h-full">
+            <!-- Header -->
+            <div class="p-5 pb-3 border-b border-gray-200">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h4 class="font-semibold text-gray-900 truncate" x-text="mapa.drawer.row.name"></h4>
+                  <p class="text-xs text-gray-500 truncate" x-text="mapa.drawer.row.brand || '(sin marca)'"></p>
+                </div>
+                <button @click="closeMapaDrawer()" class="text-gray-400 hover:text-gray-700 shrink-0">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
-              <button @click="closeMapaDrawer()" class="text-gray-400 hover:text-gray-700 shrink-0">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
+              <div class="text-[11px] text-gray-400 mt-1">
+                ID <span x-text="mapa.drawer.row.id"></span> · creada
+                <span x-text="(mapa.drawer.row.created_at || '').slice(0, 10)"></span>
+              </div>
+              <!-- Tab strip -->
+              <div class="mt-3 flex gap-1 border-b border-gray-100 -mb-3">
+                <template x-for="t in [
+                  { id: 'details', label: 'Detalles' },
+                  { id: 'notes',   label: 'Notas' },
+                  { id: 'photos',  label: 'Fotos' },
+                  { id: 'files',   label: 'Archivos' },
+                ]" :key="t.id">
+                  <button @click="setDrawerTab(t.id)"
+                    :class="mapa.drawer.tab === t.id ? 'border-brand-500 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="px-3 py-2 text-xs font-medium border-b-2 transition-colors" x-text="t.label">
+                  </button>
+                </template>
+              </div>
             </div>
 
-            <div class="text-[11px] text-gray-400">
-              ID <span x-text="mapa.drawer.row.id"></span> · creada
-              <span x-text="(mapa.drawer.row.created_at || '').slice(0, 10)"></span>
-            </div>
+            <!-- Tab bodies -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-3">
+              <template x-if="mapa.drawer.error">
+                <div class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700" x-text="mapa.drawer.error"></div>
+              </template>
 
-            <template x-if="mapa.drawer.error">
-              <div class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700" x-text="mapa.drawer.error"></div>
-            </template>
+              <!-- ----- Detalles tab ----- -->
+              <div x-show="mapa.drawer.tab === 'details'" class="grid grid-cols-1 gap-2">
+                <template x-for="f in mapaDrawerFields" :key="f.key">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold" x-text="f.label"></label>
+                    <template x-if="f.type === 'bool'">
+                      <button @click="patchLaundry(f.key, !mapa.drawer.row[f.key])"
+                        :class="mapa.drawer.row[f.key] ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700'"
+                        class="self-start text-xs px-3 py-1.5 rounded-md font-medium">
+                        <span x-text="mapa.drawer.row[f.key] ? 'Sí' : 'No'"></span>
+                      </button>
+                    </template>
+                    <template x-if="f.type !== 'bool'">
+                      <input
+                        :type="f.type === 'number' ? 'number' : 'text'"
+                        :step="f.type === 'number' ? (f.step || 'any') : null"
+                        :value="mapa.drawer.row[f.key] ?? ''"
+                        @blur="patchLaundry(f.key, $event.target.value)"
+                        @keydown.enter.prevent="$event.target.blur()"
+                        class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
+                    </template>
+                  </div>
+                </template>
+              </div>
 
-            <div class="grid grid-cols-1 gap-2">
-              <template x-for="f in mapaDrawerFields" :key="f.key">
-                <div class="flex flex-col gap-1">
-                  <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold" x-text="f.label"></label>
-
-                  <template x-if="f.type === 'bool'">
-                    <button @click="patchLaundry(f.key, !mapa.drawer.row[f.key])"
-                      :class="mapa.drawer.row[f.key] ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700'"
-                      class="self-start text-xs px-3 py-1.5 rounded-md font-medium">
-                      <span x-text="mapa.drawer.row[f.key] ? 'Sí' : 'No'"></span>
+              <!-- ----- Notas tab ----- -->
+              <div x-show="mapa.drawer.tab === 'notes'" class="space-y-3">
+                <!-- Add new note -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                  <div class="flex items-center gap-2">
+                    <input type="date" x-model="mapa.drawer.notes.newDate"
+                      class="text-xs rounded-md border-gray-300 py-1" />
+                    <span class="text-[11px] text-gray-400">Fecha de la nota</span>
+                  </div>
+                  <textarea x-model="mapa.drawer.notes.newBody" rows="3"
+                    placeholder="Ej. Llamada con dueño — abierto a vender. Precio aprox. 75k."
+                    class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"></textarea>
+                  <template x-if="mapa.drawer.notes.addError">
+                    <div class="text-xs text-red-700" x-text="mapa.drawer.notes.addError"></div>
+                  </template>
+                  <div class="flex justify-end">
+                    <button @click="addLaundryNote()"
+                      :disabled="mapa.drawer.notes.adding || !mapa.drawer.notes.newBody.trim() || !mapa.drawer.notes.newDate"
+                      class="px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-xs font-semibold">
+                      <span x-show="!mapa.drawer.notes.adding">Añadir nota</span>
+                      <span x-show="mapa.drawer.notes.adding">Guardando…</span>
                     </button>
-                  </template>
+                  </div>
+                </div>
 
-                  <template x-if="f.type === 'textarea'">
-                    <textarea
-                      :value="mapa.drawer.row[f.key] || ''"
-                      @blur="patchLaundry(f.key, $event.target.value)"
-                      rows="3"
-                      class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"
-                      :placeholder="f.placeholder || ''"></textarea>
-                  </template>
+                <!-- Notes list -->
+                <template x-if="mapa.drawer.notes.loading">
+                  <div class="text-xs text-gray-400 py-3">Cargando notas…</div>
+                </template>
+                <template x-if="!mapa.drawer.notes.loading && (mapa.drawer.notes.list || []).length === 0">
+                  <div class="text-xs text-gray-400 py-3">Sin notas todavía.</div>
+                </template>
+                <template x-for="n in (mapa.drawer.notes.list || [])" :key="n.id">
+                  <div class="border border-gray-200 rounded-lg p-3 space-y-1">
+                    <!-- View mode -->
+                    <template x-if="mapa.drawer.notes.editingId !== n.id">
+                      <div>
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="text-xs font-semibold text-gray-700" x-text="n.note_date"></div>
+                          <div class="flex items-center gap-1">
+                            <button @click="startEditNote(n)" class="text-[11px] text-gray-500 hover:text-brand-600">Editar</button>
+                            <span class="text-gray-300">·</span>
+                            <button @click="deleteLaundryNote(n.id)" class="text-[11px] text-red-600 hover:text-red-800">Eliminar</button>
+                          </div>
+                        </div>
+                        <div class="text-sm text-gray-800 whitespace-pre-wrap mt-1" x-text="n.body"></div>
+                        <div class="text-[10px] text-gray-400 mt-1" x-text="n.author ? ('por ' + n.author) : ''"></div>
+                      </div>
+                    </template>
+                    <!-- Edit mode -->
+                    <template x-if="mapa.drawer.notes.editingId === n.id">
+                      <div class="space-y-2">
+                        <input type="date" x-model="mapa.drawer.notes.editingDate"
+                          class="text-xs rounded-md border-gray-300 py-1" />
+                        <textarea x-model="mapa.drawer.notes.editingBody" rows="3"
+                          class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"></textarea>
+                        <div class="flex justify-end gap-1">
+                          <button @click="cancelEditNote()"
+                            class="px-2.5 py-1 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-medium">Cancelar</button>
+                          <button @click="saveEditNote()"
+                            :disabled="mapa.drawer.notes.editSaving || !mapa.drawer.notes.editingBody.trim()"
+                            class="px-2.5 py-1 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-xs font-semibold">
+                            <span x-show="!mapa.drawer.notes.editSaving">Guardar</span>
+                            <span x-show="mapa.drawer.notes.editSaving">…</span>
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
 
-                  <template x-if="f.type !== 'bool' && f.type !== 'textarea'">
-                    <input
-                      :type="f.type === 'number' ? 'number' : 'text'"
-                      :step="f.type === 'number' ? (f.step || 'any') : null"
-                      :value="mapa.drawer.row[f.key] ?? ''"
-                      @blur="patchLaundry(f.key, $event.target.value)"
-                      @keydown.enter.prevent="$event.target.blur()"
-                      class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"
-                      :placeholder="f.placeholder || ''" />
+              <!-- ----- Fotos tab ----- -->
+              <div x-show="mapa.drawer.tab === 'photos'" class="space-y-3">
+                <label class="flex flex-col gap-1 cursor-pointer">
+                  <span class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Subir foto</span>
+                  <input type="file" accept="image/*" capture="environment"
+                    @change="uploadLaundryPhoto($event)"
+                    :disabled="mapa.drawer.photos.uploading"
+                    class="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-brand-500 file:text-white hover:file:bg-brand-600 disabled:opacity-50" />
+                </label>
+                <template x-if="mapa.drawer.photos.uploadError">
+                  <div class="text-xs text-red-700" x-text="mapa.drawer.photos.uploadError"></div>
+                </template>
+                <div x-show="mapa.drawer.photos.uploading" class="text-xs text-gray-500">Subiendo…</div>
+
+                <template x-if="mapa.drawer.photos.loading">
+                  <div class="text-xs text-gray-400 py-3">Cargando fotos…</div>
+                </template>
+                <template x-if="!mapa.drawer.photos.loading && (mapa.drawer.photos.list || []).length === 0">
+                  <div class="text-xs text-gray-400 py-3">Sin fotos todavía.</div>
+                </template>
+                <div class="grid grid-cols-2 gap-2">
+                  <template x-for="p in (mapa.drawer.photos.list || [])" :key="p.id">
+                    <div class="relative group border border-gray-200 rounded-lg overflow-hidden">
+                      <a :href="p.drive_url" target="_blank" rel="noopener" class="block aspect-square bg-gray-100">
+                        <img :src="driveThumbUrl(p.drive_url)"
+                             @error="$event.target.style.display='none'"
+                             class="w-full h-full object-cover"
+                             alt="" />
+                      </a>
+                      <button @click="deleteLaundryPhoto(p.id)"
+                        title="Eliminar foto"
+                        class="absolute top-1 right-1 bg-white/90 hover:bg-red-50 text-red-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                      <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent text-white text-[10px] px-2 py-1">
+                        <span x-text="(p.uploaded_at || '').slice(0, 10)"></span>
+                      </div>
+                    </div>
                   </template>
                 </div>
-              </template>
+              </div>
+
+              <!-- ----- Archivos tab ----- -->
+              <div x-show="mapa.drawer.tab === 'files'" class="space-y-3">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                  <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Categoría (opcional)</label>
+                  <input type="text" x-model="mapa.drawer.files.newCategory"
+                    placeholder="contrato, plano, presupuesto…"
+                    class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
+                  <label class="flex flex-col gap-1 cursor-pointer">
+                    <span class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Subir archivo</span>
+                    <input type="file"
+                      @change="uploadLaundryFile($event)"
+                      :disabled="mapa.drawer.files.uploading"
+                      class="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-brand-500 file:text-white hover:file:bg-brand-600 disabled:opacity-50" />
+                  </label>
+                  <template x-if="mapa.drawer.files.uploadError">
+                    <div class="text-xs text-red-700" x-text="mapa.drawer.files.uploadError"></div>
+                  </template>
+                  <div x-show="mapa.drawer.files.uploading" class="text-xs text-gray-500">Subiendo…</div>
+                </div>
+
+                <template x-if="mapa.drawer.files.loading">
+                  <div class="text-xs text-gray-400 py-3">Cargando archivos…</div>
+                </template>
+                <template x-if="!mapa.drawer.files.loading && (mapa.drawer.files.list || []).length === 0">
+                  <div class="text-xs text-gray-400 py-3">Sin archivos todavía.</div>
+                </template>
+                <template x-for="f in (mapa.drawer.files.list || [])" :key="f.id">
+                  <div class="flex items-start gap-2 border border-gray-200 rounded-lg p-3">
+                    <div class="shrink-0 w-8 h-8 rounded bg-brand-50 text-brand-600 flex items-center justify-center">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <a :href="f.drive_url" target="_blank" rel="noopener"
+                        class="text-sm font-medium text-brand-600 hover:underline truncate block" x-text="f.file_name"></a>
+                      <div class="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
+                        <span x-text="(f.uploaded_at || '').slice(0, 10)"></span>
+                        <template x-if="f.category"><span class="px-1.5 py-0.5 rounded bg-gray-100" x-text="f.category"></span></template>
+                      </div>
+                    </div>
+                    <button @click="deleteLaundryFile(f.id)" title="Eliminar"
+                      class="shrink-0 text-red-600 hover:text-red-800">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+                </template>
+              </div>
             </div>
 
-            <div class="pt-3 border-t border-gray-200 flex items-center justify-between gap-2">
+            <!-- Footer with destructive action — always visible -->
+            <div class="p-3 border-t border-gray-200 flex items-center justify-between gap-2">
               <span class="text-[11px] text-gray-400" x-show="mapa.drawer.saving">Guardando…</span>
+              <span x-show="!mapa.drawer.saving"></span>
               <button @click="deleteLaundry()"
                 class="text-xs px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-700 font-medium">
-                Eliminar
+                Eliminar lavandería
               </button>
             </div>
           </div>
@@ -3662,15 +3833,11 @@
                 class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500" />
             </div>
           </div>
-          <div>
-            <label class="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">Notas</label>
-            <textarea x-model="mapa.modal.call_notes" rows="2"
-              class="w-full text-sm rounded-md border-gray-300 focus:ring-brand-500 focus:border-brand-500"></textarea>
-          </div>
           <label class="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" x-model="mapa.modal.propiedad_mcf" class="rounded" />
             Es lavandería MCF
           </label>
+          <p class="text-[11px] text-gray-400">Las notas y archivos se agregan después desde la barra lateral.</p>
         </div>
 
         <template x-if="mapa.modal.error">
@@ -3964,6 +4131,10 @@ function recomputeTotal(rows) {
     .filter(r => r.es_inversion !== 'Si')
     .reduce((s, r) => s + (Number(r.importe_total) || 0), 0);
 }
+function todayYmd() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -4007,14 +4178,24 @@ function reportApp() {
     mapa: {
       loading: false, error: null, rows: [],
       addMode: false,                  // when true, next map click opens the add modal
-      drawer: { open: false, id: null, row: null, editing: null, saving: false, error: null },
+      drawer: {
+        open: false, id: null, row: null, saving: false, error: null,
+        tab: 'details',                // 'details' | 'notes' | 'photos' | 'files'
+        notes: {
+          list: null, loading: false, error: null,
+          newDate: '', newBody: '', adding: false, addError: null,
+          editingId: null, editingDate: '', editingBody: '', editSaving: false,
+        },
+        photos: { list: null, loading: false, error: null, uploading: false, uploadError: null },
+        files:  { list: null, loading: false, error: null, uploading: false, uploadError: null, newCategory: '' },
+      },
       modal: {
         open: false, saving: false, error: null,
         name: '', brand: '', address: '', lat: null, lng: null,
         propiedad_mcf: false, num_lavadoras: '', num_secadoras: '',
-        tel: '', call_notes: '',
+        tel: '',
       },
-      _map: null, _markers: null, _markersById: {}, _addCursor: null,
+      _map: null, _markers: null, _markersById: {},
     },
 
     hub: null,
@@ -5288,7 +5469,6 @@ function reportApp() {
       { key: 'prioridad', label: 'Prioridad', type: 'text' },
       { key: 'status2025', label: 'Status 2026', type: 'text' },
       { key: 'sq_link', label: 'Speed Queen link', type: 'text' },
-      { key: 'call_notes', label: 'Notas / llamadas', type: 'textarea' },
     ],
 
     async loadMapa() {
@@ -5383,7 +5563,6 @@ function reportApp() {
       this.mapa.modal.tel = '';
       this.mapa.modal.num_lavadoras = '';
       this.mapa.modal.num_secadoras = '';
-      this.mapa.modal.call_notes = '';
       this.mapa.modal.propiedad_mcf = false;
       this.mapa.modal.error = null;
       this.mapa.modal.open = true;
@@ -5426,7 +5605,6 @@ function reportApp() {
           propiedad_mcf: m.propiedad_mcf ? 1 : 0,
           num_lavadoras: m.num_lavadoras === '' ? null : Number(m.num_lavadoras),
           num_secadoras: m.num_secadoras === '' ? null : Number(m.num_secadoras),
-          call_notes: (m.call_notes || '').trim() || null,
         };
         const r = await fetch('/api/laundries/create', {
           method: 'POST',
@@ -5450,11 +5628,20 @@ function reportApp() {
     openMapaDrawer(id) {
       const row = (this.mapa.rows || []).find(r => r.id === id);
       if (!row) return;
+      const d = this.mapa.drawer;
       // Clone so edits don't mutate the array until /update confirms.
-      this.mapa.drawer.row = { ...row };
-      this.mapa.drawer.id = id;
-      this.mapa.drawer.error = null;
-      this.mapa.drawer.open = true;
+      d.row = { ...row };
+      d.id = id;
+      d.error = null;
+      d.tab = 'details';
+      // Reset per-pin sub-state — null `list` is the "not loaded yet" sentinel
+      // so each tab triggers its own lazy load via setDrawerTab.
+      d.notes  = { list: null, loading: false, error: null,
+                   newDate: todayYmd(), newBody: '', adding: false, addError: null,
+                   editingId: null, editingDate: '', editingBody: '', editSaving: false };
+      d.photos = { list: null, loading: false, error: null, uploading: false, uploadError: null };
+      d.files  = { list: null, loading: false, error: null, uploading: false, uploadError: null, newCategory: '' };
+      d.open = true;
     },
 
     closeMapaDrawer() {
@@ -5531,6 +5718,254 @@ function reportApp() {
         d.error = e.message || String(e);
       } finally {
         d.saving = false;
+      }
+    },
+
+    // ----- Drawer tabs ----------------------------------------------------------
+    setDrawerTab(tab) {
+      this.mapa.drawer.tab = tab;
+      // Lazy-load each tab's data the first time it's opened.
+      if (tab === 'notes'  && this.mapa.drawer.notes.list  === null) this.loadLaundryNotes();
+      if (tab === 'photos' && this.mapa.drawer.photos.list === null) this.loadLaundryPhotos();
+      if (tab === 'files'  && this.mapa.drawer.files.list  === null) this.loadLaundryFiles();
+    },
+
+    // ----- Notes (dated) --------------------------------------------------------
+    async loadLaundryNotes() {
+      const d = this.mapa.drawer;
+      if (!d.id) return;
+      d.notes.loading = true; d.notes.error = null;
+      try {
+        const r = await fetch(`/api/laundries/notes?id=${d.id}`, { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        d.notes.list = data.rows || [];
+      } catch (e) {
+        d.notes.error = e.message || String(e);
+      } finally {
+        d.notes.loading = false;
+      }
+    },
+
+    async addLaundryNote() {
+      const d = this.mapa.drawer;
+      const n = d.notes;
+      if (!d.id || !n.newBody.trim() || !n.newDate) return;
+      n.adding = true; n.addError = null;
+      try {
+        const r = await fetch('/api/laundries/note-create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            laundry_id: d.id,
+            note_date: n.newDate,
+            body: n.newBody,
+            author: this.mcfUserForUploads(),
+          }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        n.newBody = '';                       // keep date as-is for rapid entry
+        await this.loadLaundryNotes();
+      } catch (e) {
+        n.addError = e.message || String(e);
+      } finally {
+        n.adding = false;
+      }
+    },
+
+    startEditNote(note) {
+      const n = this.mapa.drawer.notes;
+      n.editingId = note.id;
+      n.editingDate = note.note_date;
+      n.editingBody = note.body;
+    },
+    cancelEditNote() {
+      const n = this.mapa.drawer.notes;
+      n.editingId = null; n.editingDate = ''; n.editingBody = '';
+    },
+    async saveEditNote() {
+      const n = this.mapa.drawer.notes;
+      if (!n.editingId || !n.editingBody.trim()) return;
+      n.editSaving = true;
+      try {
+        const r = await fetch('/api/laundries/note-update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: n.editingId,
+            patch: { note_date: n.editingDate, body: n.editingBody },
+          }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        this.cancelEditNote();
+        await this.loadLaundryNotes();
+      } catch (e) {
+        alert('Error guardando nota: ' + (e.message || e));
+      } finally {
+        n.editSaving = false;
+      }
+    },
+    async deleteLaundryNote(noteId) {
+      if (!confirm('¿Eliminar esta nota?')) return;
+      try {
+        const r = await fetch(`/api/laundries/note-delete?id=${noteId}`, { method: 'DELETE' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        this.mapa.drawer.notes.list = (this.mapa.drawer.notes.list || []).filter(n => n.id !== noteId);
+      } catch (e) {
+        alert('Error eliminando nota: ' + (e.message || e));
+      }
+    },
+
+    // ----- Photos ---------------------------------------------------------------
+    async loadLaundryPhotos() {
+      const d = this.mapa.drawer;
+      if (!d.id) return;
+      d.photos.loading = true; d.photos.error = null;
+      try {
+        const r = await fetch(`/api/laundries/photos?id=${d.id}`, { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        d.photos.list = data.rows || [];
+      } catch (e) {
+        d.photos.error = e.message || String(e);
+      } finally {
+        d.photos.loading = false;
+      }
+    },
+
+    async uploadLaundryPhoto(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const d = this.mapa.drawer;
+      d.photos.uploading = true; d.photos.uploadError = null;
+      try {
+        const base64 = await fileToBase64(file);
+        const r = await fetch('/api/laundries/photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            laundry_id: d.id,
+            file: { name: file.name, type: file.type, content: base64 },
+            uploaded_by: this.mcfUserForUploads(),
+          }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        event.target.value = '';            // allow re-uploading the same file
+        await this.loadLaundryPhotos();
+      } catch (e) {
+        d.photos.uploadError = e.message || String(e);
+      } finally {
+        d.photos.uploading = false;
+      }
+    },
+
+    async deleteLaundryPhoto(photoId) {
+      if (!confirm('¿Eliminar esta foto?')) return;
+      try {
+        const r = await fetch(`/api/laundries/photo-delete?id=${photoId}`, { method: 'DELETE' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        this.mapa.drawer.photos.list = (this.mapa.drawer.photos.list || []).filter(p => p.id !== photoId);
+      } catch (e) {
+        alert('Error eliminando foto: ' + (e.message || e));
+      }
+    },
+
+    // Drive thumbnail URL trick: works for files in folders that are
+    // "Anyone with the link can view" or shared with the viewer's workspace.
+    // Onerror in the template hides the broken img and the user falls back to
+    // clicking through to Drive.
+    driveThumbUrl(driveUrl) {
+      const m = String(driveUrl || '').match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (!m) return '';
+      return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`;
+    },
+
+    // ----- Files (arbitrary) ----------------------------------------------------
+    async loadLaundryFiles() {
+      const d = this.mapa.drawer;
+      if (!d.id) return;
+      d.files.loading = true; d.files.error = null;
+      try {
+        const r = await fetch(`/api/laundries/files?id=${d.id}`, { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        d.files.list = data.rows || [];
+      } catch (e) {
+        d.files.error = e.message || String(e);
+      } finally {
+        d.files.loading = false;
+      }
+    },
+
+    async uploadLaundryFile(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const d = this.mapa.drawer;
+      d.files.uploading = true; d.files.uploadError = null;
+      try {
+        const base64 = await fileToBase64(file);
+        const r = await fetch('/api/laundries/file-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            laundry_id: d.id,
+            file: { name: file.name, type: file.type, content: base64 },
+            category: d.files.newCategory || null,
+            uploaded_by: this.mcfUserForUploads(),
+          }),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        event.target.value = '';
+        d.files.newCategory = '';
+        await this.loadLaundryFiles();
+      } catch (e) {
+        d.files.uploadError = e.message || String(e);
+      } finally {
+        d.files.uploading = false;
+      }
+    },
+
+    async deleteLaundryFile(fileId) {
+      if (!confirm('¿Eliminar este archivo?')) return;
+      try {
+        const r = await fetch(`/api/laundries/file-delete?id=${fileId}`, { method: 'DELETE' });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        this.mapa.drawer.files.list = (this.mapa.drawer.files.list || []).filter(f => f.id !== fileId);
+      } catch (e) {
+        alert('Error eliminando archivo: ' + (e.message || e));
+      }
+    },
+
+    // Pull the mcf_user identifier from the admin session if available.
+    // Used to stamp uploads and notes with the operator who saved them.
+    mcfUserForUploads() {
+      try {
+        const raw = sessionStorage.getItem('mcf_admin_authenticated');
+        const data = raw ? JSON.parse(raw) : null;
+        return data?.user || data?.username || null;
+      } catch {
+        return null;
       }
     },
 

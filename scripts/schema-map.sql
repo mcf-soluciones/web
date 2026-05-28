@@ -47,7 +47,37 @@ CREATE TABLE IF NOT EXISTS laundry_photos (
 );
 CREATE INDEX IF NOT EXISTS idx_laundry_photos_laundry ON laundry_photos(laundry_id);
 
--- 3. Census indicators per sección censal per year. Drives the choropleth layer.
+-- 3. Arbitrary file attachments (contracts, planos, PDFs). Same Drive folder
+--    as photos, but tracked separately so the UI can show them as a download
+--    list rather than a thumbnail grid.
+CREATE TABLE IF NOT EXISTS laundry_files (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  laundry_id INTEGER NOT NULL REFERENCES laundries(id) ON DELETE CASCADE,
+  drive_url TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  mime_type TEXT,
+  category TEXT,                     -- free text: 'contrato' | 'plano' | etc.
+  uploaded_by TEXT,
+  uploaded_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_laundry_files_laundry ON laundry_files(laundry_id);
+
+-- 4. Dated notes log per laundry. Replaces the free-text call_notes for any
+--    timestamped observations (calls, visits, market intel). The legacy
+--    laundries.call_notes column is kept for backwards compatibility but
+--    new entries go here.
+CREATE TABLE IF NOT EXISTS laundry_notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  laundry_id INTEGER NOT NULL REFERENCES laundries(id) ON DELETE CASCADE,
+  note_date TEXT NOT NULL,           -- ISO YYYY-MM-DD
+  body TEXT NOT NULL,
+  author TEXT,                       -- mcf_user
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_laundry_notes_laundry ON laundry_notes(laundry_id, note_date DESC);
+
+-- 5. Census indicators per sección censal per year. Drives the choropleth layer.
 CREATE TABLE IF NOT EXISTS census_indicators (
   seccion_id TEXT NOT NULL,          -- INE CUSEC: 10-digit code
   barrio_id TEXT,
