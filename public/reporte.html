@@ -4195,7 +4195,7 @@ function reportApp() {
         propiedad_mcf: false, num_lavadoras: '', num_secadoras: '',
         tel: '',
       },
-      _map: null, _markers: null, _markersById: {},
+      _map: null, _layers: null, _markersById: {},
     },
 
     hub: null,
@@ -5511,17 +5511,36 @@ function reportApp() {
           maxZoom: 19,
         }).addTo(map);
         this.mapa._map = map;
-        this.mapa._markers = window.L.layerGroup().addTo(map);
+        // Separate layer groups so each can be toggled independently in the
+        // layers control. The `_markers` group is the catch-all for both
+        // MCF and competitor pins; _layers.mcf / _layers.others let the user
+        // hide one or the other.
+        this.mapa._layers = {
+          mcf:    window.L.layerGroup().addTo(map),
+          others: window.L.layerGroup().addTo(map),
+          zones:  window.L.layerGroup(),       // not added by default; toggled on by user
+        };
+        // Layers control (top-right). Order matters — first added shows on top.
+        window.L.control.layers(null, {
+          'Lavanderías MCF': this.mapa._layers.mcf,
+          'Otras lavanderías': this.mapa._layers.others,
+          'Zonas comerciales': this.mapa._layers.zones,
+        }, { collapsed: false, position: 'topright' }).addTo(map);
         // Wire up generic map click for add-by-click mode.
         map.on('click', (e) => this.onMapaClick(e));
         if (this.mapa.rows.length) this.renderMapaMarkers();
+        // Fire-and-forget: load static overlays. Each one fails gracefully if
+        // the file isn't deployed yet (e.g. zones GeoJSON not generated).
+        this.loadMapaZones();
       };
       tryInit(50);
     },
 
     renderMapaMarkers() {
-      if (!this.mapa._map || !this.mapa._markers) return;
-      this.mapa._markers.clearLayers();
+      const L = this.mapa._layers;
+      if (!this.mapa._map || !L) return;
+      L.mcf.clearLayers();
+      L.others.clearLayers();
       this.mapa._markersById = {};
       const bounds = [];
       for (const row of this.mapa.rows) {
@@ -5536,12 +5555,37 @@ function reportApp() {
         });
         marker.bindTooltip(row.name || '', { direction: 'top' });
         marker.on('click', () => this.openMapaDrawer(row.id));
-        marker.addTo(this.mapa._markers);
+        marker.addTo(isMcf ? L.mcf : L.others);
         this.mapa._markersById[row.id] = marker;
         bounds.push([row.lat, row.lng]);
       }
       if (bounds.length > 0 && !this.mapa.drawer.open) {
         this.mapa._map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+      }
+    },
+
+    // ----- Static overlays ------------------------------------------------------
+    // Load commercial-zone polygons exported from Google MyMaps and converted
+    // via scripts/geo/kml-to-geojson.mjs. If the file isn't deployed yet, this
+    // silently noops so the rest of the map still works.
+    async loadMapaZones() {
+      const layer = this.mapa._layers?.zones;
+      if (!layer) return;
+      try {
+        const r = await fetch('/geo/zonas-comerciales.geojson', { cache: 'force-cache' });
+        if (!r.ok) return;   // 404 == not generated yet — silent.
+        const data = await r.json();
+        layer.clearLayers();
+        window.L.geoJSON(data, {
+          style: { color: '#6e5558', weight: 2, fillColor: '#ab5070', fillOpacity: 0.08 },
+          onEachFeature: (feat, lyr) => {
+            const name = feat?.properties?.name || feat?.properties?.Name || '';
+            if (name) lyr.bindTooltip(name, { sticky: true });
+          },
+        }).addTo(layer);
+      } catch (e) {
+        // Network error / parse error — log but don't surface; this layer is optional.
+        console.warn('Zonas comerciales:', e);
       }
     },
 
