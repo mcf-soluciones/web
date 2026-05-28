@@ -3513,6 +3513,46 @@
           </div>
         </div>
 
+        <!-- Census picker: only visible when the censo layer is toggled on -->
+        <div x-show="mapa.census.on" x-cloak
+             class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Censo</span>
+          <select x-model="mapa.census.indicator" @change="refreshCensus()"
+            class="rounded-md border-gray-300 text-xs py-1">
+            <template x-for="ind in (mapa.census.available?.indicators || ['poblacion','renta_media','renta_hogar','pct_extranjero','hogar_size','alquiler_m2'])" :key="ind">
+              <option :value="ind" x-text="censusIndicatorLabel(ind)"></option>
+            </template>
+          </select>
+          <select x-model.number="mapa.census.yyyy" @change="refreshCensus()"
+            class="rounded-md border-gray-300 text-xs py-1">
+            <template x-if="!mapa.census.available">
+              <option :value="mapa.census.yyyy" x-text="mapa.census.yyyy || '—'"></option>
+            </template>
+            <template x-for="y in (mapa.census.available?.years || [])" :key="y.yyyy">
+              <option :value="y.yyyy"
+                :disabled="(y.indicators?.[mapa.census.indicator] || 0) === 0"
+                x-text="y.yyyy + ((y.indicators?.[mapa.census.indicator] || 0) === 0 ? ' (sin datos)' : '')"></option>
+            </template>
+          </select>
+          <span x-show="mapa.census.loading" class="text-[11px] text-gray-500">Cargando…</span>
+          <template x-if="mapa.census.error">
+            <span class="text-[11px] text-red-600" x-text="mapa.census.error"></span>
+          </template>
+
+          <!-- Inline legend -->
+          <template x-if="mapa.census.legend && !mapa.census.error">
+            <div class="ml-auto flex items-center gap-1">
+              <span class="text-[11px] text-gray-500" x-text="`${mapa.census.legend.indicatorLabel} (${mapa.census.legend.yyyy})`"></span>
+              <template x-for="(c, i) in mapa.census.legend.colors" :key="i">
+                <div class="flex items-center gap-1">
+                  <span class="inline-block w-4 h-3" :style="`background:${c}`"></span>
+                  <span class="text-[10px] text-gray-600" x-text="formatCensusBreak(mapa.census.legend.breaks[i])"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
         <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
           <div id="mapa-host" style="height: 72vh; min-height: 480px;"
                :class="mapa.addMode ? 'cursor-crosshair' : ''"></div>
@@ -4135,6 +4175,21 @@ function todayYmd() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+// Given a sorted ascending array of numeric samples and a bin count n,
+// returns n-1 breakpoints that split the data into n quantiles. The first
+// bin's upper bound is breaks[0]; the last bin's lower bound is breaks[n-2].
+// We return exactly n breaks where the last entry is the data max — this
+// makes the color-bucketing logic (loop "if v <= breaks[i]") cleaner.
+function computeQuantileBreaks(sortedSamples, binCount) {
+  const n = sortedSamples.length;
+  if (n === 0 || binCount < 1) return [];
+  const breaks = [];
+  for (let i = 1; i <= binCount; i++) {
+    const idx = Math.min(n - 1, Math.floor((i / binCount) * n) - 1);
+    breaks.push(sortedSamples[Math.max(0, idx)]);
+  }
+  return breaks;
+}
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -4178,6 +4233,17 @@ function reportApp() {
     mapa: {
       loading: false, error: null, rows: [],
       addMode: false,                  // when true, next map click opens the add modal
+      // Census choropleth controls. Exposed via the layers panel + a top-bar
+      // picker (year + indicator). Data comes from /api/census/values; geometry
+      // from /geo/secciones.geojson (generated locally — gracefully noop if absent).
+      census: {
+        on: false,
+        indicator: 'renta_media',
+        yyyy: null,                   // set on first /available response
+        available: null,              // { indicators, years[] } from /api/census/available
+        legend: null,                 // { breaks: number[], colors: string[], indicatorLabel: string }
+        loading: false, error: null,
+      },
       drawer: {
         open: false, id: null, row: null, saving: false, error: null,
         tab: 'details',                // 'details' | 'notes' | 'photos' | 'files'
@@ -5519,13 +5585,18 @@ function reportApp() {
           mcf:    window.L.layerGroup().addTo(map),
           others: window.L.layerGroup().addTo(map),
           zones:  window.L.layerGroup(),       // not added by default; toggled on by user
+          census: window.L.layerGroup(),       // sección censal choropleth
         };
         // Layers control (top-right). Order matters — first added shows on top.
         window.L.control.layers(null, {
           'Lavanderías MCF': this.mapa._layers.mcf,
           'Otras lavanderías': this.mapa._layers.others,
           'Zonas comerciales': this.mapa._layers.zones,
+          'Censo (sección)': this.mapa._layers.census,
         }, { collapsed: false, position: 'topright' }).addTo(map);
+        // React to toggles so we can lazy-load heavy data and show the legend.
+        map.on('overlayadd', (e) => this.onOverlayAdd(e));
+        map.on('overlayremove', (e) => this.onOverlayRemove(e));
         // Wire up generic map click for add-by-click mode.
         map.on('click', (e) => this.onMapaClick(e));
         if (this.mapa.rows.length) this.renderMapaMarkers();
@@ -5534,6 +5605,19 @@ function reportApp() {
         this.loadMapaZones();
       };
       tryInit(50);
+    },
+
+    onOverlayAdd(e) {
+      if (e.layer === this.mapa._layers?.census) {
+        this.mapa.census.on = true;
+        this.loadCensusChoropleth();
+      }
+    },
+    onOverlayRemove(e) {
+      if (e.layer === this.mapa._layers?.census) {
+        this.mapa.census.on = false;
+        this.mapa.census.legend = null;
+      }
     },
 
     renderMapaMarkers() {
@@ -5586,6 +5670,122 @@ function reportApp() {
       } catch (e) {
         // Network error / parse error — log but don't surface; this layer is optional.
         console.warn('Zonas comerciales:', e);
+      }
+    },
+
+    // ----- Census choropleth ----------------------------------------------------
+    censusIndicatorLabel(key) {
+      return ({
+        poblacion: 'Población',
+        renta_media: 'Renta media',
+        renta_hogar: 'Renta hogar',
+        pct_extranjero: '% extranjero',
+        hogar_size: 'Tamaño hogar',
+        alquiler_m2: 'Alquiler €/m²',
+      })[key] || key;
+    },
+
+    // Format the upper bound of a legend bin compactly (€ 28.4k, 1.85, 12%).
+    formatCensusBreak(v) {
+      if (v == null || !Number.isFinite(v)) return '—';
+      const ind = this.mapa.census.indicator;
+      if (ind === 'pct_extranjero') return Math.round(v) + '%';
+      if (ind === 'hogar_size') return v.toFixed(2);
+      if (ind === 'poblacion') return v >= 1000 ? Math.round(v / 100) / 10 + 'k' : String(Math.round(v));
+      // renta_media / renta_hogar / alquiler_m2 — all euros
+      if (v >= 1000) return '€' + (Math.round(v / 100) / 10) + 'k';
+      return '€' + Math.round(v);
+    },
+
+    async refreshCensus() {
+      // User changed the indicator/year picker — only act if the layer is on.
+      if (this.mapa.census.on) await this.loadCensusChoropleth();
+    },
+
+    async loadCensusChoropleth() {
+      const c = this.mapa.census;
+      const layer = this.mapa._layers?.census;
+      if (!layer) return;
+      c.loading = true; c.error = null;
+      try {
+        // 1. Ensure we know which (year, indicator) combos exist.
+        if (!c.available) {
+          const r = await fetch('/api/census/available', { cache: 'no-store' });
+          if (r.ok) {
+            c.available = await r.json();
+            // Default to most recent year that has the selected indicator,
+            // falling back to the most recent year with any data.
+            if (!c.yyyy && c.available.years?.length) {
+              const withIndicator = c.available.years.find(y => (y.indicators?.[c.indicator] || 0) > 0);
+              c.yyyy = (withIndicator || c.available.years[0]).yyyy;
+            }
+          }
+        }
+        if (!c.yyyy) { c.error = 'No hay datos de censo cargados'; return; }
+
+        // 2. Fetch values for the selected indicator + year.
+        const valR = await fetch(`/api/census/values?indicator=${encodeURIComponent(c.indicator)}&yyyy=${c.yyyy}`);
+        if (!valR.ok) {
+          const err = await valR.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${valR.status}`);
+        }
+        const vals = await valR.json();
+
+        // 3. Fetch geometry. We use a slim GeoJSON of secciones for now.
+        //    feature.properties.CUSEC must match seccion_id from the API.
+        const geomR = await fetch('/geo/secciones.geojson', { cache: 'force-cache' });
+        if (!geomR.ok) {
+          c.error = 'Geometría de secciones no disponible — generar /geo/secciones.geojson';
+          return;
+        }
+        const geom = await geomR.json();
+
+        // 4. Compute color scale (5 quantile bins).
+        const samples = Object.values(vals.values).filter(Number.isFinite).sort((a, b) => a - b);
+        const breaks = computeQuantileBreaks(samples, 5);
+        const palette = ['#f7fbff', '#c6dbef', '#6baed6', '#2171b5', '#08306b'];
+        const colorFor = (v) => {
+          if (v == null || !Number.isFinite(v)) return null;
+          for (let i = 0; i < breaks.length; i++) if (v <= breaks[i]) return palette[i];
+          return palette[palette.length - 1];
+        };
+
+        layer.clearLayers();
+        window.L.geoJSON(geom, {
+          style: (feat) => {
+            const id = feat?.properties?.CUSEC || feat?.properties?.cusec || feat?.properties?.seccion_id;
+            const v = id ? vals.values[id] : null;
+            const fillColor = colorFor(v) || '#e5e7eb';
+            return {
+              color: '#9ca3af', weight: 0.5,
+              fillColor,
+              fillOpacity: v == null ? 0.05 : 0.7,
+            };
+          },
+          onEachFeature: (feat, lyr) => {
+            const id = feat?.properties?.CUSEC || feat?.properties?.cusec || feat?.properties?.seccion_id;
+            const v = id ? vals.values[id] : null;
+            const label = this.censusIndicatorLabel(c.indicator);
+            const valFmt = v == null ? '—' : Number(v).toLocaleString('es-ES', { maximumFractionDigits: 2 });
+            lyr.bindTooltip(
+              `<div style="font-family:Saira,sans-serif;font-size:12px">
+                 <div style="font-weight:600">${id || 'Sin código'}</div>
+                 <div>${label}: ${valFmt}</div>
+               </div>`,
+              { sticky: true }
+            );
+          },
+        }).addTo(layer);
+
+        c.legend = {
+          breaks, colors: palette,
+          indicatorLabel: this.censusIndicatorLabel(c.indicator),
+          yyyy: c.yyyy,
+        };
+      } catch (e) {
+        c.error = e.message || String(e);
+      } finally {
+        c.loading = false;
       }
     },
 
