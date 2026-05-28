@@ -1,0 +1,180 @@
+code,name,population
+28900,"Madrid",3422416
+28092,"Móstoles",213268
+28005,"Alcalá de Henares",199804
+28074,"Leganés",193934
+28065,"Getafe",191560
+28058,"Fuenlabrada",190496
+28007,"Alcorcón",174740
+28148,"Torrejón de Ardoz",141047
+28106,"Parla",134876
+28006,"Alcobendas",121446
+28123,"Rivas-Vaciamadrid",101637
+28127,"Las Rozas de Madrid",99193
+28134,"San Sebastián de los Reyes",94942
+28115,"Pozuelo de Alarcón",89123
+28161,"Valdemoro",83582
+28049,"Coslada",80688
+28080,"Majadahonda",73547
+28047,"Collado Villalba",67323
+28022,"Boadilla del Monte",65528
+28013,"Aranjuez",62508
+28014,"Arganda del Rey",59209
+28045,"Colmenar Viejo",56878
+28113,"Pinto",55989
+28184,"Tres Cantos",52825
+28130,"San Fernando de Henares",38969
+28015,"Arroyomolinos",37299
+28061,"Galapagar",36112
+28096,"Navalcarnero",32684
+28181,"Villaviciosa de Odón",29294
+28104,"Paracuellos de Jarama",27241
+28040,"Ciempozuelos",26046
+28152,"Torrelodones",25250
+28084,"Mejorada del Campo",24632
+28176,"Villanueva de la Cañada",23714
+28009,"Algete",21134
+28132,"San Martín de la Vega",20664
+28073,"Humanes de Madrid",20054
+28131,"San Lorenzo de El Escorial",18772
+28177,"Villanueva del Pardillo",17994
+28172,"Villalbilla",17967
+28054,"El Escorial",17262
+28068,"Guadarrama",17069
+28083,"Meco",15812
+28010,"Alpedrete",15655
+28090,"Moralzarzal",14504
+28160,"Valdemorillo",14139
+28167,"Velilla de San Antonio",14008
+28129,"San Agustín del Guadalix",13849
+28026,"Brunete",11263
+28066,"Griñón",10714
+28053,"Daganzo de Arriba",10673
+28004,"El Álamo",10413
+28149,"Torrejón de la Calzada",10366
+28086,"El Molar",10079
+28044,"Colmenarejo",9741
+28141,"Sevilla la Nueva",9694
+28082,"Manzanares el Real",9539
+28144,"Soto del Real",9436
+28075,"Loeches",9253
+28072,"Hoyo de Manzanares",9186
+28133,"San Martín de Valdeiglesias",9120
+28043,"Colmenar de Oreja",8982
+28023,"El Boalo",8548
+28091,"Morata de Tajuña",8294
+28032,"Camarma de Esteruelas",8107
+28180,"Villarejo de Salvanés",7887
+28041,"Cobeña",7742
+28154,"Torres de la Alameda",7742
+28038,"Cercedilla",7646
+28046,"Collado Mediano",7564
+28171,"Villa del Prado",7424
+28100,"Nuevo Baztán",7393
+28059,"Fuente el Saz de Jarama",7384
+28085,"Miraflores de la Sierra",7209
+28050,"Cubas de la Sagra",6984
+28067,"Guadalix de la Sierra",6912
+28033,"Campo Real",6766
+28018,"Becerril de la Sierra",6553
+28108,"Pedrezuela",6475
+28052,"Chinchón",5820
+28089,"Moraleja de Enmedio",5630
+28164,"Valdetorres de Jarama",5050
+28151,"Torrelaguna",4992
+28002,"Ajalvir",4946
+28150,"Torrejón de Velasco",4887
+28087,"Los Molinos",4812
+28125,"Robledo de Chavela",4763
+28140,"Serranillos del Valle",4632
+28162,"Valdeolmos-Alalpardo",4579
+28145,"Talamanca de Jarama",4526
+28036,"Casarrubuelos",4225
+28119,"Quijorna",3987
+28170,"Villaconejos",3487
+28008,"Aldea del Fresno",3422
+28099,"Navas del Rey",3344
+28093,"Navacerrada",3307
+28031,"Cadalso de los Vidrios",3274
+28165,"Valdilecha",3228
+28110,"Perales de Tajuña",3195
+28095,"Navalagamella",3119
+28109,"Pelayos de la Presa",3106
+28030,"La Cabrera",2952
+28174,"Villamanta",2855
+28028,"Bustarviejo",2833
+28146,"Tielmes",2807
+28137,"Los Santos de la Humosa",2797
+28051,"Chapinería",2634
+28169,"Venturada",2577
+28057,"Fresno de Torote",2547
+28035,"Carabaña",2375
+28060,"Fuentidueña de Tajo",2319
+28179,"Villar del Olmo",2274
+28168,"El Vellón",2160
+28037,"Cenicientos",2141
+28042,"Colmenar del Arroyo",2013
+28027,"Buitrago del Lozoya",1970
+28017,"Batres",1957
+28019,"Belmonte de Tajo",1919
+28183,"Zarzalejo",1870
+28056,"Fresnedillas de la Oliva",1833
+28156,"Valdeavero",1817
+28178,"Villanueva de Perales",1718
+28120,"Rascafría",1712
+28094,"Navalafuente",1703
+28175,"Villamantilla",1620
+28135,"Santa María de la Alameda",1516
+28102,"Orusco de Tajuña",1504
+28077,"Lozoyuela-Navas-Sieteiglesias",1479
+28055,"Estremera",1451
+28012,"Anchuelo",1393
+28147,"Titulcia",1393
+28116,"Pozuelo del Rey",1302
+28153,"Torremocha de Jarama",1134
+28157,"Valdelaguna",1079
+28158,"Valdemanco",1065
+28136,"Santorcaz",998
+28111,"Pezuela de las Torres",990
+28029,"Cabanillas de la Sierra",949
+28122,"Ribatejada",911
+28159,"Valdemaqueda",836
+28020,"El Berrueco",828
+28173,"Villamanrique de Tajo",820
+28048,"Corpa",795
+28185,"Puentes Viejas",774
+28011,"Ambite",701
+28155,"Valdaracete",653
+28163,"Valdepiélagos",623
+28076,"Lozoya",620
+28107,"Patones",604
+28128,"Rozas de Puerto Real",581
+28025,"Brea de Tajo",567
+28166,"Valverde de Alcalá",555
+28034,"Canencia",468
+28062,"Garganta de los Montes",415
+28101,"Olmeda de las Fuentes",409
+28063,"Gargantilla del Lozoya y Pinilla de Buitrago",401
+28088,"Montejo de la Sierra",374
+28182,"Villavieja del Lozoya",327
+28121,"Redueña",292
+28003,"Alameda del Valle",256
+28064,"Gascones",236
+28021,"Berzosa del Lozoya",234
+28070,"Horcajo de la Sierra-Aoslos",231
+28024,"Braojos",219
+28112,"Pinilla del Valle",199
+28114,"Piñuécar-Gandullas",185
+28039,"Cervera de Buitrago",161
+28097,"Navarredonda y San Mamés",154
+28117,"Prádena del Rincón",139
+28124,"Robledillo de la Jara",132
+28071,"Horcajuelo de la Sierra",111
+28016,"El Atazar",107
+28138,"La Serna del Monte",105
+28143,"Somosierra",98
+28118,"Puebla de la Sierra",93
+28069,"La Hiruela",84
+28126,"Robregordo",73
+28078,"Madarcos",70
+28001,"La Acebeda",68
