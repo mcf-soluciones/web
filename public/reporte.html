@@ -22,6 +22,9 @@
   <!-- Leaflet (only the `mapa` view uses it; CSS is small and cached) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- protomaps-leaflet renders Catastro buildings from PMTiles archives.
+       Defer + load after Leaflet (window.L). -->
+  <script defer src="https://unpkg.com/protomaps-leaflet@4.0.1/dist/protomaps-leaflet.min.js"></script>
 
   <link rel="stylesheet" href="/css/reporte.css">
 
@@ -3497,7 +3500,30 @@
               </template>
             </p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Ring controls -->
+            <div class="inline-flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
+              <button @click="toggleRing()"
+                :class="mapa.ring.placeMode ? 'bg-amber-500 text-white' : (mapa.ring.active ? 'bg-mauve-500 text-white' : 'text-gray-700 hover:bg-gray-200')"
+                class="px-2 py-1 rounded text-xs font-medium inline-flex items-center gap-1"
+                title="Coloca un anillo en el siguiente click">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+                <span x-text="mapa.ring.placeMode ? 'Click en mapa…' : 'Anillo'"></span>
+              </button>
+              <select x-model.number="mapa.ring.radiusM"
+                @change="if (mapa.ring.active && mapa.ring.lat != null) setRing(mapa.ring.lat, mapa.ring.lng)"
+                class="rounded-md border-0 bg-transparent text-xs py-0.5">
+                <option :value="300">300m</option>
+                <option :value="500">500m</option>
+                <option :value="1000">1km</option>
+                <option :value="1500">1.5km</option>
+              </select>
+              <button @click="clearRing()" x-show="mapa.ring.active" x-cloak
+                class="px-1.5 py-1 rounded text-xs text-gray-500 hover:text-red-600"
+                title="Quitar anillo">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
             <button @click="toggleAddMode()"
               :class="mapa.addMode ? 'bg-amber-500 hover:bg-amber-600' : 'bg-accent-500 hover:bg-accent-600'"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm">
@@ -3551,6 +3577,30 @@
               </template>
             </div>
           </template>
+        </div>
+
+        <!-- Buildings legend: only when the edificios layer is toggled on -->
+        <div x-show="mapa.buildings.on" x-cloak
+             class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Edificios · dwellings</span>
+          <span x-show="mapa.buildings.loading" class="text-[11px] text-gray-500">Cargando…</span>
+          <template x-if="mapa.buildings.error">
+            <span class="text-[11px] text-red-600" x-text="mapa.buildings.error"></span>
+          </template>
+          <div class="ml-auto flex items-center gap-2">
+            <template x-for="(c, i) in [
+              { color: '#f5f5f4', label: '0' },
+              { color: '#cbd5e1', label: '1–3' },
+              { color: '#7dd3fc', label: '4–10' },
+              { color: '#0284c7', label: '11–30' },
+              { color: '#1e3a8a', label: '30+' },
+            ]" :key="i">
+              <div class="flex items-center gap-1">
+                <span class="inline-block w-4 h-3 border border-gray-300" :style="`background:${c.color}`"></span>
+                <span class="text-[10px] text-gray-600" x-text="c.label"></span>
+              </div>
+            </template>
+          </div>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -4244,6 +4294,13 @@ function reportApp() {
         legend: null,                 // { breaks: number[], colors: string[], indicatorLabel: string }
         loading: false, error: null,
       },
+      // Buildings layer (Catastro footprints colored by numberOfDwellings).
+      // Loaded from per-municipality PMTiles archives under /geo/buildings/.
+      buildings: { on: false, loading: false, error: null, loaded: false },
+      // Catchment ring around a selected pin or last clicked point.
+      // 500m default (matches the R app's create_square convention).
+      // placeMode: awaiting a click to place/move. active: a ring exists.
+      ring: { placeMode: false, active: false, radiusM: 500, lat: null, lng: null, _circle: null },
       drawer: {
         open: false, id: null, row: null, saving: false, error: null,
         tab: 'details',                // 'details' | 'notes' | 'photos' | 'files'
@@ -5582,10 +5639,11 @@ function reportApp() {
         // MCF and competitor pins; _layers.mcf / _layers.others let the user
         // hide one or the other.
         this.mapa._layers = {
-          mcf:    window.L.layerGroup().addTo(map),
-          others: window.L.layerGroup().addTo(map),
-          zones:  window.L.layerGroup(),       // not added by default; toggled on by user
-          census: window.L.layerGroup(),       // sección censal choropleth
+          mcf:       window.L.layerGroup().addTo(map),
+          others:    window.L.layerGroup().addTo(map),
+          zones:     window.L.layerGroup(),    // not added by default; toggled on by user
+          census:    window.L.layerGroup(),    // sección censal choropleth
+          buildings: window.L.layerGroup(),    // Catastro footprints via PMTiles
         };
         // Layers control (top-right). Order matters — first added shows on top.
         window.L.control.layers(null, {
@@ -5593,6 +5651,7 @@ function reportApp() {
           'Otras lavanderías': this.mapa._layers.others,
           'Zonas comerciales': this.mapa._layers.zones,
           'Censo (sección)': this.mapa._layers.census,
+          'Edificios (dwellings)': this.mapa._layers.buildings,
         }, { collapsed: false, position: 'topright' }).addTo(map);
         // React to toggles so we can lazy-load heavy data and show the legend.
         map.on('overlayadd', (e) => this.onOverlayAdd(e));
@@ -5612,11 +5671,18 @@ function reportApp() {
         this.mapa.census.on = true;
         this.loadCensusChoropleth();
       }
+      if (e.layer === this.mapa._layers?.buildings) {
+        this.mapa.buildings.on = true;
+        this.loadBuildings();
+      }
     },
     onOverlayRemove(e) {
       if (e.layer === this.mapa._layers?.census) {
         this.mapa.census.on = false;
         this.mapa.census.legend = null;
+      }
+      if (e.layer === this.mapa._layers?.buildings) {
+        this.mapa.buildings.on = false;
       }
     },
 
@@ -5638,7 +5704,16 @@ function reportApp() {
           weight: 2,
         });
         marker.bindTooltip(row.name || '', { direction: 'top' });
-        marker.on('click', () => this.openMapaDrawer(row.id));
+        marker.on('click', () => {
+          // In ring place-mode, clicking a marker drops the ring on it
+          // instead of opening the drawer.
+          if (this.mapa.ring.placeMode) {
+            this.setRing(row.lat, row.lng);
+            this.mapa.ring.placeMode = false;
+          } else {
+            this.openMapaDrawer(row.id);
+          }
+        });
         marker.addTo(isMcf ? L.mcf : L.others);
         this.mapa._markersById[row.id] = marker;
         bounds.push([row.lat, row.lng]);
@@ -5789,12 +5864,121 @@ function reportApp() {
       }
     },
 
+    // ----- Buildings (Catastro footprints via PMTiles) --------------------------
+    // One PMTiles archive per municipio under /geo/buildings/<code>.pmtiles.
+    // The municipios array in /geo/buildings/index.json drives which ones to
+    // load. protomaps-leaflet does range-fetching, so even when all 179 layers
+    // are attached the browser only requests bytes for visible tiles.
+    async loadBuildings() {
+      const b = this.mapa.buildings;
+      const layer = this.mapa._layers?.buildings;
+      if (!layer) return;
+      if (b.loaded) return;                  // protomaps layer already attached
+      if (typeof window.protomapsL === 'undefined') {
+        b.error = 'protomaps-leaflet no está cargado';
+        return;
+      }
+      b.loading = true; b.error = null;
+      try {
+        const idxR = await fetch('/geo/buildings/index.json', { cache: 'force-cache' });
+        if (!idxR.ok) { b.error = 'Sin tiles de edificios — generar PMTiles'; return; }
+        const idx = await idxR.json();
+        const list = idx.municipios || [];
+        if (list.length === 0) {
+          b.error = 'public/geo/buildings/index.json está vacío (correr build-buildings.sh y añadir entrada)';
+          return;
+        }
+        // Color scale by numberOfDwellings. Hand-picked breakpoints — single
+        // dwellings dominate the count so the scale is exponential-ish.
+        const palette = ['#f5f5f4', '#cbd5e1', '#7dd3fc', '#0284c7', '#1e3a8a'];
+        const colorFor = (d) => {
+          if (d == null || d === 0) return palette[0];
+          if (d <= 3)  return palette[1];
+          if (d <= 10) return palette[2];
+          if (d <= 30) return palette[3];
+          return palette[4];
+        };
+        // Attach one protomaps layer per municipio. They all live inside the
+        // shared `buildings` layerGroup so the layers-control toggle hides
+        // them in one click.
+        for (const m of list) {
+          const code = m.code || m;
+          const url = m.url || `/geo/buildings/${code}.pmtiles`;
+          const sublayer = window.protomapsL.leafletLayer({
+            url,
+            paintRules: [{
+              dataLayer: 'buildings',
+              symbolizer: new window.protomapsL.PolygonSymbolizer({
+                fill: (z, f) => colorFor(f.props.numberOfDwellings),
+                opacity: 0.85,
+                stroke: '#6b7280',
+                width: 0.25,
+              }),
+            }],
+          });
+          sublayer.addTo(layer);
+        }
+        b.loaded = true;
+      } catch (e) {
+        b.error = e.message || String(e);
+      } finally {
+        b.loading = false;
+      }
+    },
+
     // ----- Add-by-click flow ----------------------------------------------------
     toggleAddMode() {
       this.mapa.addMode = !this.mapa.addMode;
     },
 
+    // Drop / move / hide the catchment ring around (lat, lng). Used by the
+    // ring toolbar and by openMapaDrawer to follow the selected pin.
+    setRing(lat, lng) {
+      const r = this.mapa.ring;
+      const map = this.mapa._map;
+      if (!map) return;
+      r.lat = lat; r.lng = lng;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        if (r._circle) { map.removeLayer(r._circle); r._circle = null; }
+        r.active = false;
+        return;
+      }
+      const opts = { radius: r.radiusM, color: '#ab5070', weight: 2, fillOpacity: 0.06 };
+      if (r._circle) {
+        r._circle.setLatLng([lat, lng]);
+        r._circle.setStyle(opts);
+        r._circle.setRadius(r.radiusM);
+      } else {
+        r._circle = window.L.circle([lat, lng], opts).addTo(map);
+      }
+      r.active = true;
+    },
+
+    clearRing() {
+      const r = this.mapa.ring;
+      const map = this.mapa._map;
+      if (r._circle && map) map.removeLayer(r._circle);
+      r._circle = null; r.active = false; r.lat = null; r.lng = null;
+      r.placeMode = false;
+    },
+
+    // Toolbar button. Toggles place-mode so the next map click drops the ring.
+    // If a ring is already active, this is a "move next click" affordance.
+    toggleRing() {
+      this.mapa.ring.placeMode = !this.mapa.ring.placeMode;
+      // Don't conflict with add-mode.
+      if (this.mapa.ring.placeMode) this.mapa.addMode = false;
+    },
+
     async onMapaClick(e) {
+      // Ring placement: clicking the map while placeMode is on drops/moves
+      // the ring, then exits placeMode so subsequent clicks don't keep
+      // dragging the ring around.
+      if (this.mapa.ring.placeMode && !this.mapa.addMode) {
+        this.setRing(e.latlng.lat, e.latlng.lng);
+        this.mapa.ring.placeMode = false;
+        return;
+      }
       if (!this.mapa.addMode) return;
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;

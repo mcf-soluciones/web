@@ -1,0 +1,4 @@
+{
+  "note": "Per-municipality PMTiles index. Append an entry when you build a new municipio's buildings file. The frontend uses the bbox to lazy-load only the PMTiles archives whose extents intersect the current viewport.",
+  "municipios": []
+}
