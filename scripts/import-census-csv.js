@@ -94,6 +94,7 @@ const FIELDS = [
   { key: 'pct_extranjero',  toDb: toNum },
   { key: 'hogar_size',      toDb: toNum },
   { key: 'alquiler_m2',     toDb: toNum },
+  { key: 'alquiler_growth', toDb: toNum },
 ];
 
 async function main() {

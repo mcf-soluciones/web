@@ -89,6 +89,10 @@ CREATE TABLE IF NOT EXISTS census_indicators (
   pct_extranjero REAL,
   hogar_size REAL,
   alquiler_m2 REAL,
+  alquiler_growth REAL,
   PRIMARY KEY (seccion_id, yyyy)
 );
 CREATE INDEX IF NOT EXISTS idx_census_municipio ON census_indicators(municipio_id, yyyy);
+-- Added after initial release; ALTER for existing DBs (run-schema-map treats
+-- "duplicate column" as SKIP, so this is safe on fresh DBs too).
+ALTER TABLE census_indicators ADD COLUMN alquiler_growth REAL;

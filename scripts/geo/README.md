@@ -136,8 +136,32 @@ node scripts/geo/build-census-csv.mjs --renta tmp/renta_28.csv --demo tmp/demo_2
 node scripts/import-census-csv.js tmp/census_madrid_2023.csv
 ```
 Re-running merges — blank cells don't clobber existing values, so you can load
-more indicators/years incrementally. `alquiler_m2` is not in ADRH (left null;
-source separately from Madrid open data if needed).
+more indicators/years incrementally.
+
+### Rental price + rent growth (SERPAVI → Turso)
+`alquiler_m2` and `alquiler_growth` come from the Ministerio de Vivienda
+**SERPAVI** database (sección-level mean €/m²/month, collective housing,
+2011–latest). Downloaded once, extracted for the province, imported keyed to
+the same census year so it merges into the ADRH rows (rent reflects the latest
+SERPAVI year attached to that snapshot):
+```powershell
+# bd_SERPAVI Excel — grab the latest link from
+# https://www.mivau.gob.es/vivienda/alquila-bien-es-tu-derecho/serpavi
+irm "https://cdn.mivau.gob.es/portal-web-mivau/vivienda/serpavi/<latest>.xlsx" -OutFile tmp/serpavi.xlsx -Headers @{ "User-Agent"="Mozilla/5.0" }
+node --max-old-space-size=4096 scripts/geo/build-alquiler-csv.mjs --xlsx tmp/serpavi.xlsx --prov 28 --year 2023 --out tmp/alquiler_28.csv
+node scripts/import-census-csv.js tmp/alquiler_28.csv
+```
+`alquiler_m2` = `ALQM2_LV_M_VC_<latest>` (mean €/m²/month). `alquiler_growth` =
+% change 2019→latest. Adjust the LATEST/BASE years in build-alquiler-csv.mjs as
+new editions land.
+
+### Ring demographics file (after any census/alquiler import)
+The catchment-ring panel aggregates demographics client-side from a static
+join of section centroids + indicator values. Regenerate it whenever census or
+alquiler data changes:
+```powershell
+node scripts/geo/build-census-points.mjs 2023   # -> public/geo/census-points.json (~0.5 MB)
+```
 
 ---
 
