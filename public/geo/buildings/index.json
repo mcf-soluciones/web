@@ -1,4 +1,15 @@
 {
-  "note": "Per-municipality PMTiles index. Append an entry when you build a new municipio's buildings file. The frontend uses the bbox to lazy-load only the PMTiles archives whose extents intersect the current viewport.",
-  "municipios": []
+  "note": "Buildings PMTiles for the Mapa 'Edificios' layer. Built by scripts/geo/build-comunidad-buildings.ps1. Each entry is attached as a protomaps-leaflet source; range-fetched so only visible tiles download. Re-run the build with a different -MinPopulation to regenerate madrid.pmtiles.",
+  "min_population": 30000,
+  "municipios": [
+    {
+      "code": "madrid",
+      "name": "Comunidad de Madrid (pop >= 30k, 28 municipios)",
+      "url": "/geo/buildings/madrid.pmtiles",
+      "bbox": [-4.086989, 39.907084, -3.286575, 40.730797],
+      "features": 314099,
+      "min_population": 30000,
+      "included_codes": ["28900","28092","28005","28074","28065","28058","28007","28148","28106","28006","28123","28127","28134","28115","28161","28049","28080","28047","28022","28013","28014","28045","28113","28184","28130","28015","28061","28096"]
+    }
+  ]
 }

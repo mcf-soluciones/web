@@ -3603,9 +3603,61 @@
           </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden relative">
           <div id="mapa-host" style="height: 72vh; min-height: 480px;"
                :class="mapa.addMode ? 'cursor-crosshair' : ''"></div>
+
+          <!-- Catchment-ring stats panel: floats bottom-left over the map -->
+          <div x-show="mapa.ring.active" x-cloak
+               class="absolute bottom-3 left-3 z-[500] w-60 bg-white/95 backdrop-blur border border-gray-200 rounded-lg shadow-lg p-3 text-sm pointer-events-auto">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">
+                Anillo <span x-text="mapa.ring.radiusM >= 1000 ? (mapa.ring.radiusM/1000)+' km' : mapa.ring.radiusM+' m'"></span>
+              </span>
+              <button @click="clearRing()" class="text-gray-400 hover:text-red-600">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <template x-if="mapa.ring.centroidsState === 'loading'">
+              <div class="text-[11px] text-gray-500 py-1">Cargando edificios…</div>
+            </template>
+
+            <template x-if="mapa.ring.stats">
+              <div class="space-y-1.5">
+                <div class="flex items-baseline justify-between">
+                  <span class="text-2xl font-bold tabular-nums text-brand-600" x-text="(mapa.ring.stats.dwellings || 0).toLocaleString('es-ES')"></span>
+                  <span class="text-[11px] text-gray-500">viviendas</span>
+                </div>
+                <template x-if="mapa.ring.stats.noData">
+                  <div class="text-[11px] text-amber-700 bg-amber-50 rounded px-1.5 py-1">
+                    Sin datos de edificios (genera centroids.bin)
+                  </div>
+                </template>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[12px] text-gray-700">
+                  <span class="text-gray-500">Edificios</span>
+                  <span class="text-right tabular-nums" x-text="(mapa.ring.stats.buildings || 0).toLocaleString('es-ES')"></span>
+                  <span class="text-gray-500">% residencial</span>
+                  <span class="text-right tabular-nums" x-text="mapa.ring.stats.pctResidential + '%'"></span>
+                  <span class="text-gray-500" title="Viviendas en edificios anteriores a 1980 — proxy de demanda de lavandería (sin lavadora propia)">% pre-1980</span>
+                  <span class="text-right tabular-nums" x-text="mapa.ring.stats.pctPre1980 == null ? '—' : (mapa.ring.stats.pctPre1980 + '%')"></span>
+                </div>
+                <div class="border-t border-gray-100 pt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 text-[12px]">
+                  <span class="text-gray-500">MCF aquí</span>
+                  <span class="text-right tabular-nums font-semibold text-brand-600" x-text="mapa.ring.stats.mcf"></span>
+                  <span class="text-gray-500">Competencia</span>
+                  <span class="text-right tabular-nums font-semibold text-accent-600" x-text="mapa.ring.stats.competitors"></span>
+                  <template x-if="mapa.ring.stats.dwellingsPerCompetitor != null">
+                    <span class="text-gray-500" title="Viviendas por lavandería de la competencia — mayor = menos saturado">Viv./competidor</span>
+                  </template>
+                  <template x-if="mapa.ring.stats.dwellingsPerCompetitor != null">
+                    <span class="text-right tabular-nums" x-text="mapa.ring.stats.dwellingsPerCompetitor.toLocaleString('es-ES')"></span>
+                  </template>
+                </div>
+                <div class="text-[10px] text-gray-400 pt-1">Mueve el anillo con el botón «Anillo».</div>
+              </div>
+            </template>
+          </div>
         </div>
 
         <template x-if="mapa.error">
@@ -4300,7 +4352,13 @@ function reportApp() {
       // Catchment ring around a selected pin or last clicked point.
       // 500m default (matches the R app's create_square convention).
       // placeMode: awaiting a click to place/move. active: a ring exists.
-      ring: { placeMode: false, active: false, radiusM: 500, lat: null, lng: null, _circle: null },
+      ring: {
+        placeMode: false, active: false, radiusM: 500, lat: null, lng: null, _circle: null,
+        // Catchment aggregates computed from centroids.bin + the laundries list.
+        stats: null,                 // { dwellings, buildings, residential, pre1980Dwellings, pct..., competitors, mcf }
+        centroidsState: 'idle',      // 'idle' | 'loading' | 'ready' | 'error'
+        _lat: null, _lng: null, _dw: null, _yr: null, _use: null, _n: 0,
+      },
       drawer: {
         open: false, id: null, row: null, saving: false, error: null,
         tab: 'details',                // 'details' | 'notes' | 'photos' | 'files'
@@ -5952,6 +6010,7 @@ function reportApp() {
         r._circle = window.L.circle([lat, lng], opts).addTo(map);
       }
       r.active = true;
+      this.computeRingStats();
     },
 
     clearRing() {
@@ -5959,7 +6018,95 @@ function reportApp() {
       const map = this.mapa._map;
       if (r._circle && map) map.removeLayer(r._circle);
       r._circle = null; r.active = false; r.lat = null; r.lng = null;
-      r.placeMode = false;
+      r.placeMode = false; r.stats = null;
+    },
+
+    // Load the building-centroid binary (public/geo/buildings/centroids.bin) once.
+    // Layout: 8-byte header ("MCFB" + Uint32 count), then 13-byte records
+    // (lat f32, lng f32, dwellings u16, year u16, use u8). See build-centroids.mjs.
+    async loadCentroids() {
+      const r = this.mapa.ring;
+      if (r.centroidsState === 'ready' || r.centroidsState === 'loading') return;
+      r.centroidsState = 'loading';
+      try {
+        const resp = await fetch('/geo/buildings/centroids.bin', { cache: 'force-cache' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const buf = await resp.arrayBuffer();
+        const dv = new DataView(buf);
+        if (String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3)) !== 'MCFB') {
+          throw new Error('bad magic');
+        }
+        const n = dv.getUint32(4, true);
+        const lat = new Float32Array(n), lng = new Float32Array(n);
+        const dw = new Uint16Array(n), yr = new Uint16Array(n), use = new Uint8Array(n);
+        const REC = 13;
+        for (let i = 0; i < n; i++) {
+          const o = 8 + i * REC;
+          lat[i] = dv.getFloat32(o, true);
+          lng[i] = dv.getFloat32(o + 4, true);
+          dw[i] = dv.getUint16(o + 8, true);
+          yr[i] = dv.getUint16(o + 10, true);
+          use[i] = dv.getUint8(o + 12);
+        }
+        r._lat = lat; r._lng = lng; r._dw = dw; r._yr = yr; r._use = use; r._n = n;
+        r.centroidsState = 'ready';
+      } catch (e) {
+        console.warn('centroids.bin:', e);
+        r.centroidsState = 'error';
+      }
+    },
+
+    async computeRingStats() {
+      const r = this.mapa.ring;
+      if (!r.active || r.lat == null) { r.stats = null; return; }
+      if (r.centroidsState === 'idle') await this.loadCentroids();
+
+      const R = 6371000;                       // earth radius (m)
+      const toRad = Math.PI / 180;
+      const lat0 = r.lat, lng0 = r.lng, rad = r.radiusM;
+      // Bounding-box prefilter in degrees to skip the haversine for far points.
+      const dLat = rad / 111320;
+      const dLng = rad / (111320 * Math.cos(lat0 * toRad));
+      const latMin = lat0 - dLat, latMax = lat0 + dLat, lngMin = lng0 - dLng, lngMax = lng0 + dLng;
+      const cosLat0 = Math.cos(lat0 * toRad);
+
+      let buildings = 0, dwellings = 0, residential = 0, pre1980Dwellings = 0, datedDwellings = 0;
+      if (r.centroidsState === 'ready') {
+        const { _lat: La, _lng: Ln, _dw: Dw, _yr: Yr, _use: Us, _n: n } = r;
+        for (let i = 0; i < n; i++) {
+          const la = La[i], ln = Ln[i];
+          if (la < latMin || la > latMax || ln < lngMin || ln > lngMax) continue;
+          // Equirectangular approximation — fine at 300–1500 m.
+          const x = (ln - lng0) * toRad * cosLat0 * R;
+          const y = (la - lat0) * toRad * R;
+          if (x * x + y * y > rad * rad) continue;
+          buildings++;
+          const d = Dw[i];
+          dwellings += d;
+          if (Us[i] === 1) residential++;
+          if (Yr[i] > 0 && d > 0) { datedDwellings += d; if (Yr[i] < 1980) pre1980Dwellings += d; }
+        }
+      }
+
+      // Laundries inside the ring (from the already-loaded list).
+      let competitors = 0, mcf = 0;
+      for (const row of (this.mapa.rows || [])) {
+        if (!Number.isFinite(row.lat) || !Number.isFinite(row.lng)) continue;
+        const x = (row.lng - lng0) * toRad * cosLat0 * R;
+        const y = (row.lat - lat0) * toRad * R;
+        if (x * x + y * y > rad * rad) continue;
+        if (row.propiedad_mcf) mcf++; else competitors++;
+      }
+
+      r.stats = {
+        dwellings, buildings, residential,
+        pctResidential: buildings ? Math.round(100 * residential / buildings) : 0,
+        pre1980Dwellings,
+        pctPre1980: datedDwellings ? Math.round(100 * pre1980Dwellings / datedDwellings) : null,
+        competitors, mcf,
+        dwellingsPerCompetitor: competitors ? Math.round(dwellings / competitors) : null,
+        noData: r.centroidsState !== 'ready',
+      };
     },
 
     // Toolbar button. Toggles place-mode so the next map click drops the ring.
@@ -5967,7 +6114,10 @@ function reportApp() {
     toggleRing() {
       this.mapa.ring.placeMode = !this.mapa.ring.placeMode;
       // Don't conflict with add-mode.
-      if (this.mapa.ring.placeMode) this.mapa.addMode = false;
+      if (this.mapa.ring.placeMode) {
+        this.mapa.addMode = false;
+        this.loadCentroids();   // warm the 4 MB centroid cache before the click
+      }
     },
 
     async onMapaClick(e) {

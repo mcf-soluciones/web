@@ -8,3 +8,7 @@ node_modules/
 # Sample/working Excel files used during development
 MovimientosCuenta*.xlsx
 Ventas Consolidado*.xlsx
+
+# Geo ETL scratch space (GML downloads, intermediate GeoJSON, build logs).
+# The committed artifacts are public/geo/** and scripts/geo/*.csv only.
+tmp/
