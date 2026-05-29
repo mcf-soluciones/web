@@ -51,6 +51,13 @@ $tipImg  = 'tippecanoe-local'
 
 New-Item -ItemType Directory -Force -Path $work, $geojson, $outDir | Out-Null
 
+# Ensure the tippecanoe-local image exists (built from scripts/geo/tippecanoe.Dockerfile).
+$haveTip = (docker images -q $tipImg 2>$null)
+if (-not $haveTip) {
+  Write-Host "Building $tipImg image (one-time)..."
+  docker build -t $tipImg -f (Join-Path $PSScriptRoot 'tippecanoe.Dockerfile') $PSScriptRoot | Out-Null
+}
+
 # Reuse a Madrid geojsonl that was built standalone in an earlier step.
 $strayMadrid = Join-Path $tmp '28900.geojsonl'
 if ((Test-Path $strayMadrid) -and -not (Test-Path (Join-Path $geojson '28900.geojsonl'))) {
