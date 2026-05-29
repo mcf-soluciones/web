@@ -99,27 +99,45 @@ Writes `public/geo/zonas-comerciales.geojson`. Toggle "Zonas comerciales" on the
 
 ## Census choropleth (layer 5)
 
-Two independent pieces: **geometry** (one-time) and **indicator values**
-(re-runnable, merges).
+Two independent pieces: **geometry** (committed static file) and **indicator
+values** (rows in Turso `census_indicators`). Both built without manual portal
+clicking — straight from INE web services.
 
-### Geometry — sección censal polygons
-Needs GDAL + mapshaper (`npm i -g mapshaper`). Download the INE
-"Cartografía digital Secciones Censales" shapefile, filter to province 28, drop
-the `.shp/.dbf/.prj/.shx` into `tmp/secciones_madrid.*`, then:
-```bash
-./scripts/geo/build-secciones.sh        # writes public/geo/secciones.geojson
-```
-The frontend joins on `feature.properties.CUSEC` → `census_indicators.seccion_id`.
-
-### Indicator values — into Turso
-Prep a CSV with at least `seccion_id, yyyy` plus any of `poblacion,
-renta_media, renta_hogar, pct_extranjero, hogar_size, alquiler_m2`:
+### Geometry — sección censal polygons (INE GeoServer OGC API)
+No shapefile download. `fetch-secciones.mjs` pages the INE GeoServer OGC API
+Features endpoint (following its `next` links — it ignores `offset`), keeps only
+the `CUSEC` join key, and drops the district aggregate rows. Then mapshaper
+simplifies topologically (no gaps between adjacent sections):
 ```powershell
-node scripts/import-census-csv.js path\to\renta-2023.csv
+node scripts/geo/fetch-secciones.mjs 28 2023      # -> tmp/secciones_28_full.geojson (~10 MB)
+mapshaper tmp/secciones_28_full.geojson -simplify 12% keep-shapes `
+  -o format=geojson precision=0.00001 public/geo/secciones.geojson   # -> ~1.8 MB
 ```
-Re-running merges (COALESCE) — blank cells don't clobber existing values, so you
-can load one indicator at a time. Sources: INE Atlas de Distribución de Renta
-(ADRH) for income, INE Padrón for population/foreign-born, Censo for household size.
+Needs mapshaper (`npm i -g mapshaper`). The frontend joins on
+`feature.properties.CUSEC` → `census_indicators.seccion_id`. Use the year that
+matches your indicator data (we use 2023 to match ADRH 2023).
+
+### Indicator values — INE ADRH → Turso
+Source: INE **Atlas de Distribución de Renta de los Hogares (ADRH)**, operation
+353, refreshed ~once a year (2023 data published Oct 2025). Two per-province
+jaxiT3 tables: the **"Indicadores de renta media y mediana"** family (renta) and
+the **"Indicadores demográficos"** family (población, tamaño hogar, % española).
+Each family lists 54 tables in province-alphabetical order; **Madrid (prov 28) =
+renta 31097, demografía 31105**. To find IDs for another province/edition:
+```powershell
+# list the families and probe a candidate's first place name to confirm province
+irm "https://servicios.ine.es/wstempus/js/ES/TABLAS_OPERACION/353"
+```
+Download both tables as CSV, merge to a tidy per-CUSEC CSV, import (UPSERT/COALESCE):
+```powershell
+irm "https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/31097.csv?nocab=1" -OutFile tmp/renta_28.csv
+irm "https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/31105.csv?nocab=1" -OutFile tmp/demo_28.csv
+node scripts/geo/build-census-csv.mjs --renta tmp/renta_28.csv --demo tmp/demo_28.csv --year 2023 --out tmp/census_madrid_2023.csv
+node scripts/import-census-csv.js tmp/census_madrid_2023.csv
+```
+Re-running merges — blank cells don't clobber existing values, so you can load
+more indicators/years incrementally. `alquiler_m2` is not in ADRH (left null;
+source separately from Madrid open data if needed).
 
 ---
 
