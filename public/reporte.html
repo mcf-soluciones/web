@@ -3545,7 +3545,7 @@
           <span class="text-[11px] uppercase tracking-wide font-semibold text-gray-500">Censo</span>
           <select x-model="mapa.census.indicator" @change="refreshCensus()"
             class="rounded-md border-gray-300 text-xs py-1">
-            <template x-for="ind in (mapa.census.available?.indicators || ['poblacion','renta_media','renta_hogar','pct_extranjero','hogar_size','alquiler_m2'])" :key="ind">
+            <template x-for="ind in (mapa.census.available?.indicators || ['poblacion','renta_media','renta_hogar','pct_extranjero','hogar_size','alquiler_m2','alquiler_growth'])" :key="ind">
               <option :value="ind" x-text="censusIndicatorLabel(ind)"></option>
             </template>
           </select>
@@ -3654,6 +3654,37 @@
                     <span class="text-right tabular-nums" x-text="mapa.ring.stats.dwellingsPerCompetitor.toLocaleString('es-ES')"></span>
                   </template>
                 </div>
+                <!-- Census demographics (population-weighted over sections in the ring) -->
+                <template x-if="mapa.ring.demo">
+                  <div class="border-t border-gray-100 pt-1.5">
+                    <div class="text-[10px] uppercase tracking-wide font-semibold text-gray-400 mb-1">
+                      Censo <span x-text="mapa.ring.demo.year"></span>
+                      · <span x-text="mapa.ring.demo.sections"></span> secc.
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[12px] text-gray-700">
+                      <span class="text-gray-500">Población</span>
+                      <span class="text-right tabular-nums" x-text="(mapa.ring.demo.poblacion || 0).toLocaleString('es-ES')"></span>
+                      <span class="text-gray-500">Renta media</span>
+                      <span class="text-right tabular-nums" x-text="mapa.ring.demo.renta_media == null ? '—' : ('€' + mapa.ring.demo.renta_media.toLocaleString('es-ES'))"></span>
+                      <span class="text-gray-500">% extranjero</span>
+                      <span class="text-right tabular-nums" x-text="mapa.ring.demo.pct_extranjero == null ? '—' : (mapa.ring.demo.pct_extranjero + '%')"></span>
+                      <span class="text-gray-500">Tamaño hogar</span>
+                      <span class="text-right tabular-nums" x-text="mapa.ring.demo.hogar_size == null ? '—' : mapa.ring.demo.hogar_size"></span>
+                      <template x-if="mapa.ring.demo.alquiler_m2 != null">
+                        <span class="text-gray-500">Alquiler €/m²</span>
+                      </template>
+                      <template x-if="mapa.ring.demo.alquiler_m2 != null">
+                        <span class="text-right tabular-nums" x-text="mapa.ring.demo.alquiler_m2"></span>
+                      </template>
+                      <template x-if="mapa.ring.demo.alquiler_growth != null">
+                        <span class="text-gray-500" title="Crecimiento del alquiler €/m² 2019→2024">Alquiler +5a</span>
+                      </template>
+                      <template x-if="mapa.ring.demo.alquiler_growth != null">
+                        <span class="text-right tabular-nums" :class="mapa.ring.demo.alquiler_growth >= 0 ? 'text-green-700' : 'text-red-600'" x-text="(mapa.ring.demo.alquiler_growth > 0 ? '+' : '') + mapa.ring.demo.alquiler_growth + '%'"></span>
+                      </template>
+                    </div>
+                  </div>
+                </template>
                 <div class="text-[10px] text-gray-400 pt-1">Mueve el anillo con el botón «Anillo».</div>
               </div>
             </template>
@@ -4358,6 +4389,10 @@ function reportApp() {
         stats: null,                 // { dwellings, buildings, residential, pre1980Dwellings, pct..., competitors, mcf }
         centroidsState: 'idle',      // 'idle' | 'loading' | 'ready' | 'error'
         _lat: null, _lng: null, _dw: null, _yr: null, _use: null, _n: 0,
+        // Census demographics (population-weighted) from census-points.json.
+        demo: null,                  // { sections, poblacion, renta_media, pct_extranjero, hogar_size, alquiler_m2, year }
+        censusState: 'idle',         // 'idle' | 'loading' | 'ready' | 'error'
+        _census: null,               // parsed { year, points: [...] }
       },
       drawer: {
         open: false, id: null, row: null, saving: false, error: null,
@@ -5815,6 +5850,7 @@ function reportApp() {
         pct_extranjero: '% extranjero',
         hogar_size: 'Tamaño hogar',
         alquiler_m2: 'Alquiler €/m²',
+        alquiler_growth: 'Alquiler crec. 5a',
       })[key] || key;
     },
 
@@ -5822,8 +5858,9 @@ function reportApp() {
     formatCensusBreak(v) {
       if (v == null || !Number.isFinite(v)) return '—';
       const ind = this.mapa.census.indicator;
-      if (ind === 'pct_extranjero') return Math.round(v) + '%';
+      if (ind === 'pct_extranjero' || ind === 'alquiler_growth') return Math.round(v) + '%';
       if (ind === 'hogar_size') return v.toFixed(2);
+      if (ind === 'alquiler_m2') return '€' + v.toFixed(1);
       if (ind === 'poblacion') return v >= 1000 ? Math.round(v / 100) / 10 + 'k' : String(Math.round(v));
       // renta_media / renta_hogar / alquiler_m2 — all euros
       if (v >= 1000) return '€' + (Math.round(v / 100) / 10) + 'k';
@@ -6056,10 +6093,28 @@ function reportApp() {
       }
     },
 
+    // Load census section points (centroid + indicators) once for the ring's
+    // demographic aggregation. ~0.5 MB. See build-census-points.mjs.
+    async loadCensusPoints() {
+      const r = this.mapa.ring;
+      if (r.censusState === 'ready' || r.censusState === 'loading') return;
+      r.censusState = 'loading';
+      try {
+        const resp = await fetch('/geo/census-points.json', { cache: 'force-cache' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        r._census = await resp.json();
+        r.censusState = 'ready';
+      } catch (e) {
+        console.warn('census-points.json:', e);
+        r.censusState = 'error';
+      }
+    },
+
     async computeRingStats() {
       const r = this.mapa.ring;
-      if (!r.active || r.lat == null) { r.stats = null; return; }
+      if (!r.active || r.lat == null) { r.stats = null; r.demo = null; return; }
       if (r.centroidsState === 'idle') await this.loadCentroids();
+      if (r.censusState === 'idle') await this.loadCensusPoints();
 
       const R = 6371000;                       // earth radius (m)
       const toRad = Math.PI / 180;
@@ -6107,6 +6162,41 @@ function reportApp() {
         dwellingsPerCompetitor: competitors ? Math.round(dwellings / competitors) : null,
         noData: r.centroidsState !== 'ready',
       };
+
+      // Census demographics: sum population over sections whose centroid is in
+      // the ring; population-weight the rate indicators (renta, % extranjero,
+      // tamaño hogar, alquiler). Section-centroid membership is approximate but
+      // fine at 300m+ given ~1500-person sections.
+      if (r.censusState === 'ready' && r._census?.points) {
+        let pob = 0, sections = 0;
+        let wRm = 0, wRmW = 0, wEx = 0, wExW = 0, wHs = 0, wHsW = 0, wAlq = 0, wAlqW = 0, wAlqg = 0, wAlqgW = 0;
+        for (const p of r._census.points) {
+          if (p.lat < latMin || p.lat > latMax || p.lng < lngMin || p.lng > lngMax) continue;
+          const x = (p.lng - lng0) * toRad * cosLat0 * R;
+          const y = (p.lat - lat0) * toRad * R;
+          if (x * x + y * y > rad * rad) continue;
+          sections++;
+          const w = p.pob || 0;
+          if (p.pob != null) pob += p.pob;
+          if (p.rm != null && w) { wRm += p.rm * w; wRmW += w; }
+          if (p.ext != null && w) { wEx += p.ext * w; wExW += w; }
+          if (p.hs != null && w) { wHs += p.hs * w; wHsW += w; }
+          if (p.alq != null && w) { wAlq += p.alq * w; wAlqW += w; }
+          if (p.alqg != null && w) { wAlqg += p.alqg * w; wAlqgW += w; }
+        }
+        r.demo = sections === 0 ? null : {
+          year: r._census.year,
+          sections,
+          poblacion: pob,
+          renta_media: wRmW ? Math.round(wRm / wRmW) : null,
+          pct_extranjero: wExW ? Math.round(10 * wEx / wExW) / 10 : null,
+          hogar_size: wHsW ? Math.round(10 * wHs / wHsW) / 10 : null,
+          alquiler_m2: wAlqW ? Math.round(10 * wAlq / wAlqW) / 10 : null,
+          alquiler_growth: wAlqgW ? Math.round(10 * wAlqg / wAlqgW) / 10 : null,
+        };
+      } else {
+        r.demo = null;
+      }
     },
 
     // Toolbar button. Toggles place-mode so the next map click drops the ring.
@@ -6116,7 +6206,8 @@ function reportApp() {
       // Don't conflict with add-mode.
       if (this.mapa.ring.placeMode) {
         this.mapa.addMode = false;
-        this.loadCentroids();   // warm the 4 MB centroid cache before the click
+        this.loadCentroids();      // warm the building-centroid cache before the click
+        this.loadCensusPoints();   // and the census points
       }
     },
 

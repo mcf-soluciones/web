@@ -17,7 +17,7 @@ import turso from '../_lib/turso.js';
  */
 const ALLOWED_INDICATORS = new Set([
   'poblacion', 'renta_media', 'renta_hogar',
-  'pct_extranjero', 'hogar_size', 'alquiler_m2',
+  'pct_extranjero', 'hogar_size', 'alquiler_m2', 'alquiler_growth',
 ]);
 
 export default async function handler(req, res) {
