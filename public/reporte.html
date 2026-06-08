@@ -3489,10 +3489,12 @@
       <section x-show="view === 'mapa'" x-cloak class="space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 class="font-semibold text-gray-900">Mapa de lavanderías</h3>
-            <p class="text-xs text-gray-500">
-              <span x-text="(mapa.rows || []).filter(r => r.propiedad_mcf).length"></span> MCF ·
-              <span x-text="(mapa.rows || []).filter(r => !r.propiedad_mcf).length"></span> otras
+            <h3 class="font-semibold text-gray-900">Mapa de negocios</h3>
+            <p class="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
+              <span><span x-text="(mapa.rows || []).filter(r => r.propiedad_mcf).length"></span> MCF</span>
+              <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#ab5070"></span><span x-text="(mapa.rows||[]).filter(r=>!r.propiedad_mcf && (r.category==='lavanderia'||!r.category)).length"></span> lavand.</span>
+              <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#d97706"></span><span x-text="(mapa.rows||[]).filter(r=>r.category==='casa_empeno').length"></span> empeño</span>
+              <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#15803d"></span><span x-text="(mapa.rows||[]).filter(r=>r.category==='supermercado').length"></span> super</span>
               <template x-if="mapa.addMode">
                 <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold">
                   Modo agregar — haz click en el mapa
@@ -3530,6 +3532,13 @@
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span x-text="mapa.addMode ? 'Cancelar' : 'Añadir lavandería'"></span>
             </button>
+            <button @click="discoverFromGoogle()" :disabled="mapa.discover.running"
+              title="Busca lavanderías, casas de empeño y supermercados en Google y agrega los nuevos"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal2-500 hover:opacity-90 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
+              <svg x-show="!mapa.discover.running" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg x-show="mapa.discover.running" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              <span x-text="mapa.discover.running ? `Buscando ${mapa.discover.done}/${mapa.discover.total}…` : 'Buscar en Google'"></span>
+            </button>
             <button @click="loadMapa()" :disabled="mapa.loading"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
               <svg x-show="!mapa.loading" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -3538,6 +3547,15 @@
             </button>
           </div>
         </div>
+
+        <!-- Discover result banner -->
+        <template x-if="mapa.discover.summary">
+          <div class="bg-teal2-500/10 border border-teal2-500/30 rounded-lg px-3 py-2 text-sm text-gray-700">
+            Búsqueda completada: <strong x-text="mapa.discover.summary.inserted"></strong> negocios nuevos agregados,
+            <span x-text="mapa.discover.summary.skipped"></span> ya existían
+            (<span x-text="mapa.discover.summary.found"></span> resultados revisados).
+          </div>
+        </template>
 
         <!-- Census picker: only visible when the censo layer is toggled on -->
         <div x-show="mapa.census.on" x-cloak
@@ -4125,8 +4143,8 @@
               <div>Positivas (ventas) ignoradas:</div><div class="text-right" x-text="bankImport.result.positives_skipped"></div>
               <div class="font-semibold">Insertadas con regla:</div><div class="text-right font-semibold" x-text="bankImport.result.matched"></div>
               <div class="font-semibold">Insertadas sin clasificar:</div><div class="text-right font-semibold" x-text="bankImport.result.unmatched"></div>
-              <div class="text-amber-700">Duplicadas (omitidas):</div><div class="text-right text-amber-700" x-text="bankImport.result.duplicates"></div>
             </div>
+            <p class="text-[11px] text-emerald-800">Todas las filas se insertan tal cual. Si subes el mismo archivo dos veces tendrás duplicados; bórralos desde la lista de gastos.</p>
             <template x-if="bankImport.result.unmatched > 0">
               <p class="text-[11px] text-amber-700">Las filas sin clasificar quedaron en la tabla sin cuenta. Edítalas en la lista de gastos para asignar concepto y cuenta.</p>
             </template>
@@ -4288,6 +4306,18 @@
 // Gastos tab — small standalone helpers (kept outside reportApp so they don't
 // close over `this` and can be unit-tested if needed).
 // -----------------------------------------------------------------------------
+// Mirror of api/_lib/propiedad.js so the optimistic table update shows the same
+// canonical label the server stores.
+function canonicalizePropiedadClient(p) {
+  if (p == null) return p;
+  const s = String(p).trim().toLowerCase();
+  if (s === '') return p;
+  if (s.includes('usera')) return '(001) Usera';
+  if (s.includes('hortaleza')) return '(002) Hortaleza';
+  if (s.includes('compra tbc') || s.includes('(003)')) return '(003) Compra TBC';
+  if (s.includes('corporate') || s.includes('(000)')) return 'Corporate';
+  return p;
+}
 function coerceClient(field, value) {
   const numeric = ['importe_total', 'importe_iva', 'importe_irpf', 'importe_otro'];
   if (numeric.includes(field)) { const n = parseFloat(value); return Number.isFinite(n) ? n : 0; }
@@ -4297,7 +4327,9 @@ function coerceClient(field, value) {
     return (s === 'si' || s === 'sí' || s === 'yes' || s === 'true' || s === '1') ? 'Si' : 'No';
   }
   const s = String(value ?? '').trim();
-  return s === '' ? null : s;
+  if (s === '') return null;
+  if (field === 'propiedad') return canonicalizePropiedadClient(s);
+  return s;
 }
 function recomputeTotal(rows) {
   return (rows || [])
@@ -4366,6 +4398,8 @@ function reportApp() {
     mapa: {
       loading: false, error: null, rows: [],
       addMode: false,                  // when true, next map click opens the add modal
+      // Google Places discovery sweep (loops anchors server-side, one per call).
+      discover: { running: false, done: 0, total: 0, summary: null },
       // Census choropleth controls. Exposed via the layers panel + a top-bar
       // picker (year + indicator). Data comes from /api/census/values; geometry
       // from /geo/secciones.geojson (generated locally — gracefully noop if absent).
@@ -5685,6 +5719,7 @@ function reportApp() {
       { key: 'prioridad', label: 'Prioridad', type: 'text' },
       { key: 'status2025', label: 'Status 2026', type: 'text' },
       { key: 'sq_link', label: 'Speed Queen link', type: 'text' },
+      { key: 'category', label: 'Categoría', type: 'text' },
     ],
 
     async loadMapa() {
@@ -5701,6 +5736,42 @@ function reportApp() {
         this.mapa.error = e.message || String(e);
       } finally {
         this.mapa.loading = false;
+      }
+    },
+
+    // Sweep Google Places across the 30 Madrid anchors (one request each so no
+    // serverless call is long), inserting new businesses. Reloads pins at the end.
+    async discoverFromGoogle() {
+      const d = this.mapa.discover;
+      if (d.running) return;
+      if (!confirm('Buscar lavanderías, casas de empeño y supermercados en Google (30 zonas de Madrid) y agregar los nuevos al mapa?')) return;
+      d.running = true; d.done = 0; d.total = 30; d.summary = null;
+      let inserted = 0, skipped = 0, found = 0;
+      try {
+        // Loop anchors; the first response tells us the real total.
+        for (let i = 0; i < d.total; i++) {
+          const r = await fetch('/api/laundries/discover', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ anchorIndex: i }),
+          });
+          if (!r.ok) {
+            const err = await r.json().catch(() => ({}));
+            throw new Error(err.error || `HTTP ${r.status}`);
+          }
+          const data = await r.json();
+          d.total = data.anchor?.total || d.total;
+          inserted += data.inserted || 0;
+          skipped += data.skippedExisting || 0;
+          found += data.found || 0;
+          d.done = i + 1;
+        }
+        d.summary = { inserted, skipped, found };
+        await this.loadMapa();
+      } catch (e) {
+        alert('Error en la búsqueda: ' + (e.message || e));
+      } finally {
+        d.running = false;
       }
     },
 
@@ -5741,7 +5812,7 @@ function reportApp() {
         // Layers control (top-right). Order matters — first added shows on top.
         window.L.control.layers(null, {
           'Lavanderías MCF': this.mapa._layers.mcf,
-          'Otras lavanderías': this.mapa._layers.others,
+          'Otros negocios': this.mapa._layers.others,
           'Zonas comerciales': this.mapa._layers.zones,
           'Censo (sección)': this.mapa._layers.census,
           'Edificios (dwellings)': this.mapa._layers.buildings,
@@ -5789,10 +5860,11 @@ function reportApp() {
       for (const row of this.mapa.rows) {
         if (!Number.isFinite(row.lat) || !Number.isFinite(row.lng)) continue;
         const isMcf = !!row.propiedad_mcf;
+        const fill = isMcf ? '#2d6695' : this.categoryColor(row.category);
         const marker = window.L.circleMarker([row.lat, row.lng], {
           radius: isMcf ? 9 : 6,
-          color: isMcf ? '#27486b' : '#ab5070',
-          fillColor: isMcf ? '#2d6695' : '#ab5070',
+          color: isMcf ? '#27486b' : fill,
+          fillColor: fill,
           fillOpacity: 0.85,
           weight: 2,
         });
@@ -5814,6 +5886,15 @@ function reportApp() {
       if (bounds.length > 0 && !this.mapa.drawer.open) {
         this.mapa._map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
       }
+    },
+
+    // Pin color by business category (non-MCF).
+    categoryColor(cat) {
+      return ({
+        lavanderia: '#ab5070',     // accent (laundromats)
+        casa_empeno: '#d97706',    // amber (pawn shops)
+        supermercado: '#15803d',   // green (groceries)
+      })[cat] || '#ab5070';
     },
 
     // ----- Static overlays ------------------------------------------------------
