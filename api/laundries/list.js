@@ -19,7 +19,7 @@ export default async function handler(req, res) {
                    precio_lavado_15kg, precio_secado_15kg,
                    marca_maquinas, estado_limpieza, years_aprox, clientes_estim,
                    interes_venta, status2025, prioridad, modelo2,
-                   sq_link, call_notes,
+                   sq_link, call_notes, category, source,
                    created_by, created_at, updated_at
             FROM laundries
             ORDER BY propiedad_mcf DESC, name ASC`,

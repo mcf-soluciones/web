@@ -29,12 +29,21 @@ CREATE TABLE IF NOT EXISTS laundries (
   modelo2 TEXT,
   sq_link TEXT,
   call_notes TEXT,
+  category TEXT DEFAULT 'lavanderia',   -- business type: lavanderia | casa_empeno | supermercado
+  source TEXT,                          -- how the row got here: import | google | manual
   created_by TEXT,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_laundries_propiedad ON laundries(propiedad_mcf);
 CREATE INDEX IF NOT EXISTS idx_laundries_brand     ON laundries(brand);
+-- Added after initial release; ALTERs for existing DBs (run-schema-map treats
+-- "duplicate column" as SKIP, so these are safe on fresh DBs too). These run
+-- BEFORE the dependent indexes below so the columns exist first.
+ALTER TABLE laundries ADD COLUMN category TEXT DEFAULT 'lavanderia';
+ALTER TABLE laundries ADD COLUMN source TEXT;
+CREATE INDEX IF NOT EXISTS idx_laundries_category  ON laundries(category);
+CREATE INDEX IF NOT EXISTS idx_laundries_placeid   ON laundries(google_place_id);
 
 -- 2. Photos per laundry. Stored in Google Drive; we keep the public URL.
 CREATE TABLE IF NOT EXISTS laundry_photos (

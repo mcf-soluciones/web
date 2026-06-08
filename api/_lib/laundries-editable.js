@@ -28,6 +28,7 @@ export const EDITABLE_FIELDS = new Set([
   'modelo2',
   'sq_link',
   'call_notes',
+  'category',
 ]);
 
 const NUMERIC_REAL = new Set(['lat', 'lng', 'google_rating']);
