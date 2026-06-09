@@ -25,15 +25,30 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body || {};
-    const idx = toInt(body.anchorIndex);
-    if (idx == null || idx < 0 || idx >= ANCHORS.length) {
-      return res.status(400).json({ error: `anchorIndex must be 0..${ANCHORS.length - 1}`, total: ANCHORS.length });
+
+    // Two modes:
+    //   - grid sweep: { anchorIndex } uses a fixed Madrid anchor (full sweep button)
+    //   - ad-hoc point: { lat, lng, radius? } searches around an arbitrary click
+    //     (the ring "Buscar en Google aquí" button)
+    let lat, lng, label, radius = RADIUS_M;
+    if (body.lat != null && body.lng != null) {
+      lat = Number(body.lat); lng = Number(body.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return res.status(400).json({ error: 'lat/lng must be numbers' });
+      }
+      const r = Number(body.radius);
+      if (Number.isFinite(r) && r > 0) radius = Math.min(r, 50000);
+      label = `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    } else {
+      const idx = toInt(body.anchorIndex);
+      if (idx == null || idx < 0 || idx >= ANCHORS.length) {
+        return res.status(400).json({ error: `provide lat/lng or anchorIndex (0..${ANCHORS.length - 1})`, total: ANCHORS.length });
+      }
+      [lat, lng, label] = ANCHORS[idx];
     }
     const wantCats = Array.isArray(body.categories) && body.categories.length
       ? body.categories.filter(c => CATEGORIES[c])
       : Object.keys(CATEGORIES);
-
-    const [lat, lng, label] = ANCHORS[idx];
 
     // Existing place_ids — dedupe target. Small table, one cheap scan.
     const existing = await turso.execute('SELECT google_place_id FROM laundries WHERE google_place_id IS NOT NULL');
@@ -46,7 +61,7 @@ export default async function handler(req, res) {
     for (const cat of wantCats) {
       byCategory[cat] = { found: 0, inserted: 0 };
       for (const kw of CATEGORIES[cat].keywords) {
-        const results = await nearby(lat, lng, kw, key);
+        const results = await nearby(lat, lng, radius, kw, key);
         for (const p of results) {
           found++; byCategory[cat].found++;
           const pid = p.place_id;
@@ -75,7 +90,8 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      anchor: { index: idx, label, total: ANCHORS.length },
+      anchor: { index: toInt(body.anchorIndex), label, total: ANCHORS.length },
+      center: { lat, lng, radius },
       found, inserted, skippedExisting, byCategory,
     });
   } catch (err) {
@@ -86,9 +102,9 @@ export default async function handler(req, res) {
 
 // Legacy Places Nearby Search (first page only — proven to work with the
 // existing key). Returns the raw results array (or []).
-async function nearby(lat, lng, keyword, key) {
+async function nearby(lat, lng, radius, keyword, key) {
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json`
-    + `?location=${lat},${lng}&radius=${RADIUS_M}`
+    + `?location=${lat},${lng}&radius=${Math.round(radius)}`
     + `&keyword=${encodeURIComponent(keyword)}&key=${key}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`Places HTTP ${r.status}`);
