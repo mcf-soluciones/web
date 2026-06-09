@@ -1,5 +1,6 @@
 import turso from '../_lib/turso.js';
 import { BULK_FIELDS, coerce } from '../_lib/gastos-editable.js';
+import { canonicalizePropiedad } from '../_lib/propiedad.js';
 
 /**
  * PATCH /api/gastos/bulk
@@ -36,6 +37,11 @@ export default async function handler(req, res) {
     // cuenta changes also trigger categoria re-resolution.
     if ('cuenta' in updates) {
       updates.categoria_gastos_mcf = await resolveCategoria(updates.cuenta);
+    }
+    // Always store propiedad in canonical form so a bulk edit can't introduce a
+    // divergent spelling ("USERA", "Usera", "hortaleza") — same as update.js.
+    if ('propiedad' in updates) {
+      updates.propiedad = canonicalizePropiedad(updates.propiedad);
     }
 
     const fields = Object.keys(updates);

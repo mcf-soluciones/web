@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS bank_import_rules (
 
 CREATE INDEX IF NOT EXISTS idx_bank_import_rules_priority ON bank_import_rules (priority);
 
--- Idempotency for re-uploads: hash(date|importe|concepto_text) is unique across gastos.
+-- bank_movement_hash now only flags a row as bank-imported in the UI
+-- (list.js: bank_movement_hash != null). It is NOT unique: the import trusts
+-- every uploaded row and allows duplicates (the user deletes any later). The
+-- former UNIQUE index idx_gastos_bank_hash is dropped — see
+-- scripts/drop-bank-hash-unique-index.js.
 ALTER TABLE gastos ADD COLUMN bank_movement_hash TEXT;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_gastos_bank_hash
-  ON gastos (bank_movement_hash) WHERE bank_movement_hash IS NOT NULL;
+DROP INDEX IF EXISTS idx_gastos_bank_hash;

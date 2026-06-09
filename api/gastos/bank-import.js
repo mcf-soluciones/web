@@ -12,9 +12,12 @@ import { canonicalizePropiedad } from '../_lib/propiedad.js';
  * negative-amount row, and inserts gastos + matching movements rows.
  *
  * - Positive amounts (sales liquidaciones) are skipped silently.
- * - Each row is fingerprinted as SHA1(date|importe|concepto_text) and stored
- *   in gastos.bank_movement_hash. Re-uploads are de-duplicated by the unique
- *   index — INSERT OR IGNORE returns rowsAffected=0.
+ * - Every negative row is inserted as-is — no de-duplication. The upload is
+ *   trusted: whatever the user uploads, with the sucursal they pick, is taken
+ *   as correct. If they upload the same file twice they get duplicate rows and
+ *   can delete them in the gastos editor. (A SHA1(date|importe|concepto_text)
+ *   is still stored in gastos.bank_movement_hash purely to flag the row as
+ *   bank-imported in the UI — it is no longer unique and no longer gates inserts.)
  * - Rules without a propiedad_override use the upload's sucursal.
  * - When a rule supplies concepto_mcf, the cuenta is derived from
  *   catalogo_cuentas (desc, propiedad). When no rule matches, the row still
@@ -50,7 +53,6 @@ export default async function handler(req, res) {
       positives_skipped: 0,
       matched: 0,
       unmatched: 0,
-      duplicates: 0,
       inserted_ids: [],
       sample: [],
     };
@@ -87,6 +89,8 @@ export default async function handler(req, res) {
       const mm = parseInt(fecha.slice(5, 7), 10);
       const yyyy = parseInt(fecha.slice(0, 4), 10);
 
+      // Stored only to flag the row as bank-imported in the UI (list.js reads
+      // bank_movement_hash != null). Not unique, not used for de-duplication.
       const hash = sha1(`${fecha}|${importeTotal.toFixed(2)}|${m.concepto_text}`);
 
       const title = `Banco ${propiedadCanonical} · ${rule?.razon_social || conceptoMcf || 'Sin clasificar'} · ${fecha}`;
@@ -94,9 +98,9 @@ export default async function handler(req, res) {
       // Bank-imported gastos are always fiscal (real money out of the company account).
       const isFiscal = 1;
 
-      // INSERT OR IGNORE on the unique bank_movement_hash index handles dupes.
+      // Plain INSERT — every uploaded row is trusted and stored.
       const ins = await turso.execute({
-        sql: `INSERT OR IGNORE INTO gastos (
+        sql: `INSERT INTO gastos (
                 concepto_text, user_name, concepto_mcf, currency, cuenta,
                 concepto_proveedor, num_factura, nif_proveedor, razon_social,
                 concepto_banco, gasto, importe_iva, importe_irpf, importe_otro,
@@ -125,12 +129,6 @@ export default async function handler(req, res) {
           hash,
         ],
       });
-
-      const wasInserted = Number(ins.rowsAffected || 0) > 0;
-      if (!wasInserted) {
-        summary.duplicates++;
-        continue;
-      }
 
       const gastoId = Number(ins.lastInsertRowid);
       summary.inserted_ids.push(gastoId);

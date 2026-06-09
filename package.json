@@ -16,7 +16,7 @@
     "@notionhq/client": "^5.18.0",
     "@tmcw/togeojson": "^7.1.2",
     "dotenv": "^17.4.2",
-    "vercel": "^39.0.0",
+    "vercel": "^54.9.1",
     "xmldom": "^0.6.0"
   }
 }

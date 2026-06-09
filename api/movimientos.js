@@ -1,4 +1,5 @@
 import turso from './_lib/turso.js';
+import { canonicalizePropiedad } from './_lib/propiedad.js';
 
 function formatDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -72,7 +73,7 @@ async function handleDepositoSimple(body, dateStr, res) {
       title,
       body.account || 'cash',
       body.euros || 0,
-      body.propiedad || null,
+      canonicalizePropiedad(body.propiedad) || null,
       body.mcf_user || 'unknown',
       dateStr,
       description,
@@ -88,7 +89,8 @@ async function handleDepositoSimple(body, dateStr, res) {
 }
 
 async function handleIncidencia(body, dateStr, res) {
-  const title = body.description || `Incidencia ${body.propiedad} - ${dateStr}`;
+  const propiedad = canonicalizePropiedad(body.propiedad);
+  const title = body.description || `Incidencia ${propiedad} - ${dateStr}`;
 
   const result = await turso.execute({
     sql: `INSERT INTO incidents (summary, severity, propiedad, cost, resolution, found, machine, incident_date)
@@ -96,7 +98,7 @@ async function handleIncidencia(body, dateStr, res) {
     args: [
       title,
       body.severity || 'media',
-      body.propiedad || 'unknown',
+      propiedad || 'unknown',
       body.cost || 0,
       body.resolution || 'pendiente',
       body.found || 'otro',
@@ -115,7 +117,8 @@ async function handleIncidencia(body, dateStr, res) {
 
 async function handleEncuesta(body, now, res) {
   const surveyId = body.survey_id || 'no-id';
-  const title = `Encuesta ${body.location} - ${surveyId}`;
+  const propiedad = canonicalizePropiedad(body.location);
+  const title = `Encuesta ${propiedad} - ${surveyId}`;
 
   const result = await turso.execute({
     sql: `INSERT INTO surveys (name, survey_id, propiedad, experience, cleanliness, availability, recommend, comments, survey_date)
@@ -123,7 +126,7 @@ async function handleEncuesta(body, now, res) {
     args: [
       title,
       surveyId,
-      body.location || 'unknown',
+      propiedad || 'unknown',
       body.experience || 'unknown',
       body.cleanliness || 'unknown',
       body.availability || 'unknown',
@@ -166,7 +169,7 @@ async function handleDenominationMovement(body, dateStr, res) {
       title,
       type,
       euros,
-      body.propiedad || null,
+      canonicalizePropiedad(body.propiedad) || null,
       body.user || 'unknown',
       dateStr,
       description,
