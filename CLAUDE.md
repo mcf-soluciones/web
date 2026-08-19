@@ -180,7 +180,8 @@ All gastos writes flow through Turso; the Google Sheet is a frozen archive.
   - Only `total` is required (positive euros; accepts both `8.50` and the Spanish `8,50`). Everything else falls back to MCF defaults: `business`, `subtitle`, `nif`, `address`, `concepto`, `descripcion`, `cantidad`, `ivaRate` (default 21), `fecha` (today), `hora` (now), `pago` (Efectivo), `numero` (auto `YYYYMMDD-HHMM`), `footer`.
   - `total` is IVA-*inclusive*; the PDF back-computes base + IVA so the two always re-add to the total exactly.
   - Layout/format logic lives in `api/_lib/ticket-pdf.js` (WinAnsi encoding, so `€` and Spanish accents render; emoji/CJK are stripped).
-  - UI at `/ticket` (`public/ticket.html`), linked from `/admin` → Otros → "Ticket de Compra". Fiscal details (NIF, dirección, nombre fiscal, nota al pie) are entered once per propiedad and cached in `localStorage` under `mcf_ticket_fiscal_v1` — they are **not** stored server-side.
+  - Fiscal identity is hardcoded in `api/_lib/ticket-pdf.js` (`FISCAL`): NIF `B25922568`, dirección `San Julio 5, 1D Madrid 28002` — the same company and registered address for both sucursales. The header prints a single `NIF: X` line even when the caller passes its own `NIF`/`CIF` prefix.
+  - UI at `/ticket` (`public/ticket.html`), linked from `/admin` → Otros → "Ticket de Compra". The fiscal fields come pre-filled from the same constants (mirrored in `DEFAULT_FISCAL`); an edit there is an override cached per propiedad in `localStorage` under `mcf_ticket_fiscal_v1`, never stored server-side. **Changing the real NIF/dirección means editing both places.**
 
 ### Deprecated (410 Gone)
 - **`POST /api/gastos`** — split into `create` (new gasto + optional factura) and `factura` (attach to existing).

@@ -31,6 +31,14 @@ const C = {
   box: rgb(0.95, 0.95, 0.95),
 };
 
+// ---- MCF fiscal identity ---------------------------------------------------
+// Same company and registered address for both sucursales (Usera, Hortaleza).
+// Callers may still override via the nif/address fields.
+const FISCAL = {
+  nif: 'B25922568',
+  address: 'San Julio 5, 1D Madrid 28002',
+};
+
 // ---- Spanish helpers -------------------------------------------------------
 const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
@@ -131,7 +139,10 @@ export async function buildTicketPdf(data = {}) {
   // ---- header ----
   text(model.business, { size: 15, f: bold, align: 'center' });
   if (model.subtitle) text(model.subtitle.toUpperCase(), { size: 7, color: C.muted, align: 'center' });
-  if (model.nif) text(model.nif, { size: 7.5, color: C.gray, align: 'center' });
+  // print a single "NIF: X" even if the caller already prefixed the value
+  if (model.nif) {
+    text(`NIF: ${model.nif.replace(/^\s*(nif|cif)\s*[:.]?\s*/i, '')}`, { size: 7.5, color: C.gray, align: 'center' });
+  }
   if (model.address) text(model.address, { size: 7.5, color: C.gray, align: 'center' });
 
   gap(6);
@@ -263,8 +274,8 @@ function normalize(data) {
   return {
     business: (data.business || 'MCF Lavandería').toString().trim(),
     subtitle: data.subtitle !== undefined ? String(data.subtitle).trim() : 'Autoservicio de lavandería',
-    nif: (data.nif || '').toString().trim(),
-    address: (data.address || '').toString().trim(),
+    nif: (data.nif || FISCAL.nif).toString().trim(),
+    address: (data.address || FISCAL.address).toString().trim(),
     concepto: (data.concepto || 'Lavado').toString().trim(),
     descripcion: data.descripcion !== undefined ? String(data.descripcion).trim() : 'Servicio de lavandería',
     cantidad: Number(data.cantidad) > 0 ? Number(data.cantidad) : 1,

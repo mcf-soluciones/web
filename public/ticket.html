@@ -454,7 +454,7 @@
             </button>
             <div id="fiscal-fields">
                 <p class="notice" id="fiscal-notice">
-                    Rellena el NIF y la dirección una vez: se guardan en este dispositivo y se usarán en los próximos tickets de esta sucursal.
+                    Ya vienen rellenos con los datos de MCF. Solo cámbialos si necesitas un ticket distinto: se guardarán en este dispositivo para esta sucursal.
                 </p>
                 <div class="form-group">
                     <label class="form-label" for="business-input">Nombre fiscal</label>
@@ -466,11 +466,11 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="nif-input">NIF / CIF</label>
-                    <input type="text" class="form-input" id="nif-input" placeholder="Ej. B12345678">
+                    <input type="text" class="form-input" id="nif-input" placeholder="B25922568">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="address-input">Dirección</label>
-                    <input type="text" class="form-input" id="address-input" placeholder="Calle, número, Madrid">
+                    <input type="text" class="form-input" id="address-input" placeholder="San Julio 5, 1D Madrid 28002">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label" for="footer-input">Nota al pie</label>
@@ -490,6 +490,8 @@
         const FISCAL_KEY = 'mcf_ticket_fiscal_v1';
         const FISCAL_FIELDS = ['business', 'subtitle', 'nif', 'address', 'footer'];
         const DEFAULT_SUBTITLE = { usera: 'Lavandería Usera', hortaleza: 'Lavandería Hortaleza' };
+        // Same company data for both sucursales; editable here only as an override.
+        const DEFAULT_FISCAL = { nif: 'B25922568', address: 'San Julio 5, 1D Madrid 28002' };
 
         let mcfUser = null;
 
@@ -580,7 +582,7 @@
             const prop = document.getElementById('propiedad-select').value;
             const saved = readFiscalStore()[prop] || {};
             FISCAL_FIELDS.forEach(f => {
-                document.getElementById(f + '-input').value = saved[f] || '';
+                document.getElementById(f + '-input').value = saved[f] || DEFAULT_FISCAL[f] || '';
             });
             document.getElementById('subtitle-input').placeholder = DEFAULT_SUBTITLE[prop] || '';
         }
