@@ -61,6 +61,7 @@ mcf-web/
     final-visit.html       # Visit checklist -> /api/visitas
     inventario.html        # Inventory levels -> /api/visitas
     reportar-insumos.html  # Supply request -> /api/visitas
+    ticket.html            # Ticket de compra (receipt PDF) -> /api/tickets/generate
     survey.html            # Generic survey (API call commented out)
     calculador.html        # Redirect to R Shiny app
     session-reset.html     # Clears localStorage/sessionStorage
@@ -73,6 +74,7 @@ mcf-web/
     _lib/
       turso.js             # Shared Turso client (reads TURSO_DATABASE_URL, TURSO_AUTH_TOKEN)
       google-auth.js       # Google Drive + Sheets auth (two separate service accounts)
+      ticket-pdf.js        # 80mm ticket PDF builder (pdf-lib, no native deps)
     movimientos.js         # Central form router: gasto, deposito,
                            #   incidencia, encuesta, transito, fondo_caja
                            # Routes by body.type field
@@ -81,6 +83,7 @@ mcf-web/
     gastos.js              # Detailed expense: uploads receipt to Google Drive,
                            #   inserts into gastos table
     gastos-sheets.js       # Appends expense row to Google Sheets spreadsheet
+    tickets/generate.js    # Ticket (simplified receipt) PDF -> application/pdf
 
   lambda/                  # AWS Lambda source code (5 functions still deployed on AWS)
     mcf_dailySales/        # S3 trigger -> parses CSV -> INSERT into Turso sales table
@@ -170,6 +173,14 @@ All gastos writes flow through Turso; the Google Sheet is a frozen archive.
 - **`POST /api/gastos/factura`** — re-attach a factura PDF to an existing gasto. Uploads to Drive, updates `recibo_url`.
 - **`DELETE /api/gastos/delete?id=`** — hard delete a single row (no soft delete — low-volume table).
 - **`GET /api/export/month?yyyy=&mm=`** — streams a ZIP of `mcf-YYYY-MM.xlsx` (2 sheets: Ventas + Gastos with clickable Drive hyperlinks) + `facturas/*.pdf` for every gasto row with a `recibo_url`. Uses `xlsx` + `archiver`.
+
+### Tickets (simplified receipts)
+
+- **`GET|POST /api/tickets/generate`** — renders an 80mm thermal-style "ticket de compra" PDF and returns it as `application/pdf` (inline by default, `download=1` for an attachment). Pure `pdf-lib`, no DB write — this only prints a receipt, it does not record a sale.
+  - Only `total` is required (positive euros; accepts both `8.50` and the Spanish `8,50`). Everything else falls back to MCF defaults: `business`, `subtitle`, `nif`, `address`, `concepto`, `descripcion`, `cantidad`, `ivaRate` (default 21), `fecha` (today), `hora` (now), `pago` (Efectivo), `numero` (auto `YYYYMMDD-HHMM`), `footer`.
+  - `total` is IVA-*inclusive*; the PDF back-computes base + IVA so the two always re-add to the total exactly.
+  - Layout/format logic lives in `api/_lib/ticket-pdf.js` (WinAnsi encoding, so `€` and Spanish accents render; emoji/CJK are stripped).
+  - UI at `/ticket` (`public/ticket.html`), linked from `/admin` → Otros → "Ticket de Compra". Fiscal details (NIF, dirección, nombre fiscal, nota al pie) are entered once per propiedad and cached in `localStorage` under `mcf_ticket_fiscal_v1` — they are **not** stored server-side.
 
 ### Deprecated (410 Gone)
 - **`POST /api/gastos`** — split into `create` (new gasto + optional factura) and `factura` (attach to existing).

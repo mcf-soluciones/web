@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Ticket de Compra</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fecaca;
+            --cyan: #06b6d4;
+            --cyan-light: #cffafe;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+
+        .back-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px var(--cyan-light);
+        }
+
+        .form-input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px var(--danger-light);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Breakdown */
+        .breakdown {
+            background: var(--cyan-light);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .breakdown-row.total {
+            border-top: 1px solid rgba(6, 182, 212, 0.35);
+            margin-bottom: 0;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .breakdown-row.total .breakdown-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .breakdown-row.total .breakdown-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .breakdown-value {
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Fiscal details toggle */
+        .toggle-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .toggle-link svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .toggle-link.open svg {
+            transform: rotate(180deg);
+        }
+
+        #fiscal-fields {
+            display: none;
+            margin-top: 16px;
+        }
+
+        #fiscal-fields.visible {
+            display: block;
+        }
+
+        .notice {
+            background: var(--warning-light);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-cyan {
+            background: var(--cyan);
+            color: white;
+        }
+
+        .btn-cyan:hover {
+            background: #0891b2;
+        }
+
+        .btn-outline {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 390px) {
+            .container {
+                padding: 16px 12px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin.html" class="back-link" id="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Volver al panel
+        </a>
+
+        <div class="header">
+            <h1>Ticket de Compra</h1>
+            <p>Genera un ticket simplificado en PDF</p>
+        </div>
+
+        <div id="form-card" class="card fade-in">
+            <form id="ticket-form">
+                <div class="form-group">
+                    <label class="form-label" for="propiedad-select">Propiedad / Sucursal</label>
+                    <select class="form-select" id="propiedad-select" required>
+                        <option value="usera">Usera</option>
+                        <option value="hortaleza">Hortaleza</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="concepto-select">Concepto</label>
+                    <select class="form-select" id="concepto-select">
+                        <option value="Lavado">Lavado</option>
+                        <option value="Secado">Secado</option>
+                        <option value="Lavado + Secado">Lavado + Secado</option>
+                        <option value="Recarga de tarjeta">Recarga de tarjeta</option>
+                        <option value="Detergente / Suavizante">Detergente / Suavizante</option>
+                        <option value="__otro">Otro (escribir)</option>
+                    </select>
+                    <input type="text" class="form-input" id="concepto-otro" placeholder="Escribe el concepto" style="display:none; margin-top:10px;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="descripcion-input">Descripción <span style="color: var(--text-muted); font-weight:400;">(opcional)</span></label>
+                    <input type="text" class="form-input" id="descripcion-input" placeholder="Ej. Máquina 3 — 30 min">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="total-input">Importe total (€)</label>
+                        <input type="text" inputmode="decimal" class="form-input" id="total-input" placeholder="0,00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="cantidad-input">Cantidad</label>
+                        <input type="number" min="1" step="1" class="form-input" id="cantidad-input" value="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="iva-select">IVA</label>
+                        <select class="form-select" id="iva-select">
+                            <option value="21" selected>21%</option>
+                            <option value="10">10%</option>
+                            <option value="4">4%</option>
+                            <option value="0">0% (exento)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pago-select">Forma de pago</label>
+                        <select class="form-select" id="pago-select">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Bizum">Bizum</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="fecha-input">Fecha</label>
+                        <input type="date" class="form-input" id="fecha-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="hora-input">Hora</label>
+                        <input type="time" class="form-input" id="hora-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="numero-input">Nº de ticket <span style="color: var(--text-muted); font-weight:400;">(opcional)</span></label>
+                    <input type="text" class="form-input" id="numero-input" placeholder="Se genera automáticamente">
+                </div>
+
+                <div class="breakdown">
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Base imponible</span>
+                        <span class="breakdown-value" id="base-value">0,00 €</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span class="breakdown-label" id="iva-label">IVA (21%)</span>
+                        <span class="breakdown-value" id="iva-value">0,00 €</span>
+                    </div>
+                    <div class="breakdown-row total">
+                        <span class="breakdown-label">Total</span>
+                        <span class="breakdown-value" id="total-value">0,00 €</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-cyan">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                    Ver / Imprimir ticket
+                </button>
+                <button type="button" class="btn btn-outline" id="download-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Descargar PDF
+                </button>
+            </form>
+        </div>
+
+        <div class="card fade-in">
+            <button type="button" class="toggle-link" id="fiscal-toggle">
+                Datos fiscales del ticket
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div id="fiscal-fields">
+                <p class="notice" id="fiscal-notice">
+                    Rellena el NIF y la dirección una vez: se guardan en este dispositivo y se usarán en los próximos tickets de esta sucursal.
+                </p>
+                <div class="form-group">
+                    <label class="form-label" for="business-input">Nombre fiscal</label>
+                    <input type="text" class="form-input" id="business-input" placeholder="MCF Soluciones">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="subtitle-input">Subtítulo</label>
+                    <input type="text" class="form-input" id="subtitle-input" placeholder="Lavandería Usera">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="nif-input">NIF / CIF</label>
+                    <input type="text" class="form-input" id="nif-input" placeholder="Ej. B12345678">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="address-input">Dirección</label>
+                    <input type="text" class="form-input" id="address-input" placeholder="Calle, número, Madrid">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="footer-input">Nota al pie</label>
+                    <input type="text" class="form-input" id="footer-input" placeholder="IVA incluido en el precio.">
+                    <p class="form-hint">Se muestra al final del ticket. Déjalo vacío para el texto por defecto.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            MCF Soluciones · Ticket de Compra
+        </div>
+    </div>
+
+    <script>
+        // Fiscal details are per-propiedad and remembered on this device only.
+        const FISCAL_KEY = 'mcf_ticket_fiscal_v1';
+        const FISCAL_FIELDS = ['business', 'subtitle', 'nif', 'address', 'footer'];
+        const DEFAULT_SUBTITLE = { usera: 'Lavandería Usera', hortaleza: 'Lavandería Hortaleza' };
+
+        let mcfUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            mcfUser = params.get('user');
+            if (mcfUser) {
+                document.getElementById('back-link').href = '/admin.html?user=' + encodeURIComponent(mcfUser);
+            }
+
+            const now = new Date();
+            document.getElementById('fecha-input').value =
+                now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+            document.getElementById('hora-input').value = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+
+            document.getElementById('concepto-select').addEventListener('change', onConceptoChange);
+            document.getElementById('propiedad-select').addEventListener('change', loadFiscal);
+            document.getElementById('total-input').addEventListener('input', updateBreakdown);
+            document.getElementById('iva-select').addEventListener('change', updateBreakdown);
+            document.getElementById('fiscal-toggle').addEventListener('click', toggleFiscal);
+            FISCAL_FIELDS.forEach(f => {
+                document.getElementById(f + '-input').addEventListener('change', saveFiscal);
+            });
+
+            document.getElementById('ticket-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                openTicket(false);
+            });
+            document.getElementById('download-btn').addEventListener('click', () => openTicket(true));
+
+            loadFiscal();
+            updateBreakdown();
+        });
+
+        function pad2(n) { return String(n).padStart(2, '0'); }
+
+        /** Accepts "8,50" and "8.50" alike -- staff type the Spanish comma. */
+        function parseAmount(raw) {
+            const cleaned = String(raw || '').trim().replace(/\s/g, '').replace(',', '.');
+            const n = Number(cleaned);
+            return Number.isFinite(n) ? n : NaN;
+        }
+
+        function formatEur(n) {
+            return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+        }
+
+        function onConceptoChange() {
+            const otro = document.getElementById('concepto-select').value === '__otro';
+            const input = document.getElementById('concepto-otro');
+            input.style.display = otro ? 'block' : 'none';
+            if (otro) input.focus();
+        }
+
+        function conceptoValue() {
+            const sel = document.getElementById('concepto-select').value;
+            if (sel !== '__otro') return sel;
+            return document.getElementById('concepto-otro').value.trim();
+        }
+
+        function updateBreakdown() {
+            const total = parseAmount(document.getElementById('total-input').value);
+            const rate = Number(document.getElementById('iva-select').value);
+            const t = Number.isFinite(total) && total > 0 ? total : 0;
+            const base = Math.round((t / (1 + rate / 100)) * 100) / 100;
+            const iva = Math.round((t - base) * 100) / 100;
+
+            document.getElementById('iva-label').textContent = 'IVA (' + rate + '%)';
+            document.getElementById('base-value').textContent = formatEur(base);
+            document.getElementById('iva-value').textContent = formatEur(iva);
+            document.getElementById('total-value').textContent = formatEur(t);
+        }
+
+        function toggleFiscal() {
+            document.getElementById('fiscal-fields').classList.toggle('visible');
+            document.getElementById('fiscal-toggle').classList.toggle('open');
+        }
+
+        function readFiscalStore() {
+            try {
+                return JSON.parse(localStorage.getItem(FISCAL_KEY)) || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function loadFiscal() {
+            const prop = document.getElementById('propiedad-select').value;
+            const saved = readFiscalStore()[prop] || {};
+            FISCAL_FIELDS.forEach(f => {
+                document.getElementById(f + '-input').value = saved[f] || '';
+            });
+            document.getElementById('subtitle-input').placeholder = DEFAULT_SUBTITLE[prop] || '';
+        }
+
+        function saveFiscal() {
+            const prop = document.getElementById('propiedad-select').value;
+            const store = readFiscalStore();
+            store[prop] = {};
+            FISCAL_FIELDS.forEach(f => {
+                store[prop][f] = document.getElementById(f + '-input').value.trim();
+            });
+            try {
+                localStorage.setItem(FISCAL_KEY, JSON.stringify(store));
+            } catch (e) {
+                console.warn('No se pudieron guardar los datos fiscales:', e);
+            }
+        }
+
+        function openTicket(download) {
+            const totalInput = document.getElementById('total-input');
+            const total = parseAmount(totalInput.value);
+
+            if (!Number.isFinite(total) || total <= 0) {
+                totalInput.classList.add('error');
+                totalInput.focus();
+                alert('Introduce un importe total válido (por ejemplo 8,50).');
+                return;
+            }
+            totalInput.classList.remove('error');
+
+            const concepto = conceptoValue();
+            if (!concepto) {
+                alert('Escribe el concepto del ticket.');
+                document.getElementById('concepto-otro').focus();
+                return;
+            }
+
+            const prop = document.getElementById('propiedad-select').value;
+            const params = new URLSearchParams();
+            params.set('total', total.toFixed(2));
+            params.set('concepto', concepto);
+            params.set('ivaRate', document.getElementById('iva-select').value);
+            params.set('pago', document.getElementById('pago-select').value);
+            params.set('cantidad', document.getElementById('cantidad-input').value || '1');
+
+            const optional = {
+                descripcion: document.getElementById('descripcion-input').value.trim(),
+                fecha: document.getElementById('fecha-input').value,
+                hora: document.getElementById('hora-input').value,
+                numero: document.getElementById('numero-input').value.trim(),
+                business: document.getElementById('business-input').value.trim(),
+                nif: document.getElementById('nif-input').value.trim(),
+                address: document.getElementById('address-input').value.trim(),
+                footer: document.getElementById('footer-input').value.trim(),
+                subtitle: document.getElementById('subtitle-input').value.trim() || DEFAULT_SUBTITLE[prop] || '',
+            };
+            for (const [key, value] of Object.entries(optional)) {
+                if (value) params.set(key, value);
+            }
+            if (download) params.set('download', '1');
+
+            saveFiscal();
+            window.open('/api/tickets/generate?' + params.toString(), '_blank');
+        }
+    </script>
+</body>
+</html>
