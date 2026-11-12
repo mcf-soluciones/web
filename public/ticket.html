@@ -479,6 +479,12 @@
                 </div>
 
                 <div id="factura-only" hidden>
+                    <div class="form-group">
+                        <label class="form-label" for="factura-numero">Nº de factura</label>
+                        <input type="text" class="form-input" id="factura-numero" autocomplete="off" placeholder="Ej. F-2026-001">
+                        <p class="form-hint" id="factura-numero-hint">Escribe el número de la factura.</p>
+                    </div>
+
                     <p class="section-title">Cliente</p>
                     <div class="form-group">
                         <label class="form-label" for="cliente-nombre">Nombre / Razón social</label>
@@ -575,8 +581,8 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="numero-input"><span id="numero-label">Nº de ticket</span> <span style="color: var(--text-muted); font-weight:400;">(opcional)</span></label>
+                <div class="form-group" id="numero-group">
+                    <label class="form-label" for="numero-input">Nº de ticket <span style="color: var(--text-muted); font-weight:400;">(opcional)</span></label>
                     <input type="text" class="form-input" id="numero-input" placeholder="Se genera automáticamente">
                 </div>
 
@@ -654,6 +660,8 @@
 
         // Factura customers, remembered on this device only (keyed by NIF).
         const CLIENTES_KEY = 'mcf_factura_clientes_v1';
+        // Last factura number used on this device, to suggest the next one.
+        const ULTIMO_NUMERO_KEY = 'mcf_factura_ultimo_numero_v1';
 
         let mcfUser = null;
         let mode = 'ticket';
@@ -694,6 +702,7 @@
             document.getElementById('cliente-nombre').addEventListener('input', fillClienteFromName);
 
             addLinea();
+            suggestFacturaNumero();
             refreshClientesList();
             loadFiscal();
             setMode(params.get('tipo') === 'factura' ? 'factura' : 'ticket');
@@ -713,7 +722,7 @@
             document.getElementById('page-subtitle').textContent = isFactura
                 ? 'Genera una factura en PDF con los datos del cliente'
                 : 'Genera un ticket simplificado en PDF';
-            document.getElementById('numero-label').textContent = isFactura ? 'Nº de factura' : 'Nº de ticket';
+            document.getElementById('numero-group').hidden = isFactura;
             document.getElementById('submit-label').textContent = isFactura ? 'Ver / Imprimir factura' : 'Ver / Imprimir ticket';
             document.title = isFactura ? 'Factura' : 'Ticket de Compra';
 
@@ -770,6 +779,31 @@
                     total: Math.round(cantidad * precio * 100) / 100,
                 };
             });
+        }
+
+        // ---- factura number (typed by hand; we only pre-fill a suggestion) ----
+        /** "F-2026-007" -> "F-2026-008"; keeps zero padding. Null if no trailing digits. */
+        function nextNumero(last) {
+            const m = String(last || '').match(/^(.*?)(\d+)(\D*)$/);
+            if (!m) return null;
+            const n = String(Number(m[2]) + 1).padStart(m[2].length, '0');
+            return m[1] + n + m[3];
+        }
+
+        function suggestFacturaNumero() {
+            let last = null;
+            try { last = localStorage.getItem(ULTIMO_NUMERO_KEY); } catch (e) {}
+            const input = document.getElementById('factura-numero');
+            const hint = document.getElementById('factura-numero-hint');
+            const next = nextNumero(last);
+            if (next && !input.value) input.value = next;
+            hint.textContent = last
+                ? 'Última usada en este dispositivo: ' + last + '. Cámbialo si hace falta.'
+                : 'Escribe el número de la factura (ej. F-' + new Date().getFullYear() + '-001).';
+        }
+
+        function saveFacturaNumero(numero) {
+            try { localStorage.setItem(ULTIMO_NUMERO_KEY, numero); } catch (e) {}
         }
 
         // ---- remembered factura customers ----
@@ -921,6 +955,16 @@
         }
 
         function openFactura(download) {
+            const numeroInput = document.getElementById('factura-numero');
+            const numero = numeroInput.value.trim();
+            if (!numero) {
+                numeroInput.classList.add('error');
+                numeroInput.focus();
+                alert('Escribe el número de la factura.');
+                return;
+            }
+            numeroInput.classList.remove('error');
+
             const cliente = {
                 nombre: document.getElementById('cliente-nombre').value.trim(),
                 nif: document.getElementById('cliente-nif').value.trim().toUpperCase(),
@@ -962,12 +1006,13 @@
                 ivaRate: document.getElementById('iva-select').value,
                 pago: document.getElementById('pago-select').value,
                 fecha: document.getElementById('fecha-input').value,
-                numero: document.getElementById('numero-input').value.trim(),
+                numero,
                 ...fiscalParams(),
             };
 
             saveFiscal();
             saveCliente(cliente);
+            saveFacturaNumero(numero);
 
             // A real form POST opens the PDF in a new tab without tripping popup
             // blockers, and has no URL-length limit for long service lists.

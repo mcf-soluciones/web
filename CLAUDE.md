@@ -191,7 +191,7 @@ All gastos writes flow through Turso; the Google Sheet is a frozen archive.
   - Body: `{ cliente: { nombre, nif, direccion }, lineas: [{ concepto, detalle?, cantidad?, precio }], ivaRate?, fecha?, numero?, pago?, footer?, business?, subtitle?, nif?, address? }`. All three `cliente` fields and ≥1 línea are required.
   - `precio` is the IVA-*inclusive* unit price (what the customer pays). Per line the PDF shows precio unitario + importe **sin IVA** (back-computed); invoice base = Σ line bases, IVA = total − base, so they re-add to the total exactly.
   - Emisor identity is the same `FISCAL` constant as the ticket (`api/_lib/factura-pdf.js` imports it from `ticket-pdf.js`).
-  - `numero` defaults to `F-YYYYMMDD-HHMM`; there is no server-side correlative series yet, so type the number if one is needed.
+  - `numero` defaults to `F-YYYYMMDD-HHMM` in the API, but the `/ticket` form requires it: staff type it by hand in the "Nº de factura" field. The form pre-fills a suggestion (last number used on this device + 1, stored in `localStorage` under `mcf_factura_ultimo_numero_v1`). There is no server-side correlative series.
   - The `/ticket` form submits a real HTML form (new tab, no popup blocker) with the JSON in a single `payload` field — the endpoint accepts that (urlencoded or raw body, or `?payload=`) as well as a plain JSON body.
   - UI: `/ticket` → "Factura" switch (deep link `/ticket?tipo=factura`). Customers are remembered per device in `localStorage` under `mcf_factura_clientes_v1` (keyed by NIF) and autofill from the name field.
 
