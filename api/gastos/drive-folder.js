@@ -1,3 +1,4 @@
+import { requireReader } from '../_lib/web-auth.js';
 import { getDriveService } from '../_lib/google-auth.js';
 import { getOrCreateMonthFolder } from '../_lib/drive-folders.js';
 
@@ -13,6 +14,7 @@ const DRIVE_FOLDER_ID = '1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a';
  * Response: { folder_id, folder_name, url }
  */
 export default async function handler(req, res) {
+  if (!requireReader(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

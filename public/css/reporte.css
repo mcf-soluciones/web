@@ -303,3 +303,7 @@ select.modal-input {
   border-radius: 6px; height: 14px;
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* The accountant's read-only Gastos table: cells read as text, not as something to click. */
+.gastos-readonly tbody span.cursor-pointer { cursor: default; }
+.gastos-readonly tbody span.cursor-pointer:hover { background: transparent; }

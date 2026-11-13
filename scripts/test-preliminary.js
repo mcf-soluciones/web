@@ -12,7 +12,8 @@ async function main() {
     setHeader(k, v) { this._headers[k] = v; return this; },
     json(body) { console.log('fallback:', JSON.stringify(body).slice(0, 200)); out.end(); },
   });
-  const req = { method: 'GET', query: { mm: '3', yyyy: '2026' } };
+  const { scriptHeaders } = await import('../api/_lib/web-auth.js');
+  const req = { method: 'GET', headers: scriptHeaders(), query: { mm: '3', yyyy: '2026' } };
   await handler(req, res);
   await new Promise(r => out.on('close', r));
 

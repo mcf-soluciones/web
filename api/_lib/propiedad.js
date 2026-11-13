@@ -6,7 +6,8 @@
  *   'usera', 'USERA', 'Usera', 'Usera (001)', '(001) Usera' → '(001) Usera'
  *   'hortaleza', 'HORTALEZA', '(002) Hortaleza'            → '(002) Hortaleza'
  *   'corporate', '(000) Corporate'                          → 'Corporate'
- *   'compra tbc', '(003) Compra TBC'                        → '(003) Compra TBC'
+ *   'monterrey', '(003) Monterrey'                          → '(003) Monterrey'
+ *   'cdmx', '(004) CDMX'                                    → '(004) CDMX'
  *
  * Unknown inputs (and null/empty) pass through unchanged so we don't silently
  * destroy data.
@@ -17,7 +18,8 @@ export function canonicalizePropiedad(p) {
   if (s === '') return p;
   if (s.includes('usera')) return '(001) Usera';
   if (s.includes('hortaleza')) return '(002) Hortaleza';
-  if (s.includes('compra tbc') || s.includes('(003)')) return '(003) Compra TBC';
+  if (s.includes('monterrey') || s.includes('(003)')) return '(003) Monterrey';
+  if (s.includes('cdmx') || s.includes('(004)')) return '(004) CDMX';
   if (s.includes('corporate') || s.includes('(000)')) return 'Corporate';
   return p;
 }

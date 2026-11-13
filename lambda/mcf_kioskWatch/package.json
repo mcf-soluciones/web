@@ -1,0 +1,8 @@
+{
+  "name": "mcf-kiosk-watch",
+  "version": "1.0.0",
+  "description": "Every 5 minutes, asks mcfsoluciones.com to check the kiosks and send alerts",
+  "type": "module",
+  "main": "index.js",
+  "private": true
+}

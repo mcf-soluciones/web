@@ -1,3 +1,4 @@
+import { requireReports } from './_lib/web-auth.js';
 /**
  * DEPRECATED — use POST /api/gastos/create instead.
  *
@@ -9,6 +10,7 @@
  * This endpoint returns 410 Gone so any stale client surfaces the change.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST,GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

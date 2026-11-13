@@ -18,6 +18,7 @@
  *   node scripts/check-bs-vs-pnl.mjs 2025 2026  # specific years
  */
 import 'dotenv/config';
+import { scriptHeaders } from '../api/_lib/web-auth.js';
 import { createClient } from '@libsql/client';
 import { deriveBalanceSheet } from '../api/_lib/balance-sheet.js';
 
@@ -29,7 +30,7 @@ const BASE = process.env.LOCAL_API_BASE || 'http://localhost:3001';
 const TOL = 1;
 
 async function pnlYearNeto(yyyy) {
-  const r = await fetch(`${BASE}/api/reports/pnl?yyyy=${yyyy}&mm=12`);
+  const r = await fetch(`${BASE}/api/reports/pnl?yyyy=${yyyy}&mm=12`, { headers: scriptHeaders() });
   if (!r.ok) throw new Error(`pnl HTTP ${r.status} for ${yyyy}`);
   const j = await r.json();
   return j.year.neto.by_month;                                              // { 1: x, 2: y, ... }

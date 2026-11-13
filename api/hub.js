@@ -1,4 +1,6 @@
+import { requireReports } from './_lib/web-auth.js';
 import turso from './_lib/turso.js';
+import { MEXICO_COMPANY } from './_lib/sucursales.js';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +14,7 @@ function formatDate(date) {
 }
 
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   if (req.method === 'OPTIONS') return res.status(200).json({});
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -67,8 +70,9 @@ export default async function handler(req, res) {
             WHERE (yyyy > ? OR (yyyy = ? AND mm >= ?))
               AND (yyyy < ? OR (yyyy = ? AND mm <= ?))
               AND UPPER(COALESCE(payment, '')) NOT LIKE '%CLIENTE%'
+              AND COALESCE(company, '') <> ?
             GROUP BY yyyy, mm`,
-      args: [firstY, firstY, firstM, curY, curY, curM],
+      args: [firstY, firstY, firstM, curY, curY, curM, MEXICO_COMPANY],
     });
     const monthTotals = new Map();
     for (const r of monthlyRs.rows) {
@@ -116,16 +120,24 @@ export default async function handler(req, res) {
         const key = r.mcf_user === 'local-usera' ? 'usera' : 'hortaleza';
         mtdCurrentByStore[key] = Number(r.total) || 0;
       }
-      const mtdLastYearRs = await turso.execute({
-        sql: `SELECT property, COALESCE(SUM(euro), 0) AS total FROM sales_detail
-              WHERE yyyy = ? AND mm = ? AND dd <= ?
-                AND UPPER(COALESCE(payment, '')) NOT LIKE '%CLIENTE%'
-                AND property IN ('usera', 'hortaleza')
-              GROUP BY property`,
-        args: [curY - 1, curM, throughDay],
+      // Each store is compared up to its own latest day: one with the kiosk reports today, the other only after closing.
+      const lastByStoreRs = await turso.execute({
+        sql: `SELECT mcf_user, MAX(date_real) AS last_date FROM sales WHERE date_real >= ? GROUP BY mcf_user`,
+        args: [mtdStart],
       });
-      for (const r of mtdLastYearRs.rows) {
-        mtdLastYearByStore[r.property] = Number(r.total) || 0;
+      const storeDay = store => {
+        const row = lastByStoreRs.rows.find(r => r.mcf_user === `local-${store}`);
+        return row?.last_date ? Number(row.last_date.slice(-2)) : throughDay;
+      };
+      for (const store of ['usera', 'hortaleza']) {
+        const mtdLastYearRs = await turso.execute({
+          sql: `SELECT COALESCE(SUM(euro), 0) AS total FROM sales_detail
+                WHERE yyyy = ? AND mm = ? AND dd <= ?
+                  AND UPPER(COALESCE(payment, '')) NOT LIKE '%CLIENTE%'
+                  AND property = ?`,
+          args: [curY - 1, curM, storeDay(store), store],
+        });
+        mtdLastYearByStore[store] = Number(mtdLastYearRs.rows[0]?.total) || 0;
       }
     }
     const mtdComparison = {

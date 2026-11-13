@@ -4,336 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <title>Ticket de Compra</title>
-    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --primary-light: #dbeafe;
-            --secondary: #64748b;
-            --success: #10b981;
-            --success-light: #d1fae5;
-            --warning: #f59e0b;
-            --warning-light: #fef3c7;
-            --danger: #ef4444;
-            --danger-light: #fecaca;
-            --cyan: #06b6d4;
-            --cyan-light: #cffafe;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            --radius: 12px;
-            --radius-lg: 16px;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 24px 16px;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .header h1 {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .header p {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        /* Back link */
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            margin-bottom: 16px;
-            transition: color 0.2s;
-        }
-
-        .back-link:hover {
-            color: var(--text-primary);
-        }
-
-        .back-link svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        /* Cards */
-        .card {
-            background: var(--bg-primary);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow);
-            padding: 24px;
-            margin-bottom: 16px;
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-        }
-
-        /* Form elements */
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 16px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            transition: all 0.2s;
-            -webkit-appearance: none;
-            appearance: none;
-            font-family: inherit;
-        }
-
-        .form-select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 18px;
-            padding-right: 40px;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--cyan);
-            box-shadow: 0 0 0 3px var(--cyan-light);
-        }
-
-        .form-input.error {
-            border-color: var(--danger);
-            box-shadow: 0 0 0 3px var(--danger-light);
-        }
-
-        .form-hint {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
-
-        /* Breakdown */
-        .breakdown {
-            background: var(--cyan-light);
-            border-radius: var(--radius);
-            padding: 16px 20px;
-            margin-bottom: 16px;
-        }
-
-        .breakdown-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-
-        .breakdown-row.total {
-            border-top: 1px solid rgba(6, 182, 212, 0.35);
-            margin-bottom: 0;
-            margin-top: 10px;
-            padding-top: 10px;
-        }
-
-        .breakdown-row.total .breakdown-label {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-        }
-
-        .breakdown-row.total .breakdown-value {
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--cyan);
-        }
-
-        .breakdown-value {
-            font-variant-numeric: tabular-nums;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        /* Fiscal details toggle */
-        .toggle-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: none;
-            border: none;
-            padding: 0;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--primary);
-            cursor: pointer;
-        }
-
-        .toggle-link svg {
-            width: 16px;
-            height: 16px;
-            transition: transform 0.2s;
-        }
-
-        .toggle-link.open svg {
-            transform: rotate(180deg);
-        }
-
-        #fiscal-fields {
-            display: none;
-            margin-top: 16px;
-        }
-
-        #fiscal-fields.visible {
-            display: block;
-        }
-
-        .notice {
-            background: var(--warning-light);
-            border-radius: var(--radius);
-            padding: 12px 14px;
-            font-size: 13px;
-            color: #92400e;
-            margin-bottom: 16px;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: var(--radius);
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            width: 100%;
-        }
-
-        .btn-cyan {
-            background: var(--cyan);
-            color: white;
-        }
-
-        .btn-cyan:hover {
-            background: #0891b2;
-        }
-
-        .btn-outline {
-            background: var(--bg-primary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            margin-top: 10px;
-        }
-
-        .btn-outline:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 24px 0;
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 390px) {
-            .container {
-                padding: 16px 12px;
-            }
-
-            .card {
-                padding: 20px;
-            }
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/mcf.css">
 </head>
-<body>
+<body data-shell="app">
+    <script src="/js/mcf-shell.js"></script>
     <div class="container">
         <a href="/admin.html" class="back-link" id="back-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -466,7 +143,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="nif-input">NIF / CIF</label>
-                    <input type="text" class="form-input" id="nif-input" placeholder="B25922568">
+                    <input type="text" class="form-input" id="nif-input" placeholder="B19971613">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="address-input">Dirección</label>
@@ -491,7 +168,9 @@
         const FISCAL_FIELDS = ['business', 'subtitle', 'nif', 'address', 'footer'];
         const DEFAULT_SUBTITLE = { usera: 'Lavandería Usera', hortaleza: 'Lavandería Hortaleza' };
         // Same company data for both sucursales; editable here only as an override.
-        const DEFAULT_FISCAL = { nif: 'B25922568', address: 'San Julio 5, 1D Madrid 28002' };
+        const DEFAULT_FISCAL = { nif: 'B19971613', address: 'San Julio 5, 1D Madrid 28002' };
+        // saveFiscal stores every field, so a device can hold this old NIF without anyone having chosen it.
+        const RETIRED_NIF = 'B25922568';
 
         let mcfUser = null;
 
@@ -581,6 +260,7 @@
         function loadFiscal() {
             const prop = document.getElementById('propiedad-select').value;
             const saved = readFiscalStore()[prop] || {};
+            if (saved.nif === RETIRED_NIF) delete saved.nif;
             FISCAL_FIELDS.forEach(f => {
                 document.getElementById(f + '-input').value = saved[f] || DEFAULT_FISCAL[f] || '';
             });

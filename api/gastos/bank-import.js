@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import crypto from 'node:crypto';
 import * as XLSX from 'xlsx';
 import turso from '../_lib/turso.js';
@@ -25,6 +26,7 @@ import { canonicalizePropiedad } from '../_lib/propiedad.js';
  *   editor.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

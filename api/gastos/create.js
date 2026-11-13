@@ -3,8 +3,12 @@ import turso from '../_lib/turso.js';
 import { getDriveService } from '../_lib/google-auth.js';
 import { getOrCreateMonthFolder } from '../_lib/drive-folders.js';
 import { canonicalizePropiedad } from '../_lib/propiedad.js';
+import { requireOwner } from '../_lib/web-auth.js';
+import { MEXICO_DRIVE_FOLDER_ID, esMexico } from '../_lib/sucursales.js';
 
 const DRIVE_FOLDER_ID = '1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a';
+// How /reporte labels its own entries. Anything else is a person, who can only record as themselves.
+const SYSTEM_USERS = ['admin', 'bank-import'];
 
 /**
  * POST /api/gastos/create
@@ -21,6 +25,8 @@ export default async function handler(req, res) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const owner = requireOwner(req, res);
+  if (!owner) return;
 
   try {
     const body = req.body || {};
@@ -50,7 +56,9 @@ export default async function handler(req, res) {
     // Optional factura upload to Drive (into a YYYY-MM subfolder of the parent).
     let reciboUrl = body.recibo_url || null;
     if (body.file && body.file.content) {
-      reciboUrl = await uploadFacturaToDrive(body.file, yyyy, mm);
+      const folder = esMexico(propiedad) ? MEXICO_DRIVE_FOLDER_ID : DRIVE_FOLDER_ID;
+      if (!folder) return res.status(400).json({ error: 'Falta configurar la carpeta de Drive de México' });
+      reciboUrl = await uploadFacturaToDrive(body.file, yyyy, mm, folder);
     }
 
     const importeTotal = parseFloat(body.importe_total ?? body.gasto) || 0;
@@ -88,7 +96,9 @@ export default async function handler(req, res) {
       || (String(cuenta || '').toUpperCase().charAt(0) === 'Z');
     const esInversion = isCapexCategory ? 'Si' : normaliseYesNo(body.es_inversion, 'No');
     const isFiscal = body.is_fiscal === true || body.is_fiscal === 'true' || body.is_fiscal === 1 ? 1 : 0;
-    const mcfUser = body.mcf_user || body.user_name || body.user || null;
+    const sentUser = body.mcf_user || body.user_name || body.user || null;
+    // No person sent means no movements row below, so nobody's balance changes.
+    const mcfUser = !sentUser || SYSTEM_USERS.includes(sentUser) ? sentUser : owner;
 
     const insert = await turso.execute({
       sql: `INSERT INTO gastos (
@@ -132,9 +142,10 @@ export default async function handler(req, res) {
 
     const gastoId = Number(insert.lastInsertRowid);
 
-    // Create matching movements row so Hub user balances stay correct.
+    // Create matching movements row so Hub user balances stay correct. Mexico's money
+    // is not in those balances, or in Spain's cash on the balance sheet.
     let movementId = null;
-    if (mcfUser) {
+    if (mcfUser && !esMexico(propiedad)) {
       const movTitle = title;
       const movDescription = `Concepto: ${body.concepto_proveedor || conceptoMcf || '-'}\nImporte: ${importeTotal} ${body.currency || 'EUR'}\nFiscal: ${isFiscal ? 'Si' : 'No'}\nInversion: ${esInversion}`;
       const mov = await turso.execute({
@@ -162,9 +173,9 @@ export default async function handler(req, res) {
 // Helpers
 // -----------------------------------------------------------------------------
 
-async function uploadFacturaToDrive(file, yyyy, mm) {
+async function uploadFacturaToDrive(file, yyyy, mm, folder) {
   const drive = getDriveService();
-  const monthFolderId = await getOrCreateMonthFolder(drive, DRIVE_FOLDER_ID, yyyy, mm);
+  const monthFolderId = await getOrCreateMonthFolder(drive, folder, yyyy, mm);
   const buffer = Buffer.from(file.content, 'base64');
   const created = await drive.files.create({
     requestBody: { name: file.name || `factura-${Date.now()}`, parents: [monthFolderId] },

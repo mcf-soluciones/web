@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 import { uploadLaundryFile } from '../_lib/laundry-drive.js';
 
@@ -9,6 +10,7 @@ import { uploadLaundryFile } from '../_lib/laundry-drive.js';
  * laundry Drive folder, then inserts a row into laundry_files.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

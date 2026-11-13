@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 import { BULK_FIELDS, coerce } from '../_lib/gastos-editable.js';
 import { canonicalizePropiedad } from '../_lib/propiedad.js';
@@ -11,6 +12,7 @@ import { canonicalizePropiedad } from '../_lib/propiedad.js';
  * are intentionally excluded; those should be edited per-row.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'PATCH' && req.method !== 'POST') {

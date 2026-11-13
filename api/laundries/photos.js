@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 
 /**
@@ -6,6 +7,7 @@ import turso from '../_lib/turso.js';
  * Returns every photo row for one laundry, ordered newest first.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

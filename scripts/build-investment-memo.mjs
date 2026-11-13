@@ -6,6 +6,7 @@ import path from 'node:path';
 import turso from '../api/_lib/turso.js';
 import { computeProjection } from '../api/_lib/projections.js';
 import baselineHandler from '../api/projections/baseline.js';
+import { scriptHeaders } from '../api/_lib/web-auth.js';
 
 function captureHandler(h, req) {
   return new Promise((resolve, reject) => {
@@ -20,7 +21,7 @@ function captureHandler(h, req) {
   });
 }
 
-const baseline = (await captureHandler(baselineHandler, { method: 'GET', query: { yyyy_mm: '2026-04' }, body: null })).body;
+const baseline = (await captureHandler(baselineHandler, { method: 'GET', headers: scriptHeaders(), query: { yyyy_mm: '2026-04' }, body: null })).body;
 const r = await turso.execute('SELECT id, payload FROM projections WHERE id IN (5,6,7,8)');
 const saved = {};
 for (const row of r.rows) saved[row.id] = JSON.parse(row.payload);

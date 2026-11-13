@@ -3,7 +3,7 @@
  *   1) Add catalogo_cuentas rows for the new Z letter
  *        Z1 · (001) Usera         · Adquisición o Inversiones
  *        Z2 · (002) Hortaleza      · Adquisición o Inversiones
- *        Z3 · (003) Compra TBC     · Adquisición o Inversiones
+ *        Z3 · (003) Monterrey      · Adquisición o Inversiones
  *        Z4 · Corporate            · Adquisición o Inversiones
  *   2) Re-home 7 mis-tagged gastos to Z (keeping es_inversion='Si'):
  *        ids 194, 195          → Z2 (were C2 Alquiler Hortaleza)
@@ -19,7 +19,7 @@ const turso = createClient({ url: process.env.TURSO_DATABASE_URL, authToken: pro
 const NEW_CATALOG_ROWS = [
   { code: 'Z1', property: '(001) Usera',     desc: 'Adquisición o Inversiones' },
   { code: 'Z2', property: '(002) Hortaleza', desc: 'Adquisición o Inversiones' },
-  { code: 'Z3', property: '(003) Compra TBC', desc: 'Adquisición o Inversiones' },
+  { code: 'Z3', property: '(003) Monterrey', desc: 'Adquisición o Inversiones' },
   { code: 'Z4', property: 'Corporate',        desc: 'Adquisición o Inversiones' },
 ];
 
