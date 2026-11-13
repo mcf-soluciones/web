@@ -84,7 +84,7 @@
       admin: true,
       items: [
         { page: 'incidencias', label: 'Incidencias', desc: 'Reportar quejas o llamadas', icon: 'warning' },
-        { page: 'ticket', label: 'Ticket de Compra', desc: 'Generar ticket simplificado en PDF', icon: 'ticket' },
+        { page: 'ticket', label: 'Ticket / Factura', desc: 'Generar ticket o factura en PDF', icon: 'ticket' },
       ],
     },
     {

@@ -418,6 +418,26 @@ body[data-shell="bare"] .header { text-align: center; }
 .breakdown { padding: 0.75rem 1rem; margin-bottom: 1rem; background: var(--muted); border-radius: var(--radius); }
 .breakdown-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.375rem; font-size: 14px; color: var(--muted-foreground); }
 .breakdown-row.total { margin: 0.625rem 0 0; padding-top: 0.625rem; border-top: 1px solid var(--border); }
+
+/* Ticket / Factura (/ticket): mode switch and factura service lines */
+[hidden] { display: none !important; }
+.mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; padding: 0.25rem; margin-bottom: 1.25rem; background: var(--muted); border-radius: var(--radius); }
+.mode-toggle button { border: 1px solid transparent; background: transparent; border-radius: calc(var(--radius) - 2px); padding: 0.5rem 0.75rem; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted-foreground); cursor: pointer; }
+.mode-toggle button:hover { color: var(--foreground); }
+.mode-toggle button.active { background: var(--card); border-color: var(--border); color: var(--purple); }
+.mode-toggle button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.section-title { margin: 0.25rem 0 0.75rem; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); }
+.linea { padding: 0.75rem; margin-bottom: 0.625rem; background: var(--muted); border: 1px solid var(--border); border-radius: var(--radius); }
+.linea-top, .linea-bottom { display: grid; gap: 0.5rem; align-items: center; }
+.linea-top { grid-template-columns: 1.4fr 1fr; margin-bottom: 0.5rem; }
+.linea-bottom { grid-template-columns: 4rem 1fr auto 2.25rem; }
+.linea .form-input { background: var(--card); }
+.linea-importe { min-width: 4.5rem; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.linea-remove { width: 2.25rem; height: 2.25rem; border: 0; border-radius: calc(var(--radius) - 2px); background: transparent; color: var(--muted-foreground); font-size: 20px; line-height: 1; cursor: pointer; }
+.linea-remove:hover { background: var(--tint-danger); color: var(--destructive); }
+.linea-remove:disabled { visibility: hidden; }
+.btn-add { width: 100%; margin-bottom: 1rem; background: var(--card); border: 1px dashed var(--border); color: var(--primary); }
+.btn-add:hover { background: var(--tint-primary); border-color: var(--primary); }
 .breakdown-row.total .breakdown-label { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
 .breakdown-row.total .breakdown-value { font-size: 1.5rem; font-weight: 600; color: var(--foreground); }
 .breakdown-value { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--foreground); }

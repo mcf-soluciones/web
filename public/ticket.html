@@ -18,12 +18,17 @@
         </a>
 
         <div class="header">
-            <h1>Ticket de Compra</h1>
-            <p>Genera un ticket simplificado en PDF</p>
+            <h1 id="page-title">Ticket de Compra</h1>
+            <p id="page-subtitle">Genera un ticket simplificado en PDF</p>
         </div>
 
         <div id="form-card" class="card fade-in">
             <form id="ticket-form">
+                <div class="mode-toggle" role="tablist">
+                    <button type="button" class="active" data-mode="ticket" role="tab">Ticket</button>
+                    <button type="button" data-mode="factura" role="tab">Factura</button>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label" for="propiedad-select">Propiedad / Sucursal</label>
                     <select class="form-select" id="propiedad-select" required>
@@ -32,6 +37,47 @@
                     </select>
                 </div>
 
+                <div id="factura-only" hidden>
+                    <div class="form-group">
+                        <label class="form-label" for="factura-numero">Nº de factura</label>
+                        <input type="text" class="form-input" id="factura-numero" autocomplete="off" placeholder="Ej. F-2026-001">
+                        <p class="form-hint" id="factura-numero-hint">Escribe el número de la factura.</p>
+                    </div>
+
+                    <p class="section-title">Cliente</p>
+                    <div class="form-group">
+                        <label class="form-label" for="cliente-nombre">Nombre / Razón social</label>
+                        <input type="text" class="form-input" id="cliente-nombre" list="clientes-list" autocomplete="off" placeholder="Ej. Hotel Ejemplo S.L.">
+                        <datalist id="clientes-list"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="cliente-nif">NIF / CIF</label>
+                        <input type="text" class="form-input" id="cliente-nif" autocomplete="off" placeholder="B12345678" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="cliente-direccion">Dirección</label>
+                        <textarea class="form-input" id="cliente-direccion" rows="2" placeholder="Calle, número, CP y ciudad"></textarea>
+                        <p class="form-hint">Los clientes se recuerdan en este dispositivo: escribe el nombre para rellenar el resto.</p>
+                    </div>
+
+                    <p class="section-title">Servicios</p>
+                    <div id="lineas"></div>
+                    <datalist id="servicios-list">
+                        <option value="Lavadora 1"></option>
+                        <option value="Lavadora 2"></option>
+                        <option value="Lavadora 3"></option>
+                        <option value="Secadora 1"></option>
+                        <option value="Secadora 2"></option>
+                        <option value="Secadora 3"></option>
+                        <option value="Lavado + Secado"></option>
+                        <option value="Recarga de tarjeta"></option>
+                        <option value="Detergente / Suavizante"></option>
+                    </datalist>
+                    <button type="button" class="btn btn-add" id="add-linea-btn">+ Añadir servicio</button>
+                    <p class="form-hint" style="margin: -8px 0 16px;">Precio unitario con IVA incluido (lo que paga el cliente). La factura muestra el precio sin IVA y el desglose.</p>
+                </div>
+
+                <div id="ticket-only">
                 <div class="form-group">
                     <label class="form-label" for="concepto-select">Concepto</label>
                     <select class="form-select" id="concepto-select">
@@ -53,12 +99,13 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" for="total-input">Importe total (€)</label>
-                        <input type="text" inputmode="decimal" class="form-input" id="total-input" placeholder="0,00" required>
+                        <input type="text" inputmode="decimal" class="form-input" id="total-input" placeholder="0,00">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="cantidad-input">Cantidad</label>
                         <input type="number" min="1" step="1" class="form-input" id="cantidad-input" value="1">
                     </div>
+                </div>
                 </div>
 
                 <div class="form-row">
@@ -82,18 +129,18 @@
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row" id="fecha-row">
                     <div class="form-group">
                         <label class="form-label" for="fecha-input">Fecha</label>
                         <input type="date" class="form-input" id="fecha-input">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="hora-group">
                         <label class="form-label" for="hora-input">Hora</label>
                         <input type="time" class="form-input" id="hora-input">
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="numero-group">
                     <label class="form-label" for="numero-input">Nº de ticket <span style="color: var(--text-muted); font-weight:400;">(opcional)</span></label>
                     <input type="text" class="form-input" id="numero-input" placeholder="Se genera automáticamente">
                 </div>
@@ -115,7 +162,7 @@
 
                 <button type="submit" class="btn btn-cyan">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-                    Ver / Imprimir ticket
+                    <span id="submit-label">Ver / Imprimir ticket</span>
                 </button>
                 <button type="button" class="btn btn-outline" id="download-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
@@ -126,12 +173,12 @@
 
         <div class="card fade-in">
             <button type="button" class="toggle-link" id="fiscal-toggle">
-                Datos fiscales del ticket
+                Datos fiscales de MCF
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             <div id="fiscal-fields">
                 <p class="notice" id="fiscal-notice">
-                    Ya vienen rellenos con los datos de MCF. Solo cámbialos si necesitas un ticket distinto: se guardarán en este dispositivo para esta sucursal.
+                    Ya vienen rellenos con los datos de MCF. Se usan igual en tickets y facturas. Solo cámbialos si necesitas algo distinto: se guardarán en este dispositivo para esta sucursal.
                 </p>
                 <div class="form-group">
                     <label class="form-label" for="business-input">Nombre fiscal</label>
@@ -172,7 +219,13 @@
         // saveFiscal stores every field, so a device can hold this old NIF without anyone having chosen it.
         const RETIRED_NIF = 'B25922568';
 
+        // Factura customers, remembered on this device only (keyed by NIF).
+        const CLIENTES_KEY = 'mcf_factura_clientes_v1';
+        // Last factura number used on this device, to suggest the next one.
+        const ULTIMO_NUMERO_KEY = 'mcf_factura_ultimo_numero_v1';
+
         let mcfUser = null;
+        let mode = 'ticket';
 
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
@@ -201,9 +254,160 @@
             });
             document.getElementById('download-btn').addEventListener('click', () => openTicket(true));
 
+            document.querySelectorAll('.mode-toggle button').forEach(btn => {
+                btn.addEventListener('click', () => setMode(btn.dataset.mode));
+            });
+            document.getElementById('add-linea-btn').addEventListener('click', () => {
+                addLinea().querySelector('.linea-concepto').focus();
+            });
+            document.getElementById('cliente-nombre').addEventListener('input', fillClienteFromName);
+
+            addLinea();
+            suggestFacturaNumero();
+            refreshClientesList();
             loadFiscal();
-            updateBreakdown();
+            setMode(params.get('tipo') === 'factura' ? 'factura' : 'ticket');
         });
+
+        function setMode(next) {
+            mode = next === 'factura' ? 'factura' : 'ticket';
+            const isFactura = mode === 'factura';
+            document.querySelectorAll('.mode-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            document.getElementById('factura-only').hidden = !isFactura;
+            document.getElementById('ticket-only').hidden = isFactura;
+            document.getElementById('hora-group').hidden = isFactura;
+            document.getElementById('fecha-row').style.gridTemplateColumns = isFactura ? '1fr' : '';
+            document.getElementById('page-title').textContent = isFactura ? 'Factura' : 'Ticket de Compra';
+            document.getElementById('page-subtitle').textContent = isFactura
+                ? 'Genera una factura en PDF con los datos del cliente'
+                : 'Genera un ticket simplificado en PDF';
+            document.getElementById('numero-group').hidden = isFactura;
+            document.getElementById('submit-label').textContent = isFactura ? 'Ver / Imprimir factura' : 'Ver / Imprimir ticket';
+            document.title = isFactura ? 'Factura' : 'Ticket de Compra';
+
+            const url = new URL(window.location.href);
+            if (isFactura) url.searchParams.set('tipo', 'factura');
+            else url.searchParams.delete('tipo');
+            history.replaceState(null, '', url);
+
+            updateBreakdown();
+        }
+
+        // ---- factura service lines ----
+        function addLinea() {
+            const row = document.createElement('div');
+            row.className = 'linea';
+            row.innerHTML =
+                '<div class="linea-top">' +
+                    '<input type="text" class="form-input linea-concepto" list="servicios-list" placeholder="Servicio (ej. Secadora 1)" aria-label="Servicio">' +
+                    '<input type="text" class="form-input linea-detalle" placeholder="Detalle (ej. 20 min)" aria-label="Detalle">' +
+                '</div>' +
+                '<div class="linea-bottom">' +
+                    '<input type="number" min="1" step="1" value="1" class="form-input linea-cantidad" aria-label="Cantidad">' +
+                    '<input type="text" inputmode="decimal" class="form-input linea-precio" placeholder="Precio € (IVA incl.)" aria-label="Precio unitario con IVA">' +
+                    '<span class="linea-importe">0,00 €</span>' +
+                    '<button type="button" class="linea-remove" aria-label="Quitar servicio">&times;</button>' +
+                '</div>';
+            row.querySelector('.linea-remove').addEventListener('click', () => {
+                row.remove();
+                syncRemoveButtons();
+                updateBreakdown();
+            });
+            row.querySelectorAll('input').forEach(i => i.addEventListener('input', updateBreakdown));
+            document.getElementById('lineas').appendChild(row);
+            syncRemoveButtons();
+            return row;
+        }
+
+        function syncRemoveButtons() {
+            const rows = document.querySelectorAll('#lineas .linea');
+            rows.forEach(r => { r.querySelector('.linea-remove').disabled = rows.length === 1; });
+        }
+
+        /** Rows as typed; `total` is cantidad × precio (IVA incl.), NaN if invalid. */
+        function readLineas() {
+            return Array.from(document.querySelectorAll('#lineas .linea')).map(row => {
+                const cantidad = Number(row.querySelector('.linea-cantidad').value);
+                const precio = parseAmount(row.querySelector('.linea-precio').value);
+                return {
+                    row,
+                    concepto: row.querySelector('.linea-concepto').value.trim(),
+                    detalle: row.querySelector('.linea-detalle').value.trim(),
+                    cantidad,
+                    precio,
+                    total: Math.round(cantidad * precio * 100) / 100,
+                };
+            });
+        }
+
+        // ---- factura number (typed by hand; we only pre-fill a suggestion) ----
+        /** "F-2026-007" -> "F-2026-008"; keeps zero padding. Null if no trailing digits. */
+        function nextNumero(last) {
+            const m = String(last || '').match(/^(.*?)(\d+)(\D*)$/);
+            if (!m) return null;
+            const n = String(Number(m[2]) + 1).padStart(m[2].length, '0');
+            return m[1] + n + m[3];
+        }
+
+        function suggestFacturaNumero() {
+            let last = null;
+            try { last = localStorage.getItem(ULTIMO_NUMERO_KEY); } catch (e) {}
+            const input = document.getElementById('factura-numero');
+            const hint = document.getElementById('factura-numero-hint');
+            const next = nextNumero(last);
+            if (next && !input.value) input.value = next;
+            hint.textContent = last
+                ? 'Última usada en este dispositivo: ' + last + '. Cámbialo si hace falta.'
+                : 'Escribe el número de la factura (ej. F-' + new Date().getFullYear() + '-001).';
+        }
+
+        function saveFacturaNumero(numero) {
+            try { localStorage.setItem(ULTIMO_NUMERO_KEY, numero); } catch (e) {}
+        }
+
+        // ---- remembered factura customers ----
+        function readClientes() {
+            try {
+                return JSON.parse(localStorage.getItem(CLIENTES_KEY)) || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function refreshClientesList() {
+            const list = document.getElementById('clientes-list');
+            list.innerHTML = '';
+            Object.values(readClientes())
+                .sort((a, b) => (b.usado || 0) - (a.usado || 0))
+                .forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.nombre;
+                    opt.label = c.nif;
+                    list.appendChild(opt);
+                });
+        }
+
+        function fillClienteFromName() {
+            const nombre = document.getElementById('cliente-nombre').value.trim().toLowerCase();
+            if (!nombre) return;
+            const match = Object.values(readClientes()).find(c => c.nombre.toLowerCase() === nombre);
+            if (!match) return;
+            document.getElementById('cliente-nif').value = match.nif;
+            document.getElementById('cliente-direccion').value = match.direccion;
+        }
+
+        function saveCliente(cliente) {
+            const store = readClientes();
+            store[cliente.nif.toUpperCase()] = { ...cliente, usado: Date.now() };
+            try {
+                localStorage.setItem(CLIENTES_KEY, JSON.stringify(store));
+            } catch (e) {
+                console.warn('No se pudo guardar el cliente:', e);
+            }
+            refreshClientesList();
+        }
 
         function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -232,10 +436,27 @@
         }
 
         function updateBreakdown() {
-            const total = parseAmount(document.getElementById('total-input').value);
             const rate = Number(document.getElementById('iva-select').value);
-            const t = Number.isFinite(total) && total > 0 ? total : 0;
-            const base = Math.round((t / (1 + rate / 100)) * 100) / 100;
+            let t;
+            let base;
+            if (mode === 'factura') {
+                // Mirrors api/_lib/factura-pdf.js: base per line, IVA = total - base.
+                t = 0;
+                base = 0;
+                readLineas().forEach(l => {
+                    const ok = Number.isFinite(l.total) && l.total > 0;
+                    l.row.querySelector('.linea-importe').textContent = formatEur(ok ? l.total : 0);
+                    if (!ok) return;
+                    t += l.total;
+                    base += Math.round((l.total / (1 + rate / 100)) * 100) / 100;
+                });
+                t = Math.round(t * 100) / 100;
+                base = Math.round(base * 100) / 100;
+            } else {
+                const total = parseAmount(document.getElementById('total-input').value);
+                t = Number.isFinite(total) && total > 0 ? total : 0;
+                base = Math.round((t / (1 + rate / 100)) * 100) / 100;
+            }
             const iva = Math.round((t - base) * 100) / 100;
 
             document.getElementById('iva-label').textContent = 'IVA (' + rate + '%)';
@@ -281,7 +502,103 @@
             }
         }
 
+        /** Shared emisor fields for both ticket and factura. */
+        function fiscalParams() {
+            const prop = document.getElementById('propiedad-select').value;
+            const out = {
+                business: document.getElementById('business-input').value.trim(),
+                nif: document.getElementById('nif-input').value.trim(),
+                address: document.getElementById('address-input').value.trim(),
+                footer: document.getElementById('footer-input').value.trim(),
+                subtitle: document.getElementById('subtitle-input').value.trim() || DEFAULT_SUBTITLE[prop] || '',
+            };
+            Object.keys(out).forEach(k => { if (!out[k]) delete out[k]; });
+            return out;
+        }
+
+        function openFactura(download) {
+            const numeroInput = document.getElementById('factura-numero');
+            const numero = numeroInput.value.trim();
+            if (!numero) {
+                numeroInput.classList.add('error');
+                numeroInput.focus();
+                alert('Escribe el número de la factura.');
+                return;
+            }
+            numeroInput.classList.remove('error');
+
+            const cliente = {
+                nombre: document.getElementById('cliente-nombre').value.trim(),
+                nif: document.getElementById('cliente-nif').value.trim().toUpperCase(),
+                direccion: document.getElementById('cliente-direccion').value.trim(),
+            };
+            const faltan = [['nombre', 'el nombre / razón social'], ['nif', 'el NIF / CIF'], ['direccion', 'la dirección']]
+                .filter(([k]) => !cliente[k]);
+            if (faltan.length) {
+                alert('Para una factura falta ' + faltan.map(f => f[1]).join(', ') + ' del cliente.');
+                document.getElementById('cliente-' + faltan[0][0]).focus();
+                return;
+            }
+
+            // Ignore completely empty rows; validate the rest.
+            const lineas = readLineas().filter(l => l.concepto || l.detalle || l.row.querySelector('.linea-precio').value.trim());
+            document.querySelectorAll('#lineas .form-input.error').forEach(i => i.classList.remove('error'));
+            if (!lineas.length) {
+                alert('Añade al menos un servicio.');
+                document.querySelector('#lineas .linea-concepto').focus();
+                return;
+            }
+            for (const l of lineas) {
+                let bad = null;
+                if (!l.concepto) bad = '.linea-concepto';
+                else if (!(l.cantidad > 0)) bad = '.linea-cantidad';
+                else if (!(l.precio > 0)) bad = '.linea-precio';
+                if (bad) {
+                    const input = l.row.querySelector(bad);
+                    input.classList.add('error');
+                    input.focus();
+                    alert('Revisa el servicio marcado: necesita concepto, cantidad y un precio válido (por ejemplo 4,50).');
+                    return;
+                }
+            }
+
+            const payload = {
+                cliente,
+                lineas: lineas.map(l => ({ concepto: l.concepto, detalle: l.detalle, cantidad: l.cantidad, precio: l.precio })),
+                ivaRate: document.getElementById('iva-select').value,
+                pago: document.getElementById('pago-select').value,
+                fecha: document.getElementById('fecha-input').value,
+                numero,
+                ...fiscalParams(),
+            };
+
+            saveFiscal();
+            saveCliente(cliente);
+            saveFacturaNumero(numero);
+
+            // A real form POST opens the PDF in a new tab without tripping popup
+            // blockers, and has no URL-length limit for long service lists.
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/api/facturas/generate';
+            form.target = '_blank';
+            const add = (name, value) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            };
+            add('payload', JSON.stringify(payload));
+            if (download) add('download', '1');
+            document.body.appendChild(form);
+            form.submit();
+            form.remove();
+        }
+
         function openTicket(download) {
+            if (mode === 'factura') return openFactura(download);
+
             const totalInput = document.getElementById('total-input');
             const total = parseAmount(totalInput.value);
 
@@ -300,7 +617,6 @@
                 return;
             }
 
-            const prop = document.getElementById('propiedad-select').value;
             const params = new URLSearchParams();
             params.set('total', total.toFixed(2));
             params.set('concepto', concepto);
@@ -313,11 +629,7 @@
                 fecha: document.getElementById('fecha-input').value,
                 hora: document.getElementById('hora-input').value,
                 numero: document.getElementById('numero-input').value.trim(),
-                business: document.getElementById('business-input').value.trim(),
-                nif: document.getElementById('nif-input').value.trim(),
-                address: document.getElementById('address-input').value.trim(),
-                footer: document.getElementById('footer-input').value.trim(),
-                subtitle: document.getElementById('subtitle-input').value.trim() || DEFAULT_SUBTITLE[prop] || '',
+                ...fiscalParams(),
             };
             for (const [key, value] of Object.entries(optional)) {
                 if (value) params.set(key, value);

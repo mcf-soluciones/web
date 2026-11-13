@@ -34,15 +34,15 @@ const C = {
 // ---- MCF fiscal identity ---------------------------------------------------
 // Same company and registered address for both sucursales (Usera, Hortaleza).
 // Callers may still override via the nif/address fields.
-const FISCAL = {
+export const FISCAL = {
   nif: 'B19971613',
   address: 'San Julio 5, 1D Madrid 28002',
 };
 
 // ---- Spanish helpers -------------------------------------------------------
-const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+export const WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
-function pad2(n) { return String(n).padStart(2, '0'); }
+export function pad2(n) { return String(n).padStart(2, '0'); }
 
 /** Round to 2 decimals avoiding binary float drift. */
 export function round2(n) { return Math.round((Number(n) + Number.EPSILON) * 100) / 100; }
@@ -70,7 +70,7 @@ const TRANSLIT = {
   '‘': "'", '’': "'", '“': '"', '”': '"',
   '–': '-', '—': '-', '…': '...', ' ': ' ',
 };
-function sanitize(str) {
+export function sanitize(str) {
   return String(str ?? '')
     .replace(/[‘’“”–—… ]/g, (m) => TRANSLIT[m])
     .split('')
@@ -237,7 +237,7 @@ export async function buildTicketPdf(data = {}) {
 }
 
 // ---- input normalization ---------------------------------------------------
-function trimRate(rate) {
+export function trimRate(rate) {
   const r = Number(rate) || 0;
   return Number.isInteger(r) ? String(r) : String(r).replace('.', ',');
 }

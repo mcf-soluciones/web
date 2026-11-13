@@ -61,7 +61,7 @@ mcf-web/
     final-visit.html       # Visit checklist -> /api/visitas
     inventario.html        # Inventory levels -> /api/visitas
     reportar-insumos.html  # Supply request -> /api/visitas
-    ticket.html            # Ticket de compra (receipt PDF) -> /api/tickets/generate
+    ticket.html            # Ticket de compra / Factura PDF -> /api/tickets/generate, /api/facturas/generate
     survey.html            # Generic survey (API call commented out)
     calculador.html        # Redirect to /reporte#calculator
     session-reset.html     # Clears localStorage/sessionStorage
@@ -77,6 +77,7 @@ mcf-web/
       sucursales.js        # The Mexican stores, and sinMexico() which keeps them out of Spain's numbers
       google-auth.js       # Google Drive + Sheets auth (two separate service accounts)
       ticket-pdf.js        # 80mm ticket PDF builder (pdf-lib, no native deps)
+      factura-pdf.js       # A4 factura PDF builder (cliente + N service lines)
     movimientos.js         # Central form router: gasto, deposito,
                            #   incidencia, encuesta, transito, fondo_caja
                            # Routes by body.type field
@@ -86,6 +87,7 @@ mcf-web/
                            #   inserts into gastos table
     gastos-sheets.js       # Appends expense row to Google Sheets spreadsheet
     tickets/generate.js    # Ticket (simplified receipt) PDF -> application/pdf
+    facturas/generate.js   # Factura (full invoice) PDF -> application/pdf
 
   lambda/                  # AWS Lambda source code (5 functions still deployed on AWS)
     mcf_dailySales/        # S3 trigger -> parses CSV -> INSERT into Turso sales table
@@ -191,6 +193,16 @@ All gastos writes flow through Turso; the Google Sheet is a frozen archive.
   - Layout/format logic lives in `api/_lib/ticket-pdf.js` (WinAnsi encoding, so `€` and Spanish accents render; emoji/CJK are stripped).
   - Fiscal identity is hardcoded in `api/_lib/ticket-pdf.js` (`FISCAL`): NIF `B19971613`, dirección `San Julio 5, 1D Madrid 28002` — the same company and registered address for both sucursales. The header prints a single `NIF: X` line even when the caller passes its own `NIF`/`CIF` prefix.
   - UI at `/ticket` (`public/ticket.html`), linked from `/admin` → Otros → "Ticket de Compra". The fiscal fields come pre-filled from the same constants (mirrored in `DEFAULT_FISCAL`); an edit there is an override cached per propiedad in `localStorage` under `mcf_ticket_fiscal_v1`, never stored server-side. **Changing the real NIF/dirección means editing both places.**
+
+### Facturas (full invoices)
+
+- **`GET|POST /api/facturas/generate`** — renders an A4 factura PDF (`application/pdf`, `download=1` for an attachment). Also print-only, no DB write.
+  - Body: `{ cliente: { nombre, nif, direccion }, lineas: [{ concepto, detalle?, cantidad?, precio }], ivaRate?, fecha?, numero?, pago?, footer?, business?, subtitle?, nif?, address? }`. All three `cliente` fields and ≥1 línea are required.
+  - `precio` is the IVA-*inclusive* unit price (what the customer pays). Per line the PDF shows precio unitario + importe **sin IVA** (back-computed); invoice base = Σ line bases, IVA = total − base, so they re-add to the total exactly.
+  - Emisor identity is the same `FISCAL` constant as the ticket (`api/_lib/factura-pdf.js` imports it from `ticket-pdf.js`).
+  - `numero` defaults to `F-YYYYMMDD-HHMM` in the API, but the `/ticket` form requires it: staff type it by hand in the "Nº de factura" field. The form pre-fills a suggestion (last number used on this device + 1, stored in `localStorage` under `mcf_factura_ultimo_numero_v1`). There is no server-side correlative series.
+  - The `/ticket` form submits a real HTML form (new tab, no popup blocker) with the JSON in a single `payload` field — the endpoint accepts that (urlencoded or raw body, or `?payload=`) as well as a plain JSON body.
+  - UI: `/ticket` → "Factura" switch (deep link `/ticket?tipo=factura`). Customers are remembered per device in `localStorage` under `mcf_factura_clientes_v1` (keyed by NIF) and autofill from the name field.
 
 ### Deprecated (410 Gone)
 - **`POST /api/gastos`** — split into `create` (new gasto + optional factura) and `factura` (attach to existing).
