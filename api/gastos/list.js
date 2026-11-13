@@ -1,12 +1,16 @@
+import { requireReader } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
+import { sinMexico } from '../_lib/sucursales.js';
 
 /**
  * GET /api/gastos/list?yyyy=2026&mm=3
  *
  * Returns every gasto row for the month joined to catalogo_cuentas for display.
- * Used by the Gastos tab editable table.
+ * Used by the Gastos tab editable table. Spain only, unless an owner asks for mexico=1.
  */
 export default async function handler(req, res) {
+  const reader = requireReader(req, res);
+  if (!reader) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -20,6 +24,7 @@ export default async function handler(req, res) {
 
     const monthClause = mm > 0 ? 'AND g.mm = ?' : '';
     const args = mm > 0 ? [yyyy, mm] : [yyyy];
+    const verMexico = reader.role === 'owner' && req.query.mexico === '1';
 
     const rs = await turso.execute({
       sql: `SELECT g.id, g.fecha, g.mm, g.yyyy,
@@ -40,6 +45,7 @@ export default async function handler(req, res) {
             LEFT JOIN catalogo_cuentas c ON g.cuenta = c.cuenta_mcf
             LEFT JOIN loans l ON g.loan_id = l.id
             WHERE g.yyyy = ? ${monthClause}
+              ${verMexico ? '' : `AND ${sinMexico('g')}`}
             ORDER BY g.fecha DESC, g.id DESC`,
       args,
     });

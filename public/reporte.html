@@ -43,6 +43,7 @@
       }
     };
   </script>
+  <script src="/js/mcf-gate.js" data-level="reports"></script>
 </head>
 <body class="font-sans min-h-screen">
 
@@ -385,6 +386,29 @@
           </div>
         </template>
 
+        <!-- One store has detail while the other still waits for its monthly PDF -->
+        <template x-if="monthly && !monthly.preliminary && monthly.partial_stores?.length">
+          <div class="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 text-sm text-amber-900 mb-4">
+            <span class="font-semibold">Mes incompleto:</span>
+            <template x-for="s in monthly.partial_stores" :key="s.store">
+              <span><span class="capitalize" x-text="s.store"></span> aún no tiene detalle y no aparece en estas tablas (<span x-text="fmtEUR(s.total)"></span> según <code>sales</code> hasta <span x-text="s.max_day"></span>). </span>
+            </template>
+          </div>
+        </template>
+
+        <!-- Each Mexican store is analysed together with its Spanish sister -->
+        <template x-if="monthly && monthly.sister_merge?.length">
+          <div class="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm text-gray-700 mb-4">
+            <span class="font-semibold">Sucursales combinadas:</span>
+            <template x-for="m in monthly.sister_merge" :key="m.store">
+              <span><span class="capitalize" x-text="m.store"></span> incluye <span x-text="m.includes"></span>. </span>
+            </template>
+            <template x-if="monthly.sister_merge.some(m => !m.yoy_comparable)">
+              <span class="text-amber-700">La comparación con el año anterior no es homogénea, porque uno de los dos meses no incluye todas estas sucursales.</span>
+            </template>
+          </div>
+        </template>
+
         <template x-if="monthly && !monthly.preliminary && monthly.this.rows.length === 0">
           <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center text-sm text-amber-800">
             <div class="font-semibold mb-1">Sin ventas registradas en <span x-text="monthLabels[monthly.this.mm-1] + ' ' + monthly.this.yyyy"></span></div>
@@ -713,6 +737,15 @@
                   class="px-3 py-1 rounded" x-text="opt.label"></button>
               </template>
             </div>
+            <template x-if="mexicoVisible && !accountantMode">
+              <div class="flex items-center gap-1 bg-gray-100 rounded-md p-1 text-xs font-medium" :title="pnlScope === 'mcf' ? '' : 'México se ve en la vista MCF'">
+                <template x-for="opt in [{on:false,label:'Sin México'},{on:true,label:'Con México'}]" :key="opt.label">
+                  <button @click="setVerMexico(opt.on)" :disabled="pnlScope !== 'mcf'"
+                    :class="pnlConMexico() === opt.on ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-600'"
+                    class="px-3 py-1 rounded disabled:opacity-50" x-text="opt.label"></button>
+                </template>
+              </div>
+            </template>
           <button @click="loadPnl()" :disabled="loading"
             :class="isStale() ? 'ring-2 ring-amber-400 ring-offset-1' : ''"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-semibold shadow-sm">
@@ -765,7 +798,7 @@
               <div class="pnl-card">
                 <div class="pnl-label">Ingresos (fiscales)</div>
                 <div class="pnl-total text-gray-900" x-text="fmtEUR(pnl.topline.revenue)"></div>
-                <div class="text-xs text-gray-500 mt-1">Excluye tarjeta cliente · IVA 21% incluido</div>
+                <div class="text-xs text-gray-500 mt-1" x-text="pnl.con_mexico ? 'Excluye tarjeta cliente · IVA 21% solo en España' : 'Excluye tarjeta cliente · IVA 21% incluido'"></div>
               </div>
               <div class="pnl-card">
                 <div class="pnl-label">Gastos operativos</div>
@@ -804,6 +837,7 @@
                   </div>
                   <div class="text-[11px] text-gray-500 mt-2 leading-snug">
                     El IVA cobrado se remite a Hacienda; el IVA pagado en gastos operativos (C–J) es deducible. EBITDA refleja el margen operativo real, neto de IVA.
+                    <span x-show="pnl.con_mexico">México ya tributó allí: sus ventas y gastos entran completos, sin IVA.</span>
                   </div>
                 </div>
               </div>
@@ -866,6 +900,7 @@
 
                   <div class="text-[11px] text-gray-500 mt-2 leading-snug">
                     Los impuestos N1 (Autónomo), N3 (Seg. Social empleados) y N8 (Imp. Sociedades estimado, o N8a real cuando el año está cerrado) reducen la utilidad neta. N2 (pagos de IS) es passthrough — afecta cash flow pero no net income, ya cargado vía N8/N8a. La depreciación es un gasto contable no monetario: reduce la base imponible para calcular N8 y luego se suma de vuelta a la utilidad neta.
+                    <span x-show="pnl.con_mexico">N8 se calcula solo sobre España: México ya tributó allí.</span>
                   </div>
                 </div>
               </div>
@@ -1322,15 +1357,24 @@
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h3 class="font-semibold text-gray-900">Gastos del mes</h3>
-            <p class="text-xs text-gray-500">Revisa, edita, selecciona varios, o agrega un gasto detallado con autocompletado.</p>
+            <p class="text-xs text-gray-500" x-text="accountantMode ? 'Consulta los gastos del mes y descarga sus facturas.' : (loaded.gastos?.mexico ? 'Incluye México. ' : '') + 'Revisa, edita, selecciona varios, o agrega un gasto detallado con autocompletado.'"></p>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <button @click="openGastosModal()"
+            <template x-if="mexicoVisible && !accountantMode">
+              <div class="flex items-center gap-1 bg-gray-100 rounded-md p-1 text-xs font-medium">
+                <template x-for="opt in [{on:false,label:'Sin México'},{on:true,label:'Con México'}]" :key="opt.label">
+                  <button @click="setVerMexico(opt.on)"
+                    :class="verMexico === opt.on ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-600'"
+                    class="px-3 py-1 rounded" x-text="opt.label"></button>
+                </template>
+              </div>
+            </template>
+            <button x-show="!accountantMode" @click="openGastosModal()"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-brand-500 text-brand-600 hover:bg-brand-50 text-sm font-medium">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Nuevo detallado
             </button>
-            <button @click="openBankImport()"
+            <button x-show="!accountantMode" @click="openBankImport()"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50 text-sm font-medium text-gray-700">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Importar banco
@@ -1414,10 +1458,10 @@
             <!-- Editable table -->
             <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <div class="overflow-x-auto">
-                <table class="mcf-table text-[12px] gastos-table">
+                <table class="mcf-table text-[12px] gastos-table" :class="accountantMode ? 'gastos-readonly' : ''">
                   <thead>
                     <tr>
-                      <th style="width: 30px;"><input type="checkbox" @change="gastosToggleAll($event.target.checked)"></th>
+                      <th x-show="!accountantMode" style="width: 30px;"><input type="checkbox" @change="gastosToggleAll($event.target.checked)"></th>
                       <th class="cursor-pointer select-none hover:bg-gray-50" @click="gastosToggleSort('fecha')">
                         Fecha <span class="ml-0.5" :class="gastosSortColor('fecha')" x-text="gastosSortIcon('fecha')"></span>
                       </th>
@@ -1455,13 +1499,13 @@
                         Inv. <span class="ml-0.5" :class="gastosSortColor('es_inversion')" x-text="gastosSortIcon('es_inversion')"></span>
                       </th>
                       <th style="width: 40px;">📎</th>
-                      <th style="width: 60px;"></th>
+                      <th x-show="!accountantMode" style="width: 60px;"></th>
                     </tr>
                   </thead>
                   <tbody>
                     <template x-for="row in gastosFilteredRows()" :key="row.id">
                       <tr :class="gastosIsSelected(row.id) ? 'bg-brand-50' : ''">
-                        <td><input type="checkbox" :checked="gastosIsSelected(row.id)" @change="gastosToggleSelect(row.id)"></td>
+                        <td x-show="!accountantMode"><input type="checkbox" :checked="gastosIsSelected(row.id)" @change="gastosToggleSelect(row.id)"></td>
                         <td class="whitespace-nowrap font-mono text-[11px]">
                           <template x-if="gastosEditing && gastosEditing.id === row.id && gastosEditing.field === 'fecha'">
                             <input data-gastos-edit-input type="date" x-model="gastosEditing.value" @keydown.enter="gastosCommitEdit()" @keydown.escape="gastosCancelEdit()" @blur="gastosCommitEdit()" class="w-28 px-1 py-0.5 border border-brand-500 rounded text-[11px]">
@@ -1480,7 +1524,6 @@
                               <option value="Corporate">Corporate</option>
                               <option value="(001) Usera">(001) Usera</option>
                               <option value="(002) Hortaleza">(002) Hortaleza</option>
-                              <option value="(003) Compra TBC">(003) Compra TBC</option>
                             </select>
                           </template>
                           <template x-if="!(gastosEditing && gastosEditing.id === row.id && gastosEditing.field === 'propiedad')">
@@ -1567,13 +1610,13 @@
                               <svg class="w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                             </a>
                           </template>
-                          <template x-if="!row.recibo_url">
+                          <template x-if="!row.recibo_url && !accountantMode">
                             <button @click="gastosAttachFactura(row.id)" class="text-gray-400 hover:text-brand-600" title="Adjuntar factura">
                               <svg class="w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             </button>
                           </template>
                         </td>
-                        <td class="text-center whitespace-nowrap">
+                        <td x-show="!accountantMode" class="text-center whitespace-nowrap">
                           <button @click="openGastosModalForEdit(row)" class="text-gray-400 hover:text-brand-600 mr-1" title="Editar (modal completo con sugerencias)">
                             <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           </button>
@@ -2261,7 +2304,6 @@
                   <option value="usera">Usera</option>
                   <option value="hortaleza">Hortaleza</option>
                   <option value="Corporate">Corporate</option>
-                  <option value="(003) Compra TBC">(003) Compra TBC</option>
                 </select>
               </div>
               <div>
@@ -4332,7 +4374,8 @@ function canonicalizePropiedadClient(p) {
   if (s === '') return p;
   if (s.includes('usera')) return '(001) Usera';
   if (s.includes('hortaleza')) return '(002) Hortaleza';
-  if (s.includes('compra tbc') || s.includes('(003)')) return '(003) Compra TBC';
+  if (s.includes('monterrey') || s.includes('(003)')) return '(003) Monterrey';
+  if (s.includes('cdmx') || s.includes('(004)')) return '(004) CDMX';
   if (s.includes('corporate') || s.includes('(000)')) return 'Corporate';
   return p;
 }
@@ -4654,7 +4697,7 @@ function reportApp() {
     // Line-item detail modal
     detailModal: { open: false, loading: false, error: null, cuenta: null, label: null, data: null },
 
-    // Full nav. In accountantMode the UI filters this down to just Gastos via `visibleNav()`.
+    // Full nav. In accountantMode the UI filters this down to Gastos and P&L via `visibleNav()`.
     nav: [
       { id: 'hub', label: 'Hub', icon: icons.hub },
       { id: 'resumen', label: 'Resumen', icon: icons.resumen },
@@ -4670,8 +4713,12 @@ function reportApp() {
       { id: 'configuraciones', label: 'Configuración', icon: icons.configuraciones, adminOnly: true },
     ],
 
-    // Accountant mode (set by /cuentas after password): UI is locked to gastos.
-    accountantMode: false,
+    // The accountant, signed in at /cuentas: read-only Gastos and P&L. The server enforces this and init() confirms it;
+    // starting from this tab's memory only stops the full menu flashing on a reload.
+    accountantMode: sessionStorage.getItem('mcf_accountant_session') === 'gastos_only',
+    // The with/without Mexico toggle, for partners. Starts off on every page load.
+    mexicoVisible: false,
+    verMexico: false,
     // Admin mode (set by /admin after password): unlocks the Financiamiento tab.
     adminMode: false,
     // Financiamiento tab state
@@ -4706,14 +4753,16 @@ function reportApp() {
     monthLabels: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
     years: (() => { const out = []; for (let y = now.getFullYear(); y >= 2023; y--) out.push(y); return out; })(),
 
-    init() {
-      // Detect accountant session — locks the UI to gastos and hides everything else.
-      this.accountantMode = sessionStorage.getItem('mcf_accountant_session') === 'gastos_only';
+    async init() {
+      // Who the server says this is. This tab's own memory can't decide it, because a new tab has none.
+      const me = (await window.mcfGate?.who) || {};
+      this.accountantMode = !!me.accountant;
+      this.mexicoVisible = !!me.mexico_visible;
       // Detect admin session (set by /admin) — unlocks the Financiamiento tab.
       try {
         const raw = sessionStorage.getItem('mcf_admin_authenticated');
         const data = raw ? JSON.parse(raw) : null;
-        this.adminMode = !!(data && data.authenticated);
+        this.adminMode = !this.accountantMode && !!(data && data.authenticated);
       } catch { this.adminMode = false; }
 
       if (this.accountantMode) {
@@ -4767,9 +4816,18 @@ function reportApp() {
     },
     mobileNavMore: false,
 
-    accountantLogout() {
+    async accountantLogout() {
+      try { await fetch('/api/auth/cuentas', { method: 'DELETE' }); } catch { /* the cookie lapses by itself */ }
       sessionStorage.removeItem('mcf_accountant_session');
       location.replace('/cuentas');
+    },
+
+    pnlConMexico() { return this.verMexico && this.pnlScope === 'mcf'; },
+
+    setVerMexico(on) {
+      if (this.verMexico === on) return;
+      this.verMexico = on;
+      this.refresh();
     },
 
     // Views that use the global month/year picker
@@ -4809,6 +4867,8 @@ function reportApp() {
       if (!loaded) return true;
       if (loaded.mm !== this.mm || loaded.yyyy !== this.yyyy) return true;
       if (this.view === 'pnl' && loaded.scope && loaded.scope !== this.pnlScope) return true;
+      if (this.view === 'pnl' && !!loaded.mexico !== this.pnlConMexico()) return true;
+      if (this.view === 'gastos' && !!loaded.mexico !== this.verMexico) return true;
       return false;
     },
 
@@ -5107,13 +5167,13 @@ function reportApp() {
     async loadPnl() {
       this.loading = true;
       try {
-        const mm = this.mm, yyyy = this.yyyy, scope = this.pnlScope;
-        const url = `/api/reports/pnl?mm=${mm}&yyyy=${yyyy}&scope=${scope}`;
+        const mm = this.mm, yyyy = this.yyyy, scope = this.pnlScope, mexico = this.pnlConMexico();
+        const url = `/api/reports/pnl?mm=${mm}&yyyy=${yyyy}&scope=${scope}${mexico ? '&mexico=1' : ''}`;
         const r = await fetch(url);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const data = await r.json();
         this.pnl = data;
-        this.loaded.pnl = { mm, yyyy, scope };
+        this.loaded.pnl = { mm, yyyy, scope, mexico };
         // Reset expansion state on new load
         this.pnlOpen = { sections: {}, subs: {} };
         this.pnlAllOpen = false;
@@ -5346,7 +5406,7 @@ function reportApp() {
       this.detailModal = { open: true, loading: true, error: null, cuenta: code, label, data: null };
       try {
         const yyyy = this.pnl?.year?.yyyy || this.yyyy;
-        const r = await fetch(`/api/reports/gastos-detail?cuenta=${encodeURIComponent(code)}&yyyy=${yyyy}`);
+        const r = await fetch(`/api/reports/gastos-detail?cuenta=${encodeURIComponent(code)}&yyyy=${yyyy}${this.pnl?.con_mexico ? '&mexico=1' : ''}`);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         this.detailModal.data = await r.json();
       } catch (e) {
@@ -5690,8 +5750,9 @@ function reportApp() {
 
       const wb = XLSX.utils.book_new();
       const scopeLabel = this.pnlScope === 'mcf' ? 'MCF' : (this.pnlScope === 'usera' ? 'Usera' : 'Hortaleza');
-      XLSX.utils.book_append_sheet(wb, ws, ('P&L ' + scopeLabel + ' ' + y.yyyy).slice(0, 31));
-      XLSX.writeFile(wb, `pnl-${this.pnlScope}-${y.yyyy}.xlsx`);
+      const conMexico = !!this.pnl.con_mexico;
+      XLSX.utils.book_append_sheet(wb, ws, ('P&L ' + scopeLabel + (conMexico ? ' con México ' : ' ') + y.yyyy).slice(0, 31));
+      XLSX.writeFile(wb, `pnl-${this.pnlScope}${conMexico ? '-con-mexico' : ''}-${y.yyyy}.xlsx`);
     },
 
     async loadPivot() {
@@ -6773,13 +6834,13 @@ function reportApp() {
     async loadGastos() {
       this.loading = true;
       try {
-        const mm = this.mm, yyyy = this.yyyy;
-        const r = await fetch(`/api/gastos/list?mm=${mm}&yyyy=${yyyy}`);
+        const mm = this.mm, yyyy = this.yyyy, mexico = this.verMexico;
+        const r = await fetch(`/api/gastos/list?mm=${mm}&yyyy=${yyyy}${mexico ? '&mexico=1' : ''}`);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         this.gastosList = await r.json();
         this.gastosSelected = {};
         this.gastosEditing = null;
-        this.loaded.gastos = { mm, yyyy };
+        this.loaded.gastos = { mm, yyyy, mexico };
         if (this.conceptoOptions.length === 0) await this.loadConceptoOptions();
       } finally {
         this.loading = false;
@@ -6811,7 +6872,8 @@ function reportApp() {
       let key = raw;
       if (/\(001\)|^usera$/.test(s)) key = '(001) Usera';
       else if (/\(002\)|^hortaleza$/.test(s)) key = '(002) Hortaleza';
-      else if (/\(003\)|tbc/.test(s)) key = '(003) Compra TBC';
+      else if (/\(003\)|monterrey/.test(s)) key = '(003) Monterrey';
+      else if (/\(004\)|cdmx/.test(s)) key = '(004) CDMX';
       else if (/corporate/.test(s)) key = 'Corporate';
       const list = this.gastosCatalog.by_propiedad[key] || [];
       return list.map(e => e.desc);
@@ -6834,6 +6896,7 @@ function reportApp() {
     },
 
     gastosStartEdit(id, field, currentValue) {
+      if (this.accountantMode) return;
       this.gastosEditing = { id, field, value: currentValue ?? '' };
       this.$nextTick(() => {
         const el = document.querySelector('[data-gastos-edit-input]');
@@ -7312,7 +7375,6 @@ function reportApp() {
       let propiedad = 'usera';
       if (/\(001\)|^usera$/.test(s)) propiedad = 'usera';
       else if (/\(002\)|^hortaleza$/.test(s)) propiedad = 'hortaleza';
-      else if (/\(003\)|tbc|compra/.test(s)) propiedad = '(003) Compra TBC';
       else if (/corporate/.test(s)) propiedad = 'Corporate';
       else propiedad = row.propiedad || 'usera';
       this.gastosModal = {
@@ -8434,7 +8496,7 @@ function reportApp() {
       const catalog = this.proj.baseline.pnl.catalog;
       const tplKey = ns.template;
 
-      // The new sucursal owns the (003) Compra TBC cuentas — those are the
+      // The new sucursal owns the cuentas the baseline labels Sucursal nueva — those are the
       // chart-of-accounts placeholder for a future location. The template
       // (Usera / Hortaleza) only provides reasonable starting VALUES; the
       // codes themselves stay distinct so existing sucursal P&L lines are
@@ -8490,14 +8552,14 @@ function reportApp() {
         ns.monthly_seasonality = Array.from({ length: 12 }, () => Number((100/12).toFixed(2)));
       }
 
-      // Load all Compra TBC operating cuentas, with values copied from the
+      // Load all the new sucursal's operating cuentas, with values copied from the
       // template by matching desc.
       const newCuentas = [];
       for (const code of Object.keys(catalog)) {
         const letter = code.charAt(0).toUpperCase();
         if (!'CDEFGHIJ'.includes(letter)) continue;
         const meta = catalog[code];
-        if (!String(meta.propiedad || '').toLowerCase().includes('compra tbc')) continue;
+        if (meta.propiedad !== 'Sucursal nueva') continue;
         newCuentas.push(code);
       }
       newCuentas.sort();
@@ -8601,7 +8663,7 @@ function reportApp() {
         const meta = this.proj.baseline.pnl.catalog[code];
         const letter = code.charAt(0).toUpperCase();
         if (!'CDEFGHIJ'.includes(letter)) continue;                   // operating expenses only
-        if (!String(meta.propiedad || '').toLowerCase().includes('compra tbc')) continue;
+        if (meta.propiedad !== 'Sucursal nueva') continue;
         out.push({ cuenta: code, desc: meta.desc || code });
       }
       out.sort((a, b) => a.cuenta.localeCompare(b.cuenta));

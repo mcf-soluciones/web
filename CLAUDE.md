@@ -4,7 +4,7 @@
 
 MCF Soluciones operates self-service laundromats in Madrid (locations: **Usera** and **Hortaleza**). This web app is the operational platform used by staff to record daily activities: expenses, deposits, cash counts, incident reports, customer surveys, site visits with cleaning checklists, and inventory tracking. It also has a public-facing landing page at mcfsoluciones.com.
 
-The app is a collection of mobile-first HTML forms that submit data to a Turso (libSQL) database via Vercel serverless functions. There is no authentication framework -- users are identified by a `?user=lalo` URL parameter, and admin access uses a simple password stored client-side.
+The app is a collection of mobile-first HTML forms that submit data to a Turso (libSQL) database via Vercel serverless functions. Owners sign in with a personal 6-digit PIN checked on the server (`api/auth/pin.js`, `api/_lib/web-auth.js`), the same PIN as on the kiosk. Hub and every route only `/reporte` uses ask for the PIN a second time. Joanna and Kenia pick their name, and their forms stay open and take `?user=` from the URL. The accountant signs in at `/cuentas` with her own password and gets read-only Gastos and P&L, always Spain only.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ AWS Lambda (3 functions still on AWS)
 
 ## Tech Stack
 
-- **Frontend**: Plain HTML, jQuery 3.6.0, Bootstrap 4.5, Font Awesome, custom CSS variables
+- **Frontend**: Plain HTML, jQuery 3.6.0. Every page except `/reporte` shares `public/css/mcf.css` and `public/js/mcf-shell.js` and has no `<style>` of its own; `/reporte` uses Tailwind and `css/reporte.css`
 - **Backend**: Vercel serverless functions (Node.js, ESM compiled to CJS by Vercel)
 - **Database**: Turso (libSQL / edge SQLite) via `@libsql/client`
 - **External APIs**: Google Drive API, Google Sheets API via `googleapis`
@@ -49,8 +49,8 @@ AWS Lambda (3 functions still on AWS)
 ```
 mcf-web/
   public/                  # Static files served by Vercel
-    index.html             # Landing page (inlined from Jekyll layout)
-    admin.html             # Admin dashboard (password: mcf2024, users: lalo/oscar/adrian)
+    index.html             # Landing page
+    admin.html             # Sign-in (Admin with PIN, Joanna, Kenia) and Inicio
     gastos.html            # Expense form -> /api/movimientos + /api/gastos-sheets
     deposito.html          # Deposit form -> /api/movimientos
     retiro.html            # Cash withdrawal (denominations) -> /api/movimientos
@@ -63,16 +63,18 @@ mcf-web/
     reportar-insumos.html  # Supply request -> /api/visitas
     ticket.html            # Ticket de compra / Factura PDF -> /api/tickets/generate, /api/facturas/generate
     survey.html            # Generic survey (API call commented out)
-    calculador.html        # Redirect to R Shiny app
+    calculador.html        # Redirect to /reporte#calculator
     session-reset.html     # Clears localStorage/sessionStorage
+    cuentas.html           # The accountant's sign-in -> /api/auth/cuentas, then read-only /reporte
     movimientos.html       # Empty page (placeholder)
-    css/                   # Bootstrap, animate.css, main.css (compiled from SCSS)
-    js/                    # jQuery, Bootstrap, creative.js, etc.
+    css/                   # mcf.css (colours and components), reporte.css; Bootstrap, animate.css, main.css are unused leftovers
+    js/                    # mcf-shell.js (sidebar, top bar, the navigation list); jQuery, Bootstrap, creative.js etc. are unused leftovers
     fonts/, font-awesome/, img/
 
   api/                     # Vercel serverless functions
     _lib/
       turso.js             # Shared Turso client (reads TURSO_DATABASE_URL, TURSO_AUTH_TOKEN)
+      sucursales.js        # The Mexican stores, and sinMexico() which keeps them out of Spain's numbers
       google-auth.js       # Google Drive + Sheets auth (two separate service accounts)
       ticket-pdf.js        # 80mm ticket PDF builder (pdf-lib, no native deps)
       factura-pdf.js       # A4 factura PDF builder (cliente + N service lines)
@@ -98,6 +100,9 @@ mcf-web/
     schema.sql             # Turso schema: 9 operational tables
     schema-sales-detail.sql# Turso schema: products + sales_detail tables
     migrate-notion-to-turso.js  # One-time migration script (already run)
+
+  docs/
+    adding-a-sucursal.md   # Runbook: every surface a new store touches
 
   vercel.json              # Vercel config: cleanUrls, CORS headers, output dir
   package.json             # Dependencies: @libsql/client, googleapis
@@ -140,8 +145,12 @@ This join enriches transactions with product metadata (mission, size, minutes, c
 |----------|------------|---------|
 | `TURSO_DATABASE_URL` | Vercel + AWS Lambda (mcf_dailySales) | libSQL connection URL |
 | `TURSO_AUTH_TOKEN` | Vercel + AWS Lambda (mcf_dailySales) | Turso auth token |
+| `MCF_SESSION_SECRET` | Optional, local only | Signs the sign-in cookies when there is no `TURSO_AUTH_TOKEN`, as on a file database |
 | `GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON` | Vercel (`/api/gastos`) | Service account for receipt uploads (project: mcf-lambda-to-drive-gastos) |
 | `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON` | Vercel (`/api/gastos-sheets`) | Service account for spreadsheet appends (project: western-evening-264012) |
+| `KIOSK_WATCH_SECRET` | Vercel + AWS Lambda (mcf_kioskWatch) | Shared secret for `POST /api/kiosk/watch-tick`. Generated once and never stored elsewhere, so to change it, set a new value on both sides |
+| `KIOSK_WATCH_URL` | AWS Lambda (mcf_kioskWatch) | The website's watch-tick address |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Vercel + AWS Lambda (mcf_kioskWatch) | The kiosk alerts group. **Not set yet**: until they are, alerts stay open and retry, and nobody is told |
 | `NOTION_API_KEY` | Migration script only | No longer needed in production |
 
 ## API Routes
@@ -182,7 +191,7 @@ All gastos writes flow through Turso; the Google Sheet is a frozen archive.
   - Only `total` is required (positive euros; accepts both `8.50` and the Spanish `8,50`). Everything else falls back to MCF defaults: `business`, `subtitle`, `nif`, `address`, `concepto`, `descripcion`, `cantidad`, `ivaRate` (default 21), `fecha` (today), `hora` (now), `pago` (Efectivo), `numero` (auto `YYYYMMDD-HHMM`), `footer`.
   - `total` is IVA-*inclusive*; the PDF back-computes base + IVA so the two always re-add to the total exactly.
   - Layout/format logic lives in `api/_lib/ticket-pdf.js` (WinAnsi encoding, so `€` and Spanish accents render; emoji/CJK are stripped).
-  - Fiscal identity is hardcoded in `api/_lib/ticket-pdf.js` (`FISCAL`): NIF `B25922568`, dirección `San Julio 5, 1D Madrid 28002` — the same company and registered address for both sucursales. The header prints a single `NIF: X` line even when the caller passes its own `NIF`/`CIF` prefix.
+  - Fiscal identity is hardcoded in `api/_lib/ticket-pdf.js` (`FISCAL`): NIF `B19971613`, dirección `San Julio 5, 1D Madrid 28002` — the same company and registered address for both sucursales. The header prints a single `NIF: X` line even when the caller passes its own `NIF`/`CIF` prefix.
   - UI at `/ticket` (`public/ticket.html`), linked from `/admin` → Otros → "Ticket de Compra". The fiscal fields come pre-filled from the same constants (mirrored in `DEFAULT_FISCAL`); an edit there is an override cached per propiedad in `localStorage` under `mcf_ticket_fiscal_v1`, never stored server-side. **Changing the real NIF/dirección means editing both places.**
 
 ### Facturas (full invoices)
@@ -235,17 +244,46 @@ Gmail (sales reports) -> mcf_gmailReadtoS3 -> S3 "mcf-sales" bucket
 - Loading overlay: `document.getElementById('loading-overlay').classList.add('active')`
 - On success: hides form card, shows completion message
 - Mobile-first: max-width 480px containers, CSS custom properties for theming
-- Admin auth: sessionStorage key `mcf_admin_session`, password `mcf2024`
+- Owner auth: signed HttpOnly cookies, `mcf_session` (12 h) and `mcf_reports` (second PIN, lapses after 30 min idle), signed with a key derived from `TURSO_AUTH_TOKEN`, so changing that token signs everyone out (`MCF_SESSION_SECRET` overrides it, for local work on a file database). sessionStorage key `mcf_admin_authenticated` only decides which menu shows. `public/js/mcf-gate.js` asks for the PIN on `/reporte` and the money forms. A new route must call `requireReports`, or be added on purpose to the open list in `tests/kiosk/web-auth.test.js`. The accountant has her own cookie, covered under Accountant Access below.
 
 ## Key Business Concepts
 
-- **Propiedad**: Location (usera, hortaleza)
+- **Propiedad**: Location (usera, hortaleza; monterrey and cdmx are planned, see Mexico Sucursales)
 - **MCF User**: Staff member (lalo, oscar, adrian, kenia)
 - **Ventas efectivas**: Sales paid with cash or bank card (excludes client card payments -- fiscal revenue)
 - **Ventas demanda**: All sales regardless of payment method (includes client card double-counting)
 - **Product mission**: LAVAR (wash), SECAR (dry), RECARGAS (card reloads)
 - **Product size**: S, M, L (machine capacity)
 - **Price list**: Maps to company/pricing tier (edusanferric1, edusanferric2, speedqueencanillas, etc.)
+
+## Accountant Access
+
+- **Login**: `/cuentas`, with a password hashed in `kiosk_users` under `role = 'accountant'`, which neither the owner PIN check nor the kiosks read. Set or replace it with `node scripts/set-accountant-password.mjs <nombre>`, run in your own terminal because it prints the password. Wrong tries have their own lockout scope, so they can't lock owners out. Sign-ins go to `kiosk_audit`.
+- **Session**: a signed `mcf_accountant` cookie naming her, with the same limits as `mcf_reports`. A session already open survives a password change until it lapses (30 idle minutes, 12 hours at most).
+- **What she reaches**: only the routes using `requireReader`, all GET: `reports/pnl`, `reports/gastos-detail`, `gastos/list`, `gastos/catalog`, `gastos/drive-folder`, `export/month`. Everything else keeps `requireReports` or `requireOwner` and refuses her. Adding a route to her list means switching it to `requireReader` and updating `ACCOUNTANT_ROUTES` in `tests/kiosk/web-auth.test.js`.
+- **Client**: `mcf-gate.js` never shows her a PIN prompt and sends her to `/cuentas` when her session lapses. `/reporte` takes `accountantMode` from the server, so a new tab stays locked, and hides the write controls.
+- **Outside the app**: what she can do in the Drive folder behind "Ir a Drive" is a Google permission.
+
+## Mexico Sucursales (not live yet)
+
+Monterrey (sucursal 3) and CDMX (sucursal 4), defined in `api/_lib/sucursales.js`. Amounts are entered in euros. Taxes are already paid in Mexico, so no IVA or Impuesto de Sociedades is ever computed on them.
+
+- **Spain-only, always**: balance sheet, cash flow, Hub, the monthly ZIP, the Inversión baseline, N8, N8a and `year_profit_base`. The accountant never sees Mexico.
+- **Sales** live only in `sales_detail` under `company = 'mcf_mx'`, never in `sales`. That alone keeps them out of everything filtering `company = 'mcf'` or reading `sales`.
+- **Gastos** share the `gastos` table with `propiedad` set to the store's label. Every Spain read adds `sinMexico()`, and a test fails if a new `FROM gastos` forgets it or isn't listed as exempt. They write no `movements` row, so Hub balances and balance sheet cash stay Spain's.
+- **Toggle** (partners, off on each page load): `mexico=1` on `reports/pnl` puts the stores in the same rows as any other, in Ingresos and each gasto split, gross, and the totals and cards include them. N8, N8a and IVA stay Spain's. On `gastos/list` it includes the rows, and on `reports/gastos-detail` it opens their Detalle. All ignore the flag for the accountant.
+- **Resumen**: `reports/monthly` returns each Mexican row with `property` set to its Spanish sister (Usera + Monterrey, Hortaleza + CDMX) and `sucursal_real` keeping the original. The Quarto report, P&L store views, Pivot and Comparar don't merge.
+- **Inversión**: Monterrey's cuentas were the Compra TBC placeholder, and saved scenarios point at them, so the calculator still models a store it might buy on those codes. `projections/baseline` labels them `Sucursal nueva`, and Monterrey's real gastos never reach it. If Spain buys another store, its real gastos need their own catalog rows.
+
+**Adding a store, or taking these two live:** follow `docs/adding-a-sucursal.md`, which covers both foreign and Spanish stores and every place they touch. Cuenta codes come from `scripts/add-sucursal-catalog.mjs`, never by hand, because a code belongs to one store only (`E4` is Usera's Gas).
+
+## Tests
+
+```bash
+node --test "tests/kiosk/*.test.js"
+```
+
+They run on temporary file databases and never reach production.
 
 ## Deployment
 
@@ -257,6 +295,11 @@ vercel --yes --scope eduardo-flores-projects-ea4ca166 --prod
 cd lambda/mcf_dailySales
 powershell -Command "Compress-Archive -Path index.js,package.json,node_modules -DestinationPath mcf_dailySales.zip -Force"
 aws lambda update-function-code --profile eem-personal --region us-east-1 --function-name mcf_dailySales --zip-file fileb://mcf_dailySales.zip
+
+# Update mcf_kioskWatch Lambda (EventBridge rule mcf_kioskWatch-every-5-min, role mcf_kioskWatch-role, retries off)
+cd lambda/mcf_kioskWatch
+powershell -Command "Compress-Archive -Path index.js,package.json -DestinationPath mcf_kioskWatch.zip -Force"
+aws lambda update-function-code --profile eem-personal --region us-east-1 --function-name mcf_kioskWatch --zip-file fileb://mcf_kioskWatch.zip
 
 # Trigger sales import manually
 aws lambda invoke --profile eem-personal --region us-east-1 --function-name mcf_gmailReadtoS3 out.json

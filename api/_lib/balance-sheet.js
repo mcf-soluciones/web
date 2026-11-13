@@ -1,4 +1,5 @@
 import turso from './turso.js';
+import { sinMexico } from './sucursales.js';
 
 /**
  * Balance sheet derivation engine.
@@ -224,6 +225,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
       sql: `SELECT COALESCE(SUM(COALESCE(importe_total, gasto, 0)), 0) AS total
             FROM gastos
             WHERE COALESCE(es_inversion, 'No') = 'No'
+              AND ${sinMexico()}
               AND loan_id IS NULL
               AND yyyy IS NOT NULL
               AND ((yyyy < ?) OR (yyyy = ? AND mm <= ?))
@@ -234,6 +236,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
       sql: `SELECT COALESCE(SUM(COALESCE(importe_total, gasto, 0)), 0) AS total
             FROM gastos
             WHERE es_inversion = 'Si'
+              AND ${sinMexico()}
               AND yyyy IS NOT NULL
               AND ((yyyy < ?) OR (yyyy = ? AND mm <= ?))
               ${gMonth()}`,
@@ -248,6 +251,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
                    ), 0) AS total
             FROM gastos
             WHERE loan_id IS NOT NULL
+              AND ${sinMexico()}
               AND yyyy IS NOT NULL
               AND ((yyyy < ?) OR (yyyy = ? AND mm <= ?))
               ${gMonth()}`,
@@ -260,6 +264,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
       sql: `SELECT loan_id, COALESCE(SUM(COALESCE(loan_payment_principal, 0)), 0) AS principal_paid
             FROM gastos
             WHERE loan_id IS NOT NULL
+              AND ${sinMexico()}
               AND yyyy IS NOT NULL
               AND ((yyyy < ?) OR (yyyy = ? AND mm <= ?))
             GROUP BY loan_id`,
@@ -313,6 +318,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
                    ), 0) AS expenses
             FROM gastos g
             WHERE COALESCE(g.es_inversion, 'No') = 'No'
+              AND ${sinMexico('g')}
               AND g.yyyy IS NOT NULL
               AND (g.cuenta IS NULL OR g.cuenta NOT IN ('N2', 'N4', 'N5'))
               AND ((g.yyyy < ?) OR (g.yyyy = ? AND g.mm <= ?))
@@ -337,6 +343,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
       sql: `SELECT cuenta, COALESCE(SUM(COALESCE(importe_total, gasto, 0)), 0) AS total
             FROM gastos
             WHERE cuenta IN ('N2', 'N4', 'N5')
+              AND ${sinMexico()}
               AND COALESCE(es_inversion, 'No') = 'No'
               AND yyyy IS NOT NULL
               AND ((yyyy < ?) OR (yyyy = ? AND mm <= ?))
@@ -483,6 +490,7 @@ export async function deriveBalanceSheet(yyyy, mm) {
                      ), 0) AS expenses
               FROM gastos g
               WHERE COALESCE(g.es_inversion, 'No') = 'No'
+                AND ${sinMexico('g')}
                 AND (g.cuenta IS NULL OR g.cuenta NOT IN ('N2', 'N4', 'N5'))
                 AND g.yyyy IN (${placeholders})
               GROUP BY g.yyyy, g.mm`,

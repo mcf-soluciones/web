@@ -1,6 +1,8 @@
+import { requireReader } from '../_lib/web-auth.js';
 import XLSX from 'xlsx';
 import archiver from 'archiver';
 import turso from '../_lib/turso.js';
+import { sinMexico } from '../_lib/sucursales.js';
 import { getDriveService } from '../_lib/google-auth.js';
 
 /**
@@ -19,6 +21,7 @@ import { getDriveService } from '../_lib/google-auth.js';
  * can match a row in the xlsx to the PDF in one glance.
  */
 export default async function handler(req, res) {
+  if (!requireReader(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -55,7 +58,7 @@ export default async function handler(req, res) {
                      g.user_name AS mcf_user, g.recibo_url, g.sheet_row_id,
                      g.created_at
               FROM gastos g
-              WHERE g.yyyy = ? AND g.mm = ? AND g.is_fiscal = 1
+              WHERE g.yyyy = ? AND g.mm = ? AND g.is_fiscal = 1 AND ${sinMexico('g')}
               ORDER BY g.fecha, g.id`,
         args: [yyyy, mm],
       }),

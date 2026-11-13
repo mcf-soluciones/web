@@ -1,4 +1,6 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
+import { sinMexico } from '../_lib/sucursales.js';
 
 /**
  * GET /api/reports/cashflow?mm=3&yyyy=2026
@@ -11,6 +13,7 @@ import turso from '../_lib/turso.js';
  * All outflows are stored as NEGATIVE numbers so every subtotal is a simple sum.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -117,7 +120,7 @@ async function computeYearCashflow(yyyy, currentMm) {
                    c.desc AS cuenta_desc, c.tooltip AS cuenta_tooltip
             FROM gastos g
             LEFT JOIN catalogo_cuentas c ON g.cuenta = c.cuenta_mcf
-            WHERE g.yyyy = ? AND g.cuenta IS NOT NULL`,
+            WHERE g.yyyy = ? AND g.cuenta IS NOT NULL AND ${sinMexico('g')}`,
       args: [yyyy],
     }),
     // Non-payment financing events: disbursements, equity in/out, fees, refinance.
@@ -138,6 +141,7 @@ async function computeYearCashflow(yyyy, currentMm) {
             FROM gastos g
             LEFT JOIN loans l ON g.loan_id = l.id
             WHERE g.yyyy = ?
+              AND ${sinMexico('g')}
               AND g.loan_id IS NOT NULL
               AND COALESCE(g.loan_payment_principal, 0) > 0`,
       args: [yyyy],

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de errores del kiosco</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/mcf.css">
+</head>
+<body data-shell="app">
+    <script src="/js/mcf-shell.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>Catálogo de errores del kiosco</h1>
+            <p>Qué significa cada código del Centro de soporte y de los avisos. También en <a class="inline-link" href="/data/kiosk-errors.json">JSON</a>.</p>
+        </div>
+        <input class="input mb-4" id="search" type="search" placeholder="Buscar por código o palabra" aria-label="Buscar">
+        <div id="list"></div>
+    </div>
+
+    <script>
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const items = list => `<ul>${list.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+        let entries = [];
+
+        function entry(e) {
+            return `<div class="entry" id="${esc(e.code)}">
+                <div class="entry-title"><span class="badge ${e.severity === 'error' ? 'bad' : 'warn'}">${esc(e.code)}</span><span>${esc(e.message)}</span></div>
+                <p class="meaning">${esc(e.meaning)}</p>
+                <h3>Causas habituales</h3>${items(e.causes)}
+                <h3>Qué hacer</h3>${items(e.fix)}
+                <details><summary>Cómo se produce</summary>
+                    <p>${esc(e.how)}</p>
+                    <p>${e.source.map(s => `<code>${esc(s)}</code>`).join(' ')}</p>
+                </details>
+            </div>`;
+        }
+
+        function render(filter) {
+            const q = filter.trim().toLowerCase();
+            const match = entries.filter(e => !q || JSON.stringify(e).toLowerCase().includes(q));
+            let html = '';
+            let area = null;
+            for (const e of match) {
+                if (e.area !== area) { area = e.area; html += `<h2 class="area-title">${esc(area)}</h2>`; }
+                html += entry(e);
+            }
+            document.getElementById('list').innerHTML = html || '<p class="empty">Ningún código coincide.</p>';
+        }
+
+        fetch('/data/kiosk-errors.json').then(r => r.json()).then(data => {
+            entries = data;
+            render('');
+            if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+        });
+        document.getElementById('search').addEventListener('input', e => render(e.target.value));
+    </script>
+</body>
+</html>

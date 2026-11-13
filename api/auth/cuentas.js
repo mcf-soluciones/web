@@ -1,46 +1,36 @@
+import turso from '../_lib/turso.js';
+import { checkAccountantPassword, noteSignIn } from '../_lib/kiosk-pin.js';
+import { signInAccountant, signOut } from '../_lib/web-auth.js';
+
 /**
- * POST /api/auth/cuentas
- *   body: { password: string }
+ * The accountant's sign-in at /cuentas. Her password is hashed in kiosk_users with role 'accountant'
+ * (scripts/set-accountant-password.mjs), which neither the owner PIN check nor the kiosks read.
  *
- * Validates the password against CUENTAS_PASSWORD (Vercel env var). Returns
- * { success: true } on match, 401 otherwise. The frontend sets a sessionStorage
- * flag on success and routes the accountant into gastos-only mode.
+ * POST { password }: sign in, naming her in a signed cookie.
+ * DELETE: sign out.
  *
- * This is a UI-level gate. The underlying /api/gastos/* and /api/reports/*
- * endpoints are not protected — anyone with the URL can still call them.
+ * The cookie opens only the read-only routes using requireReader, and those always hide Mexico from her.
  */
 export default async function handler(req, res) {
-  setCors(res);
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.method === 'DELETE') {
+    signOut(req, res);
+    return res.status(200).json({ ok: true });
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const expected = process.env.CUENTAS_PASSWORD;
-    if (!expected) {
-      return res.status(500).json({ error: 'CUENTAS_PASSWORD not configured on the server' });
+    const check = await checkAccountantPassword(turso, req.body?.password);
+    if (check.locked) return res.status(429).json({ error: 'Demasiados intentos. Espere unos minutos.' });
+    if (!check.ok) {
+      await noteSignIn(turso, null, 'web.accountant_wrong_password');
+      return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
-    const { password } = req.body || {};
-    if (typeof password !== 'string' || password.length === 0) {
-      return res.status(400).json({ error: 'password is required' });
-    }
-    // Constant-time comparison to dodge timing oracles. Lengths must match too.
-    if (password.length !== expected.length) {
-      return res.status(401).json({ error: 'invalid password' });
-    }
-    let mismatch = 0;
-    for (let i = 0; i < password.length; i++) {
-      mismatch |= password.charCodeAt(i) ^ expected.charCodeAt(i);
-    }
-    if (mismatch !== 0) return res.status(401).json({ error: 'invalid password' });
-    return res.status(200).json({ success: true });
+    signInAccountant(req, res, check.user);
+    await noteSignIn(turso, check.user, 'web.accountant_signin');
+    return res.status(200).json({ accountant: check.user });
   } catch (err) {
     console.error('auth/cuentas error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'No se pudo comprobar la contraseña' });
   }
-}
-
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }

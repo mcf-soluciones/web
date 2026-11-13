@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 import { EDITABLE_FIELDS, coerce } from '../_lib/gastos-editable.js';
 import { canonicalizePropiedad } from '../_lib/propiedad.js';
@@ -13,6 +14,7 @@ import { canonicalizePropiedad } from '../_lib/propiedad.js';
  *   - If importe_total changes, the legacy `gasto` column is kept in sync.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'PATCH' && req.method !== 'POST') {

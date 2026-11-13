@@ -1,10 +1,13 @@
+import { requireReader } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
+import { sinMexico } from '../_lib/sucursales.js';
 
 /**
  * GET /api/reports/gastos-detail?cuenta=C1&yyyy=2026
  *
  * Returns every gasto row in the given cuenta_mcf for the year, with all
- * useful columns for the P&L detail modal.
+ * useful columns for the P&L detail modal. Spain only, unless an owner asks
+ * for mexico=1, as the P&L does when it shows the Mexican stores' rows.
  *
  * Response:
  *   {
@@ -22,6 +25,8 @@ import turso from '../_lib/turso.js';
  *   }
  */
 export default async function handler(req, res) {
+  const reader = requireReader(req, res);
+  if (!reader) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -31,6 +36,7 @@ export default async function handler(req, res) {
     const yyyy = toInt(req.query.yyyy);
     if (!cuenta) return res.status(400).json({ error: 'cuenta is required' });
     if (!yyyy) return res.status(400).json({ error: 'yyyy is required' });
+    const verMexico = reader.role === 'owner' && req.query.mexico === '1';
 
     const [rowsRs, catalogRs] = await Promise.all([
       turso.execute({
@@ -42,13 +48,14 @@ export default async function handler(req, res) {
                      categoria_gastos_mcf, es_inversion
               FROM gastos
               WHERE cuenta = ? AND yyyy = ?
+                AND ${verMexico ? '1 = 1' : sinMexico()}
                 AND COALESCE(es_inversion, 'No') = 'No'
               ORDER BY fecha DESC, id DESC`,
         args: [cuenta, yyyy],
       }),
       turso.execute({
         sql: `SELECT cuenta_mcf, categoria_gastos_mcf, desc, tooltip
-              FROM catalogo_cuentas WHERE cuenta_mcf = ? LIMIT 1`,
+              FROM catalogo_cuentas WHERE cuenta_mcf = ? AND ${verMexico ? '1 = 1' : sinMexico()} LIMIT 1`,
         args: [cuenta],
       }),
     ]);

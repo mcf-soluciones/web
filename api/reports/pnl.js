@@ -1,4 +1,7 @@
+import { requireReader } from '../_lib/web-auth.js';
+import { detailIndex, storesOnSalesOnly } from '../_lib/sales-fallback.js';
 import turso from '../_lib/turso.js';
+import { MEXICO, MEXICO_COMPANY, sinMexico, tiendaMexico } from '../_lib/sucursales.js';
 
 /**
  * GET /api/reports/pnl?mm=3&yyyy=2026
@@ -11,8 +14,14 @@ import turso from '../_lib/turso.js';
  * Preliminary fallback: when sales_detail has no rows for the month,
  * topline revenue comes from the `sales` table (daily AWS pipeline),
  * which already excludes tarjeta-cliente.
+ *
+ * Spain only, unless an owner asks for mexico=1 at MCF scope. Then the Mexican stores join the same rows as any other
+ * store, in Ingresos and each gasto split, and the totals and cards include them. No IVA or Impuesto de Sociedades is
+ * computed on them, since those were already paid in Mexico, so N8, N8a and computeYearProfitBase stay Spain's.
  */
 export default async function handler(req, res) {
+  const reader = requireReader(req, res);
+  if (!reader) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -28,6 +37,8 @@ export default async function handler(req, res) {
       computeYearPnl(yyyy, mm, scope),
       turso.execute(`SELECT property, start_date, label, notes FROM property_activation`),
     ]);
+    const verMexico = reader.role === 'owner' && scope === 'mcf' && req.query.mexico === '1';
+    if (verMexico) addMexico(topline, yearData, await readMexico(yyyy));
 
     return res.status(200).json({
       period: { mm, yyyy },
@@ -38,6 +49,7 @@ export default async function handler(req, res) {
       margins: topline.margins,
       year: yearData,
       activations: activations.rows,
+      ...(verMexico ? { con_mexico: true } : {}),
     });
 
   } catch (err) {
@@ -58,7 +70,7 @@ function normalizeScope(s) {
 
 // Match a gastos.propiedad value against a store scope.
 // gastos.propiedad varies: 'usera', '(001) Usera', 'hortaleza', '(002) Hortaleza',
-// 'Corporate', '(003) Compra TBC', etc.
+// 'Corporate', etc.
 function matchesScope(propiedad, scope) {
   if (scope === 'mcf') return true;
   if (!propiedad) return false;
@@ -108,6 +120,7 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
                    COALESCE(g.importe_iva, 0) AS iva
             FROM gastos g
             WHERE g.yyyy = ? AND g.mm = ?
+              AND ${sinMexico('g')}
               AND COALESCE(g.es_inversion, 'No') = 'No'
               AND g.cuenta IS NOT NULL`,
       args: [yyyy, mm],
@@ -119,22 +132,11 @@ async function computeTopline(mm, yyyy, scope = 'mcf') {
 
   let preliminary = false;
   let preliminaryMaxDay = null;
-  if (revenue === 0 && revenueDemand === 0) {
-    const ym = `${yyyy}-${String(mm).padStart(2, '0')}`;
-    const fbSql = scope === 'mcf'
-      ? `SELECT COALESCE(SUM(euros), 0) AS total, MAX(date_real) AS max_day
-         FROM sales WHERE substr(date_real, 1, 7) = ?`
-      : `SELECT COALESCE(SUM(euros), 0) AS total, MAX(date_real) AS max_day
-         FROM sales WHERE substr(date_real, 1, 7) = ? AND LOWER(mcf_user) LIKE ?`;
-    const fbArgs = scope === 'mcf' ? [ym] : [ym, `%${scope}%`];
-    const fb = await turso.execute({ sql: fbSql, args: fbArgs });
-    const t = Number(fb.rows[0]?.total || 0);
-    if (t > 0) {
-      preliminary = true;
-      revenue = t;
-      revenueDemand = t;
-      preliminaryMaxDay = fb.rows[0]?.max_day || null;
-    }
+  for (const { total, max_day } of await storesOnSalesOnly(turso, yyyy, mm, scope)) {
+    preliminary = true;
+    revenue += total;
+    revenueDemand += total;
+    if (max_day && (!preliminaryMaxDay || max_day > preliminaryMaxDay)) preliminaryMaxDay = max_day;
   }
 
   // Categoria + letter buckets
@@ -331,6 +333,18 @@ function propertyLabel(p) {
 const zeroMonths = () => ({ 1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0 });
 const addMonth = (a, mm, v) => { a[mm] = (a[mm] || 0) + v; };
 
+const codeNumber = (code) => {
+  const n = parseInt(String(code).slice(1), 10);
+  return Number.isNaN(n) ? Infinity : n;
+};
+
+// Keeps a concept's rows together, one per store in code order: Agua E1, E2, E3, E10, then Gas E4, E5, E6, E11.
+function sortItems(items) {
+  const firstCode = new Map();
+  for (const it of items) firstCode.set(it.desc, Math.min(firstCode.get(it.desc) ?? Infinity, codeNumber(it.code)));
+  return items.sort((a, b) => (firstCode.get(a.desc) - firstCode.get(b.desc)) || (codeNumber(a.code) - codeNumber(b.code)));
+}
+
 async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
   const propFilterSd = scope === 'mcf' ? '' : ' AND sd.property = ?';
   const sdArgs = scope === 'mcf' ? [yyyy] : [yyyy, scope];
@@ -349,6 +363,7 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
           FROM gastos g
           LEFT JOIN catalogo_cuentas c ON g.cuenta = c.cuenta_mcf
           WHERE g.yyyy = ?
+            AND ${sinMexico('g')}
             AND COALESCE(g.es_inversion, 'No') = 'No'
             AND g.cuenta IS NOT NULL`,
     args: [yyyy],
@@ -393,8 +408,8 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
     : [scope, String(yyyy), `%${scope}%`];
   const salesAgg = await turso.execute({ sql: salesAggSql, args: salesAggArgs });
 
-  // Which months have sales_detail data?
-  const monthsWithDetail = new Set(salesDet.rows.map(r => Number(r.mm)));
+  // Which store-months have sales_detail data? One store can have it while the other does not.
+  const hasDetail = detailIndex(salesDet.rows);
   const preliminaryMonths = new Set();
 
   // Build ingresos map by property and month
@@ -406,12 +421,12 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
   }
   for (const r of salesAgg.rows) {
     const mm = Number(r.mm);
-    if (monthsWithDetail.has(mm)) continue; // prefer sales_detail
     const prop = r.property;
+    if (hasDetail(prop, mm)) continue; // prefer sales_detail
     if (prop in ingresosByProp) {
       addMonth(ingresosByProp[prop], mm, Number(r.euros));
       preliminaryMonths.add(mm);
-      if (r.max_day) preliminaryMaxDay[mm] = r.max_day;
+      if (r.max_day && (!preliminaryMaxDay[mm] || r.max_day > preliminaryMaxDay[mm])) preliminaryMaxDay[mm] = r.max_day;
     }
   }
 
@@ -641,13 +656,12 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
       ytd: sumYtd(b.by_month, currentMm),
       iva_by_month: b.iva_by_month || zeroMonths(),
       iva_ytd: sumYtd(b.iva_by_month || zeroMonths(), currentMm),
-      items: Array.from(b.items.values())
+      items: sortItems(Array.from(b.items.values())
         .map(it => ({
           ...it,
           ytd: sumYtd(it.by_month, currentMm),
           iva_ytd: sumYtd(it.iva_by_month || zeroMonths(), currentMm),
-        }))
-        .sort((a, b) => a.code.localeCompare(b.code)),
+        }))),
     });
   }
 
@@ -728,6 +742,141 @@ async function computeYearPnl(yyyy, currentMm, scope = 'mcf') {
       margin_pct_ytd: ytd(ingresos) > 0 ? ytd(neto) / ytd(ingresos) : null,
     },
   };
+}
+
+const MEXICO_TOOLTIP = 'Ya tributado en México: sin IVA ni Impuesto de Sociedades.';
+
+async function readMexico(yyyy) {
+  const [ventas, gastos] = await Promise.all([
+    turso.execute({
+      sql: `SELECT property, mm,
+                   COALESCE(SUM(CASE WHEN COALESCE(payment, '') <> 'TARJETA CLIENTE' THEN euro END), 0) AS euros,
+                   COALESCE(SUM(euro), 0) AS demanda
+            FROM sales_detail
+            WHERE company = ? AND yyyy = ?
+            GROUP BY property, mm`,
+      args: [MEXICO_COMPANY, yyyy],
+    }),
+    turso.execute({
+      sql: `SELECT g.cuenta, g.mm, g.propiedad, g.concepto_mcf, c.desc AS cuenta_desc,
+                   CASE
+                     WHEN g.loan_id IS NOT NULL THEN COALESCE(g.loan_payment_interest, 0)
+                     ELSE COALESCE(g.importe_total, g.gasto, 0)
+                   END AS importe
+            FROM gastos g
+            LEFT JOIN catalogo_cuentas c ON g.cuenta = c.cuenta_mcf
+            WHERE g.yyyy = ?
+              AND NOT (${sinMexico('g')})
+              AND COALESCE(g.es_inversion, 'No') = 'No'
+              AND g.cuenta IS NOT NULL`,
+      args: [yyyy],
+    }),
+  ]);
+  return { ventas: ventas.rows, gastos: gastos.rows };
+}
+
+/**
+ * Puts the Mexican stores in the rows every other store uses, then carries them into the totals and the month's cards.
+ * It runs once Spain's numbers are done, so N8, N8a and the IVA lines stay Spain's. Each cuenta counts the way it does
+ * for Spain, except that amounts are gross: no IVA is collected or deducted on these stores.
+ */
+function addMexico(topline, year, { ventas, gastos }) {
+  const mm = year.current_mm;
+  const ingresos = zeroMonths();
+  const porPropiedad = zeroMonths();
+  const corporate = zeroMonths();
+  const deducibles = zeroMonths();
+  const pasan = zeroMonths();
+  const depreciacion = zeroMonths();
+  const changed = new Set();
+
+  const addToRow = (letter, code, desc, store, month, amount) => {
+    const { section: sectionKey, sub: label, order } = LETTER_LABELS[letter];
+    const section = year.sections.find(s => s.key === sectionKey);
+    let sub = section.subsections.find(s => s.key === letter);
+    if (!sub) {
+      sub = { key: letter, label, order, by_month: zeroMonths(), iva_by_month: zeroMonths(), iva_ytd: 0, items: [] };
+      section.subsections.push(sub);
+      section.subsections.sort((a, b) => a.order - b.order);
+    }
+    let item = sub.items.find(it => it.code === code && it.property_label === store);
+    if (!item) {
+      item = { code, label: `${desc} — ${store}`, desc, property_label: store, tooltip: MEXICO_TOOLTIP, by_month: zeroMonths(), iva_by_month: zeroMonths(), iva_ytd: 0 };
+      sub.items.push(item);
+    }
+    addMonth(item.by_month, month, amount);
+    addMonth(sub.by_month, month, amount);
+    addMonth(section.by_month, month, amount);
+    changed.add(section);
+    changed.add(sub);
+  };
+
+  // Like A1 and A2, each store's sales row is there even before it has sold anything.
+  const ventasCode = store => `A${Number(store.label.match(/\d+/)[0])}`;
+  for (const store of MEXICO) addToRow('A', ventasCode(store), 'Ventas (Core)', store.label, 1, 0);
+
+  for (const r of ventas) {
+    const store = tiendaMexico(r.property);
+    const month = Number(r.mm);
+    const euros = Number(r.euros);
+    // A sales row under the Mexican company with a property we don't know still counts, under its own name.
+    addToRow('A', store ? ventasCode(store) : 'A', 'Ventas (Core)', store?.label ?? String(r.property), month, euros);
+    addMonth(ingresos, month, euros);
+    if (month === mm) topline.revenueDemand += Number(r.demanda);
+  }
+
+  for (const r of gastos) {
+    const code = String(r.cuenta || '').trim().toUpperCase();
+    const letter = code.charAt(0);
+    if (!LETTER_LABELS[letter]) continue; // K, L, M, Z: not P&L rows for any store
+    const month = Number(r.mm);
+    const amount = Number(r.importe || 0);
+    addToRow(letter, code, r.cuenta_desc || r.concepto_mcf || `Cuenta ${code}`, tiendaMexico(r.propiedad).label, month, amount);
+
+    if ('AB'.includes(letter)) addMonth(ingresos, month, amount);
+    else if ('CDEFGHI'.includes(letter)) addMonth(porPropiedad, month, amount);
+    else if (letter === 'J') addMonth(corporate, month, amount);
+    else if (letter === 'O') addMonth(depreciacion, month, amount);
+    else if (code === 'N1' || code === 'N3') addMonth(deducibles, month, amount);
+    else if (['N2', 'N4', 'N5'].includes(code)) addMonth(pasan, month, amount);
+    if (letter === 'N' && month === mm) topline.margins.impuestos_by_code[code] = (topline.margins.impuestos_by_code[code] || 0) + amount;
+  }
+
+  for (const part of changed) {
+    part.ytd = sumYtd(part.by_month, mm);
+    if (!part.items) continue;
+    part.items = sortItems(part.items);
+    for (const item of part.items) item.ytd = sumYtd(item.by_month, mm);
+  }
+
+  const operativo = m => ingresos[m] - porPropiedad[m] - corporate[m];
+  const netoDelMes = m => operativo(m) - deducibles[m] + depreciacion[m];
+  const totalIngresos = year.sections.find(s => s.key === 'Ingresos').by_month;
+  const share = (v, total) => (total > 0 ? v / total : null);
+  for (let m = 1; m <= 12; m++) {
+    year.ebitda.by_month[m] += operativo(m);
+    year.neto.by_month[m] += netoDelMes(m);
+    year.ebitda.margin_pct_by_month[m] = share(year.ebitda.by_month[m], totalIngresos[m]);
+    year.neto.margin_pct_by_month[m] = share(year.neto.by_month[m], totalIngresos[m]);
+  }
+  const ingresosYtd = sumYtd(totalIngresos, mm);
+  year.ebitda.ytd = sumYtd(year.ebitda.by_month, mm);
+  year.ebitda.margin_pct_ytd = share(year.ebitda.ytd, ingresosYtd);
+  year.neto.ytd = sumYtd(year.neto.by_month, mm);
+  year.neto.margin_pct_ytd = share(year.neto.ytd, ingresosYtd);
+
+  const cards = topline.margins;
+  topline.revenue += ingresos[mm];
+  cards.ingresos_net += ingresos[mm];
+  cards.per_property_gastos += porPropiedad[mm];
+  cards.corporate_gastos += corporate[mm];
+  cards.total_gastos_op += porPropiedad[mm] + corporate[mm];
+  cards.ebitda += operativo(mm);
+  cards.operating = cards.ebitda;
+  cards.impuestos_deducible += deducibles[mm];
+  cards.impuestos_passthrough += pasan[mm];
+  cards.depreciacion += depreciacion[mm];
+  cards.net_income += netoDelMes(mm);
 }
 
 function sumYtd(monthObj, throughMm) {

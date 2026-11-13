@@ -433,12 +433,12 @@ export function computeProjection(baseline, payload) {
     const baselineArr = baselineExpByCuenta[code] || ZERO12();
     const projectedArr = projectedExpByCuenta[code] || ZERO12();
     const deltaArr = projectedArr.map((v, i) => v - baselineArr[i]);
-    // Disambiguate property variants in label (E1 Usera vs E2 Hortaleza vs E3 Compra TBC)
+    // Disambiguate property variants in label (E1 Usera vs E2 Hortaleza vs E3 Sucursal nueva)
     const propLabel = (() => {
       const p = String(meta.propiedad || '').toLowerCase();
       if (p.includes('usera')) return 'Usera';
       if (p.includes('hortaleza')) return 'Hortaleza';
-      if (p.includes('compra tbc')) return 'Sucursal nueva';
+      if (p.includes('sucursal nueva')) return 'Sucursal nueva';
       if (p.includes('corporate')) return 'Corporate';
       return '';
     })();

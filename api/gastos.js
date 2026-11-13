@@ -1,3 +1,4 @@
+import { requireReports } from './_lib/web-auth.js';
 /**
  * DEPRECATED — use POST /api/gastos/create (with optional `file`) or
  * POST /api/gastos/factura (to attach a factura to an existing gasto).
@@ -8,6 +9,7 @@
  *   - factura.js  — re-attach factura to an existing gasto
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

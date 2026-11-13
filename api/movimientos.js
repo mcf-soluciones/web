@@ -1,5 +1,6 @@
 import turso from './_lib/turso.js';
 import { canonicalizePropiedad } from './_lib/propiedad.js';
+import { requireOwner } from './_lib/web-auth.js';
 
 function formatDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -40,9 +41,6 @@ export default async function handler(req, res) {
         message: 'Use POST /api/gastos/create instead of /api/movimientos for gasto entries.',
       });
     }
-    if (body.type === 'deposito') {
-      return await handleDepositoSimple(body, dateStr, res);
-    }
     if (body.type === 'incidencia') {
       return await handleIncidencia(body, dateStr, res);
     }
@@ -50,8 +48,16 @@ export default async function handler(req, res) {
       return await handleEncuesta(body, now, res);
     }
 
+    // Everything else moves money: only a signed-in owner, and it goes under their name whatever the form sent.
+    const owner = requireOwner(req, res);
+    if (!owner) return;
+
+    if (body.type === 'deposito') {
+      return await handleDepositoSimple({ ...body, mcf_user: owner }, dateStr, res);
+    }
+
     // Default: deposito, transito, fondo_caja (with cash denomination breakdown)
-    return await handleDenominationMovement(body, dateStr, res);
+    return await handleDenominationMovement({ ...body, user: owner }, dateStr, res);
 
   } catch (error) {
     console.error('Error:', error);

@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 import { EDITABLE_FIELDS, coerce } from '../_lib/laundries-editable.js';
 
@@ -9,6 +10,7 @@ import { EDITABLE_FIELDS, coerce } from '../_lib/laundries-editable.js';
  * Always bumps updated_at.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'PATCH' && req.method !== 'POST') {

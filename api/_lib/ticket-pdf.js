@@ -35,7 +35,7 @@ const C = {
 // Same company and registered address for both sucursales (Usera, Hortaleza).
 // Callers may still override via the nif/address fields.
 export const FISCAL = {
-  nif: 'B25922568',
+  nif: 'B19971613',
   address: 'San Julio 5, 1D Madrid 28002',
 };
 

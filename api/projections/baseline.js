@@ -1,5 +1,9 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 import { deriveBalanceSheet } from '../_lib/balance-sheet.js';
+import { sinMexico, tiendaMexico } from '../_lib/sucursales.js';
+
+const SUCURSAL_NUEVA = 'Sucursal nueva';
 
 /**
  * GET /api/projections/baseline?yyyy_mm=2026-04
@@ -21,6 +25,7 @@ import { deriveBalanceSheet } from '../_lib/balance-sheet.js';
  * window so seasonality and cost mix reflect the most recent year.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -63,6 +68,7 @@ export default async function handler(req, res) {
                        ), 0) AS amount
                 FROM gastos g
                 WHERE COALESCE(g.es_inversion, 'No') = 'No'
+                  AND ${sinMexico('g')}
                   AND (g.cuenta IS NULL OR g.cuenta NOT IN ('N2','N4','N5'))
                   AND g.yyyy IS NOT NULL
                   AND (g.yyyy*100 + g.mm) BETWEEN ? AND ?
@@ -87,6 +93,7 @@ export default async function handler(req, res) {
                        COALESCE(SUM(COALESCE(g.importe_total, g.gasto, 0)), 0) AS amount
                 FROM gastos g
                 WHERE COALESCE(g.es_inversion, 'No') = 'No'
+                  AND ${sinMexico('g')}
                   AND g.loan_id IS NULL
                   AND g.yyyy IS NOT NULL
                   AND (g.yyyy*100 + g.mm) BETWEEN ? AND ?
@@ -99,6 +106,7 @@ export default async function handler(req, res) {
                        COALESCE(SUM(COALESCE(g.importe_total, g.gasto, 0)), 0) AS amount
                 FROM gastos g
                 WHERE g.es_inversion = 'Si'
+                  AND ${sinMexico('g')}
                   AND g.yyyy IS NOT NULL
                   AND (g.yyyy*100 + g.mm) BETWEEN ? AND ?
                 GROUP BY g.yyyy, g.mm`,
@@ -111,6 +119,7 @@ export default async function handler(req, res) {
                        COALESCE(SUM(COALESCE(g.loan_payment_principal, 0)), 0) AS principal
                 FROM gastos g
                 WHERE g.loan_id IS NOT NULL
+                  AND ${sinMexico('g')}
                   AND g.yyyy IS NOT NULL
                   AND (g.yyyy*100 + g.mm) BETWEEN ? AND ?
                 GROUP BY g.yyyy, g.mm`,
@@ -148,14 +157,18 @@ export default async function handler(req, res) {
       revenueByPropiedad[prop][`${r.yyyy}-${r.mm}`] = Number(r.revenue) || 0;
     }
 
+    // The calculator models a store it might buy on Monterrey's cuentas, which were the Compra TBC placeholder and which
+    // saved scenarios point at. None of Monterrey's amounts reach it, since every gastos query above leaves Mexico out.
     const catalog = {};
     for (const r of catalogRs.rows) {
+      const tienda = tiendaMexico(r.propiedad);
+      if (tienda && tienda.key !== 'monterrey') continue;
       catalog[r.cuenta_mcf] = {
         cuenta: r.cuenta_mcf,
         categoria: r.categoria_gastos_mcf,
         desc: r.desc,
-        propiedad: r.propiedad,
-        tooltip: r.tooltip,
+        propiedad: tienda ? SUCURSAL_NUEVA : r.propiedad,
+        tooltip: tienda ? `${r.desc} · ${SUCURSAL_NUEVA}` : r.tooltip,
       };
     }
 

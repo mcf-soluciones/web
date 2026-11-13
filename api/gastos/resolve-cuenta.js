@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
 
 /**
@@ -11,6 +12,7 @@ import turso from '../_lib/turso.js';
  * Drives the detailed-entry form's auto-derived cuenta badge.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -71,7 +73,8 @@ function canonicalizePropiedad(raw) {
   const s = String(raw).trim().toLowerCase();
   if (/\(001\)|usera/.test(s)) return '(001) Usera';
   if (/\(002\)|hortaleza/.test(s)) return '(002) Hortaleza';
-  if (/\(003\)|tbc|compra/.test(s)) return '(003) Compra TBC';
+  if (/\(003\)|monterrey/.test(s)) return '(003) Monterrey';
+  if (/\(004\)|cdmx/.test(s)) return '(004) CDMX';
   if (/corporate/.test(s)) return 'Corporate';
   return raw; // last-resort passthrough
 }

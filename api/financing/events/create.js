@@ -1,3 +1,4 @@
+import { requireReports } from '../../_lib/web-auth.js';
 import turso from '../../_lib/turso.js';
 
 const VALID_TYPES = new Set([
@@ -9,6 +10,7 @@ const VALID_TYPES = new Set([
  *   body: { fecha, event_type, euros, loan_id?, counterparty?, notes?, recibo_url?, user_name? }
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

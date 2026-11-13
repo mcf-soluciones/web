@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de los kioscos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/mcf.css">
+</head>
+<body data-shell="app">
+    <script src="/js/mcf-shell.js"></script>
+    <div class="container wide">
+        <div class="header">
+            <h1>Estado de los kioscos</h1>
+            <p id="updated">Cargando…</p>
+        </div>
+        <div id="kiosks"></div>
+        <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">Dinero (solo dueños)</h2></div>
+            <div class="panel-body">
+                <form class="money-form" id="moneyForm" autocomplete="off">
+                    <input class="input" type="password" id="pin" inputmode="numeric" maxlength="6" placeholder="PIN" aria-label="PIN">
+                    <button type="submit" class="btn btn-primary btn-inline">Ver</button>
+                </form>
+                <p class="message" id="moneyMessage"></p>
+                <div id="money"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const HEADLINES = {
+            ok: 'Todo bien',
+            problem: 'Hay algo que revisar',
+            down: 'Sin señal',
+            off: 'Telemetría desactivada',
+            unknown: 'Aún sin datos',
+        };
+
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const eur = cents => (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+        function ago(iso) {
+            if (!iso) return 'nunca';
+            const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
+            if (minutes < 1) return 'ahora mismo';
+            if (minutes < 60) return `hace ${minutes} min`;
+            if (minutes < 1440) return `hace ${Math.round(minutes / 60)} h`;
+            return `hace ${Math.round(minutes / 1440)} días`;
+        }
+
+        function statePill(c) {
+            if (c.ok === null) return '<span class="badge">sin datos</span>';
+            if (!c.ok) return `<span class="badge bad">${esc(c.status || 'fallo')}</span>`;
+            if (c.status === 'bajo') return '<span class="badge warn">bajo</span>';
+            return '<span class="badge good">ok</span>';
+        }
+
+        function machinePill(state) {
+            const good = state === 'Libre';
+            const busy = state === 'En Marcha' || state === 'Pagada';
+            return `<span class="badge ${good ? 'good' : busy ? '' : 'warn'}">${esc(state)}</span>`;
+        }
+
+        function renderKiosk(k) {
+            let html = `<div class="panel kiosk state-${esc(k.state)}"><div class="status-banner">
+                <div class="name">${esc(k.name)}</div>
+                <h2>${HEADLINES[k.state] || esc(k.state)}</h2>
+                <div class="seen">Última señal ${ago(k.last_seen)}${k.selling === false ? ' · fuera de horario' : ''}</div>
+            </div>`;
+
+            if (k.problems.length) {
+                html += '<div class="panel-section"><h3 class="label">Qué pasa</h3>' + k.problems.map(p =>
+                    `<p class="problem">${esc(p.message)} <a class="inline-link" href="/errores#${esc(p.code)}">Código ${esc(p.code)}</a></p>`).join('') + '</div>';
+                if (k.state === 'down') html += '<div class="panel-section"><p class="problem">Desde aquí no se puede saber cuál de las dos es. Compruébelo con Chrome Remote Desktop o las cámaras.</p></div>';
+            }
+            if (k.components.length) {
+                html += '<div class="panel-section"><h3 class="label">Equipos</h3>' + k.components.map(c => `<div class="row"><span>${esc(c.label)}</span>${statePill(c)}</div>`).join('') + '</div>';
+            }
+            if (k.machines.length) {
+                html += '<div class="panel-section"><h3 class="label">Máquinas</h3>' + k.machines.map(m => `<div class="row"><span>${esc(m.name)}</span>${machinePill(m.state)}</div>`).join('') + '</div>';
+            }
+            if (k.pc || k.upload) {
+                html += '<div class="panel-section"><h3 class="label">Ordenador y subida</h3>';
+                if (k.pc?.temp_c != null) html += `<div class="row"><span>Temperatura</span><span>${Math.round(k.pc.temp_c)} °C</span></div>`;
+                if (k.pc?.disk_free_gb != null) html += `<div class="row"><span>Disco libre</span><span>${Math.round(k.pc.disk_free_gb)} GB</span></div>`;
+                if (k.upload) html += `<div class="row"><span>Pendiente de subir</span><span>${esc(k.upload.depth)}</span></div>`;
+                if (k.upload?.last_ok_at) html += `<div class="row"><span>Última subida</span><span>${ago(k.upload.last_ok_at)}</span></div>`;
+                if (k.recon_ok_through) html += `<div class="row"><span>Revisado hasta</span><span>${esc(k.recon_ok_through)}</span></div>`;
+                if (k.app_version) html += `<div class="row"><span>Versión</span><span>${esc(k.app_version)}</span></div>`;
+                html += '</div>';
+            }
+            return html + '</div>';
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch('/api/kiosk/status', { cache: 'no-store' });
+                if (!res.ok) throw new Error(res.status);
+                const data = await res.json();
+                document.getElementById('kiosks').innerHTML = data.kiosks.length
+                    ? data.kiosks.map(renderKiosk).join('')
+                    : '<p class="empty">Todavía no hay kioscos registrados.</p>';
+                document.getElementById('updated').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            } catch (err) {
+                document.getElementById('updated').textContent = 'No se pudo actualizar. Se reintentará en un minuto.';
+            }
+        }
+
+        const METHODS = { cash: 'Efectivo', bank: 'Tarjeta bancaria', card: 'Tarjeta cliente' };
+
+        function renderMoney(data) {
+            return data.kiosks.map(k => {
+                const coins = (k.cash?.coins || []).map(c => `<div class="row"><span>${eur(c.cents)} × ${esc(c.count)}</span><span>${eur(c.cents * c.count)}</span></div>`).join('');
+                const notes = (k.cash?.notes || []).map(n => `<div class="row"><span>${eur(n.cents)} × ${esc(n.count)}</span><span>${eur(n.cents * n.count)}</span></div>`).join('');
+                const byMethod = {};
+                for (const t of k.today) byMethod[t.method] = (byMethod[t.method] || 0) + t.cents;
+                const today = Object.entries(byMethod).map(([m, c]) => `<div class="row"><span>${METHODS[m] || esc(m)}</span><span>${eur(c)}</span></div>`).join('');
+                return `<h3 class="label mt-4">${esc(k.name)} · ${ago(k.as_of)}</h3>
+                    <div class="row strong"><span>Monedas en hopper</span><span>${eur(k.cash?.hopper_cents || 0)}</span></div>${coins}
+                    <div class="row strong"><span>Billetes desde el último retiro</span><span>${eur(k.cash?.notes_cents || 0)}</span></div>${notes}
+                    <div class="row strong"><span>Ventas de hoy</span><span></span></div>${today || '<div class="row"><span>Sin ventas todavía</span></div>'}`;
+            }).join('');
+        }
+
+        document.getElementById('moneyForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const input = document.getElementById('pin');
+            const message = document.getElementById('moneyMessage');
+            message.textContent = '';
+            try {
+                const res = await fetch('/api/kiosk/money', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: input.value }) });
+                const data = await res.json();
+                if (!res.ok) { message.textContent = data.error || 'No se pudo comprobar el PIN'; return; }
+                document.getElementById('money').innerHTML = renderMoney(data);
+            } catch (err) {
+                message.textContent = 'No se pudo comprobar el PIN';
+            } finally {
+                input.value = '';
+            }
+        });
+
+        refresh();
+        setInterval(refresh, 60000);
+
+        // Signed in already: no need to ask for the PIN here. If that lapsed, the form is still there.
+        async function showMoneyIfSignedIn() {
+            if (!MCF.isAdmin()) return;
+            try {
+                const res = await fetch('/api/kiosk/money', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                if (!res.ok) return;
+                document.getElementById('moneyForm').style.display = 'none';
+                document.getElementById('money').innerHTML = renderMoney(await res.json());
+            } catch (err) { /* the form is still there */ }
+        }
+        showMoneyIfSignedIn();
+    </script>
+</body>
+</html>

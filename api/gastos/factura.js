@@ -1,7 +1,9 @@
+import { requireReports } from '../_lib/web-auth.js';
 import { Readable } from 'stream';
 import turso from '../_lib/turso.js';
 import { getDriveService } from '../_lib/google-auth.js';
 import { getOrCreateMonthFolder } from '../_lib/drive-folders.js';
+import { MEXICO_DRIVE_FOLDER_ID, esMexico } from '../_lib/sucursales.js';
 
 const DRIVE_FOLDER_ID = '1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a';
 
@@ -13,6 +15,7 @@ const DRIVE_FOLDER_ID = '1L44fCCmEsOQW0SvxvduC6QthJlt-DC7a';
  * Used by the month table's re-attach flow (click paperclip on a row).
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -27,7 +30,7 @@ export default async function handler(req, res) {
 
     // Look up the gasto's month so we drop the factura into the right subfolder.
     const gastoRow = await turso.execute({
-      sql: `SELECT mm, yyyy, fecha FROM gastos WHERE id = ? LIMIT 1`,
+      sql: `SELECT mm, yyyy, fecha, propiedad FROM gastos WHERE id = ? LIMIT 1`,
       args: [id],
     });
     if (gastoRow.rows.length === 0) return res.status(404).json({ error: 'gasto not found' });
@@ -35,8 +38,11 @@ export default async function handler(req, res) {
     const yyyy = Number(g.yyyy) || (g.fecha ? Number(String(g.fecha).slice(0, 4)) : new Date().getFullYear());
     const mm = Number(g.mm) || (g.fecha ? Number(String(g.fecha).slice(5, 7)) : new Date().getMonth() + 1);
 
+    const folder = esMexico(g.propiedad) ? MEXICO_DRIVE_FOLDER_ID : DRIVE_FOLDER_ID;
+    if (!folder) return res.status(400).json({ error: 'Falta configurar la carpeta de Drive de México' });
+
     const drive = getDriveService();
-    const monthFolderId = await getOrCreateMonthFolder(drive, DRIVE_FOLDER_ID, yyyy, mm);
+    const monthFolderId = await getOrCreateMonthFolder(drive, folder, yyyy, mm);
     const buffer = Buffer.from(body.file.content, 'base64');
     const created = await drive.files.create({
       requestBody: {

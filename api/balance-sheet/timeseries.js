@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import { deriveBalanceSheet } from '../_lib/balance-sheet.js';
 
 /**
@@ -34,6 +35,7 @@ import { deriveBalanceSheet } from '../_lib/balance-sheet.js';
  *     once at the top level and per-period values keyed by code.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

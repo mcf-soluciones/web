@@ -1,4 +1,6 @@
+import { requireReader } from '../_lib/web-auth.js';
 import turso from '../_lib/turso.js';
+import { esMexico } from '../_lib/sucursales.js';
 
 /**
  * GET /api/gastos/catalog
@@ -24,6 +26,8 @@ const GASTOS_CATEGORIES = new Set([
 ]);
 
 export default async function handler(req, res) {
+  const reader = requireReader(req, res);
+  if (!reader) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -46,7 +50,8 @@ export default async function handler(req, res) {
       ORDER BY desc, propiedad
     `);
 
-    const rows = rs.rows.filter(r => GASTOS_CATEGORIES.has(r.categoria_gastos_mcf));
+    const rows = rs.rows.filter(r => GASTOS_CATEGORIES.has(r.categoria_gastos_mcf)
+      && (reader.role === 'owner' || !esMexico(r.propiedad)));
 
     const byPropiedad = {};
     const allDescs = new Set();

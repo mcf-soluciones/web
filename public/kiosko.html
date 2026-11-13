@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajustes del kiosco</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/mcf.css">
+</head>
+<body data-shell="app">
+    <script src="/js/mcf-shell.js"></script>
+    <div class="container wide">
+        <div class="header">
+            <h1>Ajustes del kiosco</h1>
+            <p>El kiosco los recibe en un minuto de día y en una hora de noche, y los aplica al volver a su pantalla inicial.</p>
+        </div>
+
+        <form class="card pin-card" id="pinCard" autocomplete="off">
+            <h2 class="card-title">Solo dueños</h2>
+            <input class="input" type="password" id="pin" inputmode="numeric" maxlength="6" placeholder="PIN" aria-label="PIN">
+            <button type="submit" class="btn btn-primary">Entrar</button>
+        </form>
+
+        <div id="message" class="page-message"></div>
+
+        <div id="editor" style="display:none">
+            <div class="card">
+                <h2 class="card-title">Horario</h2>
+                <p class="help">Abre, Última lavadora y Cierre se muestran a los clientes. Las lavadoras dejan de venderse tras la última lavadora; todo lo demás, en la última venta.</p>
+                <div class="scroll-x"><table class="settings-table" id="hours"></table></div>
+            </div>
+            <div class="card">
+                <h2 class="card-title">Precios</h2>
+                <p class="help">Por lavado, o por ciclo de 10 minutos en secadoras. El efectivo y la tarjeta bancaria pagan el precio normal, en múltiplos de 0,50 €. Al guardar se añaden a products las filas que falten.</p>
+                <div class="scroll-x"><table class="settings-table" id="prices"></table></div>
+                <div class="field mt-2"><label for="maxCycles">Máximo de ciclos por secado</label><input class="input num" id="maxCycles" type="number" min="1" max="5"></div>
+            </div>
+            <div class="card">
+                <h2 class="card-title">Tarjeta cliente</h2>
+                <div class="field"><label for="cardPrice">Precio de la tarjeta (€)</label><input class="input money" id="cardPrice"></div>
+                <div class="field"><label for="cardInitial">Saldo que incluye (€)</label><input class="input money" id="cardInitial"></div>
+                <div class="field"><label for="topups">Recargas (€, separadas por comas)</label><input class="input mid" id="topups"></div>
+            </div>
+            <div class="card">
+                <h2 class="card-title">Descuentos por tarjeta</h2>
+                <p class="help">Sobre el precio con tarjeta cliente, redondeado hacia arriba a 0,05 €. Se pueden añadir tarjetas nuevas con su número.</p>
+                <div class="scroll-x"><table class="settings-table" id="discounts"></table></div>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="addDiscount">Añadir tarjeta</button>
+            </div>
+            <div class="card">
+                <h2 class="card-title">Pantalla y aviso</h2>
+                <div class="field"><label for="notice">Aviso en la pantalla inicial</label></div>
+                <input class="input mb-2" id="notice" maxlength="140">
+                <div class="field"><label for="minChange">Cambio mínimo para aceptar billetes (€)</label><input class="input money" id="minChange"></div>
+                <div class="field"><label for="blackFrom">Pantalla negra desde</label><input class="input time" id="blackFrom" type="time"></div>
+                <p class="help">Con el kiosco ya cerrado, a partir de esa hora la pantalla se queda en negro hasta la hora de abrir, para ahorrar energía. El ordenador sigue encendido y F5 abre el Support Center. Una hora anterior a la de abrir, como 01:00, cuenta como pasada la medianoche. Vacío = nunca.</p>
+            </div>
+            <div class="card">
+                <h2 class="card-title">Telemetría y subida</h2>
+                <div class="field"><label for="telemetry">Latidos activados</label><input id="telemetry" type="checkbox"></div>
+                <div class="field"><label for="beatDay">Latido de día (minutos)</label><input class="input num" id="beatDay" type="number" min="1"></div>
+                <div class="field"><label for="beatNight">Latido de noche (minutos)</label><input class="input num" id="beatNight" type="number" min="1"></div>
+                <div class="field"><label for="upload">Subir ventas cada (minutos)</label><input class="input num" id="upload" type="number" min="1"></div>
+                <div class="field"><label for="night">Revisión nocturna</label><input class="input time" id="night" type="time"></div>
+                <div class="field"><label for="tempAlert">Aviso de temperatura (°C)</label><input class="input num" id="tempAlert" type="number"></div>
+                <div class="field"><label for="low50">Mínimo de monedas de 0,50 €</label><input class="input num" id="low50" type="number" min="0"></div>
+                <div class="field"><label for="low100">Mínimo de monedas de 1 €</label><input class="input num" id="low100" type="number" min="0"></div>
+                <div class="field"><label for="low200">Mínimo de monedas de 2 €</label><input class="input num" id="low200" type="number" min="0"></div>
+            </div>
+            <div class="savebar"><button type="button" class="btn btn-primary" id="save">Guardar y enviar al kiosco</button></div>
+        </div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const toEuro = cents => ((cents ?? 0) / 100).toFixed(2).replace('.', ',');
+        const toCents = text => Math.round(parseFloat(String(text).replace(',', '.')) * 100);
+        let pin = '';
+        let loaded = null;
+
+        function say(text, kind) {
+            const m = $('message');
+            m.textContent = text;
+            m.className = `page-message ${kind}`;
+            m.scrollIntoView({ block: 'nearest' });
+        }
+
+        async function call(body) {
+            const res = await fetch('/api/kiosk/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin, ...body }) });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error del servidor');
+            return data;
+        }
+
+        function renderHours(hours) {
+            $('hours').innerHTML = '<tr><th>Día</th><th>Abre</th><th>Última lavadora</th><th>Última venta</th><th>Cierre</th></tr>' + DAYS.map((name, i) => {
+                const d = hours[i];
+                const cell = f => `<td><input class="input time" type="time" data-day="${i}" data-field="${f}" value="${esc(d[f])}"></td>`;
+                return `<tr><td>${name}</td>${cell('open')}${cell('last_wash')}${cell('last_sale')}${cell('close')}</tr>`;
+            }).join('');
+        }
+
+        function renderPrices(prices) {
+            let html = '<tr><th>Máquina</th><th>Desde</th><th>Hasta</th><th>Precio €</th><th>Tarjeta €</th><th></th></tr>';
+            for (const [machine, windows] of Object.entries(prices)) {
+                windows.forEach((w, i) => {
+                    html += `<tr class="machine" data-machine="${esc(machine)}">
+                        <td class="machine-name">${i === 0 ? esc(machine) : ''}</td>
+                        <td><input class="input time" type="time" data-f="from" value="${esc(w.from)}"></td>
+                        <td><input class="input time" type="time" data-f="to" value="${esc(w.to)}"></td>
+                        <td><input class="input money" data-f="cents" value="${toEuro(w.cents)}"></td>
+                        <td><input class="input money" data-f="card_cents" value="${toEuro(w.card_cents)}"></td>
+                        <td>${i === 0
+                            ? `<button type="button" class="btn btn-secondary btn-sm" data-add="${esc(machine)}">+ tramo</button>`
+                            : `<button type="button" class="btn btn-secondary btn-sm" data-remove>Quitar</button>`}</td>
+                    </tr>`;
+                });
+            }
+            $('prices').innerHTML = html;
+        }
+
+        function readPrices() {
+            const prices = {};
+            for (const row of $('prices').querySelectorAll('tr[data-machine]')) {
+                const get = f => row.querySelector(`[data-f="${f}"]`).value;
+                (prices[row.dataset.machine] ||= []).push({ from: get('from'), to: get('to'), cents: toCents(get('cents')), card_cents: toCents(get('card_cents')) });
+            }
+            return prices;
+        }
+
+        $('prices').addEventListener('click', e => {
+            const prices = readPrices();
+            if (e.target.dataset.add) {
+                prices[e.target.dataset.add].push({ from: '21:16', to: '23:59', cents: 0, card_cents: 0 });
+            } else if (e.target.hasAttribute('data-remove')) {
+                const row = e.target.closest('tr');
+                const rows = [...$('prices').querySelectorAll(`tr[data-machine="${row.dataset.machine}"]`)];
+                prices[row.dataset.machine].splice(rows.indexOf(row), 1);
+            } else return;
+            renderPrices(prices);
+        });
+
+        function renderDiscounts(list) {
+            $('discounts').innerHTML = '<tr><th>Número de tarjeta</th><th>Descuento %</th><th></th></tr>' + list.map(d =>
+                `<tr><td><input class="input mid" data-d="uid" value="${esc(d.uid)}"></td><td><input class="input num" data-d="percent" type="number" min="1" max="100" value="${esc(d.percent)}"></td><td><button type="button" class="btn btn-secondary btn-sm" data-drop>Quitar</button></td></tr>`).join('');
+        }
+
+        function readDiscounts() {
+            return [...$('discounts').querySelectorAll('tr')].slice(1).map(r => ({
+                uid: r.querySelector('[data-d="uid"]').value.trim().toUpperCase(),
+                percent: parseInt(r.querySelector('[data-d="percent"]').value, 10),
+            }));
+        }
+
+        $('discounts').addEventListener('click', e => {
+            if (!e.target.hasAttribute('data-drop')) return;
+            e.target.closest('tr').remove();
+        });
+        $('addDiscount').addEventListener('click', () => renderDiscounts([...readDiscounts(), { uid: '', percent: 5 }]));
+
+        function fill(s, discounts) {
+            renderHours(s.hours);
+            renderPrices(s.prices);
+            $('maxCycles').value = s.max_cycles;
+            $('cardPrice').value = toEuro(s.card.price_cents);
+            $('cardInitial').value = toEuro(s.card.initial_balance_cents);
+            $('topups').value = s.card.topup_amounts.map(a => a / 100).join(', ');
+            renderDiscounts(discounts);
+            $('notice').value = s.home_notice || '';
+            $('minChange').value = toEuro(s.min_change_in_hopper_cents);
+            $('blackFrom').value = s.black_screen_from ?? '';
+            $('telemetry').checked = s.cloud.telemetry_enabled;
+            $('beatDay').value = s.cloud.heartbeat_day_minutes;
+            $('beatNight').value = s.cloud.heartbeat_night_minutes;
+            $('upload').value = s.cloud.upload_minutes;
+            $('night').value = s.cloud.night_check_at;
+            $('tempAlert').value = s.cloud.temp_alert_c;
+            $('low50').value = s.cloud.low_coins['50'] ?? 0;
+            $('low100').value = s.cloud.low_coins['100'] ?? 0;
+            $('low200').value = s.cloud.low_coins['200'] ?? 0;
+        }
+
+        function read() {
+            const hours = DAYS.map((_, i) => {
+                const get = f => $('hours').querySelector(`[data-day="${i}"][data-field="${f}"]`).value;
+                return { open: get('open'), last_wash: get('last_wash'), last_sale: get('last_sale'), close: get('close') };
+            });
+            // A kiosk older than 3.8 does not report this: left empty, it is not sent, so the new version keeps its own default instead of turning it off.
+            const blackFrom = $('blackFrom').value;
+            return {
+                ...loaded.settings,
+                hours,
+                ...(blackFrom || loaded.settings.black_screen_from !== undefined ? { black_screen_from: blackFrom } : {}),
+                prices: readPrices(),
+                max_cycles: parseInt($('maxCycles').value, 10),
+                card: {
+                    ...loaded.settings.card,
+                    price_cents: toCents($('cardPrice').value),
+                    initial_balance_cents: toCents($('cardInitial').value),
+                    topup_amounts: $('topups').value.split(',').map(toCents),
+                },
+                home_notice: $('notice').value,
+                min_change_in_hopper_cents: toCents($('minChange').value),
+                cloud: {
+                    ...loaded.settings.cloud,
+                    telemetry_enabled: $('telemetry').checked,
+                    heartbeat_day_minutes: parseInt($('beatDay').value, 10),
+                    heartbeat_night_minutes: parseInt($('beatNight').value, 10),
+                    upload_minutes: parseInt($('upload').value, 10),
+                    night_check_at: $('night').value,
+                    temp_alert_c: parseInt($('tempAlert').value, 10),
+                    low_coins: { 50: parseInt($('low50').value, 10), 100: parseInt($('low100').value, 10), 200: parseInt($('low200').value, 10) },
+                },
+            };
+        }
+
+        async function openEditor(quiet) {
+            try {
+                loaded = await call({ action: 'load' });
+                if (!loaded.settings) { say('El kiosco aún no ha informado de sus ajustes. Inténtelo cuando aparezca en Estado.', 'warn'); return; }
+                fill(loaded.settings, loaded.discounts);
+                $('pinCard').style.display = 'none';
+                $('editor').style.display = 'block';
+                if (loaded.config_problem) say(`El kiosco rechazó los últimos ajustes: ${loaded.config_problem}`, 'bad');
+                else if (loaded.updated_at) say(`Últimos cambios de ${loaded.updated_by}, ${new Date(loaded.updated_at).toLocaleString('es-ES')}.`, 'good');
+            } catch (err) {
+                if (!quiet) say(err.message, 'bad');
+            }
+        }
+
+        $('pinCard').addEventListener('submit', e => {
+            e.preventDefault();
+            pin = $('pin').value;
+            $('pin').value = '';
+            openEditor(false);
+        });
+
+        // Signed in already: no need to ask for the PIN here. If that lapsed, the PIN card is still there.
+        if (MCF.isAdmin()) openEditor(true);
+
+        $('save').addEventListener('click', async () => {
+            const button = $('save');
+            button.disabled = true;
+            try {
+                const result = await call({ action: 'save', settings: read(), discounts: readDiscounts() });
+                const added = result.products_added.length ? ` Se añadieron a products: ${result.products_added.map(p => `${p.product} ${toEuro(Math.round(p.precio * 100))} €`).join(', ')}.` : '';
+                say(`Guardado.${added} El kiosco lo aplicará al volver a su pantalla inicial.`, 'good');
+                loaded = await call({ action: 'load' });
+            } catch (err) {
+                say(err.message, 'bad');
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

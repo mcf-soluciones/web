@@ -1,3 +1,4 @@
+import { requireReports } from '../_lib/web-auth.js';
 import { computeProjection } from '../_lib/projections.js';
 import baselineHandler from './baseline.js';
 
@@ -10,6 +11,7 @@ import baselineHandler from './baseline.js';
  * investment_metrics } with baseline / projected / delta arrays.
  */
 export default async function handler(req, res) {
+  if (!requireReports(req, res)) return;
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -25,7 +27,7 @@ export default async function handler(req, res) {
     // Re-use baseline.js by calling its handler in-process (no self-fetch).
     // Static import so Vercel bundles the dependency reliably — dynamic
     // import() of a sibling api function returned undefined on deploy.
-    const baselineRes = await captureHandler(baselineHandler, { method: 'GET', query: { yyyy_mm: ym }, body: null });
+    const baselineRes = await captureHandler(baselineHandler, { method: 'GET', headers: req.headers, query: { yyyy_mm: ym }, body: null });
     if (baselineRes.status !== 200) return res.status(baselineRes.status).json(baselineRes.body);
     const baseline = baselineRes.body;
 
